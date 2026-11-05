@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -2203,13 +2203,15 @@ function tryAutoPlayBgm() {
     updateBgmUI(false);
     const resumeOnInteraction = () => {
       bgmAudio.play().then(() => updateBgmUI(true)).catch(e => console.log(e));
-      window.removeEventListener('click', resumeOnInteraction);
-      window.removeEventListener('keydown', resumeOnInteraction);
-      window.removeEventListener('touchstart', resumeOnInteraction);
+      ['click', 'touchstart', 'touchend', 'pointerdown', 'mousedown', 'scroll', 'keydown'].forEach(evt => {
+        window.removeEventListener(evt, resumeOnInteraction, { capture: true });
+        document.removeEventListener(evt, resumeOnInteraction, { capture: true });
+      });
     };
-    window.addEventListener('click', resumeOnInteraction, { once: true });
-    window.addEventListener('keydown', resumeOnInteraction, { once: true });
-    window.addEventListener('touchstart', resumeOnInteraction, { once: true });
+    ['click', 'touchstart', 'touchend', 'pointerdown', 'mousedown', 'scroll', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, resumeOnInteraction, { capture: true, once: true });
+      document.addEventListener(evt, resumeOnInteraction, { capture: true, once: true });
+    });
   });
 }
 

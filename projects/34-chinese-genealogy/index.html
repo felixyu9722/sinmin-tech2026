@@ -270,28 +270,70 @@ function done(){
 }
 $("qr").onclick=start;start();
 
-// BGM 古乐控制逻辑
+// BGM 古乐控制逻辑与自动播放
 let bgmAudio = new Audio('bgm.mp3');
 bgmAudio.loop = true;
 let isBgmPlaying = false;
 
-function toggleBgm() {
+function updateBgmUI(playing) {
+  isBgmPlaying = playing;
   const icon = document.getElementById('bgmIcon');
   const txt = document.getElementById('bgmTxt');
-  if (isBgmPlaying) {
-    bgmAudio.pause();
-    isBgmPlaying = false;
-    icon.innerHTML = '&#x25B6;';
-    txt.textContent = '古乐: 播放';
-  } else {
-    bgmAudio.play().then(() => {
-      isBgmPlaying = true;
+  if (icon && txt) {
+    if (playing) {
       icon.innerHTML = '&#x23F8;';
       txt.textContent = '古乐: 暂停';
-    }).catch(err => {
-      console.log('Audio autoplay prevented:', err);
+    } else {
+      icon.innerHTML = '&#x25B6;';
+      txt.textContent = '古乐: 播放';
+    }
+  }
+}
+
+function playBgm() {
+  return bgmAudio.play().then(() => {
+    updateBgmUI(true);
+  });
+}
+
+function pauseBgm() {
+  bgmAudio.pause();
+  updateBgmUI(false);
+}
+
+function toggleBgm() {
+  if (isBgmPlaying) {
+    pauseBgm();
+  } else {
+    playBgm().catch(err => {
+      console.log('Audio play failed:', err);
+      updateBgmUI(false);
     });
   }
+}
+
+// 自动播放与移动端首次交互唤醒
+function startAutoPlayBgm() {
+  playBgm().catch(() => {
+    updateBgmUI(false);
+    const triggerAudio = () => {
+      playBgm().catch(() => {});
+      ['click', 'touchstart', 'touchend', 'pointerdown', 'mousedown', 'scroll'].forEach(evt => {
+        window.removeEventListener(evt, triggerAudio, { capture: true });
+        document.removeEventListener(evt, triggerAudio, { capture: true });
+      });
+    };
+    ['click', 'touchstart', 'touchend', 'pointerdown', 'mousedown', 'scroll'].forEach(evt => {
+      window.addEventListener(evt, triggerAudio, { capture: true, once: true });
+      document.addEventListener(evt, triggerAudio, { capture: true, once: true });
+    });
+  });
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', startAutoPlayBgm);
+} else {
+  startAutoPlayBgm();
 }
 
 function backToHome() {
