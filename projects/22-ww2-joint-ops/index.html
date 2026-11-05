@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -61,6 +61,37 @@ canvas#gameCanvas {
 }
 
 @media (max-width: 900px), (pointer: coarse) {
+  #help, .bottom-deck {
+    display: none !important;
+  }
+  #radar-wrap {
+    top: 70px !important;
+    bottom: auto !important;
+    right: 12px !important;
+    width: 76px !important;
+    height: 76px !important;
+    opacity: 0.85 !important;
+  }
+  #radar-wrap canvas {
+    width: 76px !important;
+    height: 76px !important;
+  }
+  #mobile-controls {
+    display: block !important;
+    z-index: 99 !important;
+  }
+  .stick-zone {
+    left: 16px !important;
+    bottom: 24px !important;
+    width: 120px !important;
+    height: 120px !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    border: 2px solid rgba(212, 175, 55, 0.5) !important;
+  }
+  .action-btns {
+    right: 16px !important;
+    bottom: 24px !important;
+  }
   #mobile-controls {
     display: block;
   }

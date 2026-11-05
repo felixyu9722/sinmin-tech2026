@@ -6,7 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>赛博朋克风：粒子重力球与星际防御实验室</title>
     <!-- Tailwind CSS CDN 加载 -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">// ==================== ç‰©ç†å‚æ•°é¢æ¿æ˜¾éšå¼€å…³ ====================
+function toggleSettingsPanel() {
+    const p = document.getElementById('labControlPanel');
+    if (!p) return;
+    if (p.style.display === 'none' || p.classList.contains('hidden')) {
+        p.style.display = 'block';
+        p.classList.remove('hidden');
+    } else {
+        p.style.display = 'none';
+        p.classList.add('hidden');
+    }
+}
+
+// ç§»åŠ¨ç«¯/å°å±å¹•åˆå§‹é»˜è®¤æ”¶èµ·é¢æ¿ï¼Œé¿å…é®æŒ¡ç”»å¸ƒç”»é¢
+if (window.innerWidth <= 820) {
+    const p = document.getElementById('labControlPanel');
+    if (p) {
+        p.style.display = 'none';
+        p.classList.add('hidden');
+    }
+}
+</script>
     <!-- FontAwesome 图标库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -174,8 +195,11 @@
             <h2 class="font-orbitron font-bold text-cyan-400 flex items-center gap-2">
                 <i class="fa-solid fa-sliders"></i> 实验室物理参数
             </h2>
-            <span class="text-xs bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded border border-cyan-800"
-                id="fpsCounter">FPS: 60</span>
+            <div class="flex items-center gap-2">
+                <span class="text-xs bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded border border-cyan-800"
+                    id="fpsCounter">FPS: 60</span>
+                <button onclick="toggleSettingsPanel()" class="text-cyan-400/80 hover:text-white text-base px-2 py-0.5 rounded border border-cyan-500/20 bg-cyan-950/60" title="Close Panel">âœ•</button>
+            </div>
         </div>
 
         <div class="space-y-4 text-xs md:text-sm">
@@ -941,7 +965,28 @@
             initParticles();
             requestAnimationFrame(animate);
         };
-    </script>
+    // ==================== ç‰©ç†å‚æ•°é¢æ¿æ˜¾éšå¼€å…³ ====================
+function toggleSettingsPanel() {
+    const p = document.getElementById('labControlPanel');
+    if (!p) return;
+    if (p.style.display === 'none' || p.classList.contains('hidden')) {
+        p.style.display = 'block';
+        p.classList.remove('hidden');
+    } else {
+        p.style.display = 'none';
+        p.classList.add('hidden');
+    }
+}
+
+// ç§»åŠ¨ç«¯/å°å±å¹•åˆå§‹é»˜è®¤æ”¶èµ·é¢æ¿ï¼Œé¿å…é®æŒ¡ç”»å¸ƒç”»é¢
+if (window.innerWidth <= 820) {
+    const p = document.getElementById('labControlPanel');
+    if (p) {
+        p.style.display = 'none';
+        p.classList.add('hidden');
+    }
+}
+</script>
 </body>
 
 </html>

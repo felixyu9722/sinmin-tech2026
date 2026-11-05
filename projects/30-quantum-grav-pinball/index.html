@@ -333,7 +333,7 @@ input[type=range] { accent-color: var(--cyan); width: 100%; height: 6px; border-
       恭喜完美清空第 <b>1</b> 关！获得清台奖励 <b>+300 分</b>！<br>
       引力井增强 <b>+0.25x</b>，准备迎接曲率挑战！
     </div>
-    <button class="banner-btn" onclick="nextStage()">挑战下一关卡 ➔</button>
+    <button class="banner-btn" id="bannerNextBtn" onclick="nextStage()" style="touch-action:manipulation; cursor:pointer;">挑战下一关卡 ➔</button>
   </div>
 </div>
 
@@ -632,6 +632,54 @@ function triggerCombo() {
 }
 
 // ==================== 鼠标蓄力瞄准与击球 ====================
+function getTouchPos(e) {
+  const t = e.touches[0] || e.changedTouches[0];
+  const r = cv.getBoundingClientRect();
+  return {
+    x: t.clientX - r.left,
+    y: t.clientY - r.top
+  };
+}
+
+// è§¦å±åŽŸç”Ÿæ‰‹åŠ¿ç»‘å®š
+cv.addEventListener('touchstart', e => {
+  if (e.cancelable) e.preventDefault();
+  const pos = getTouchPos(e);
+  if (cueBall && Math.hypot(pos.x - cueBall.x, pos.y - cueBall.y) < BALL_R * 4.8) {
+    dragging = true;
+    dragStart = { x: cueBall.x, y: cueBall.y };
+    currentMouse = { x: pos.x, y: pos.y };
+    hideHintBar();
+  }
+}, { passive: false });
+
+window.addEventListener('touchmove', e => {
+  if (dragging) {
+    if (e.cancelable) e.preventDefault();
+    const pos = getTouchPos(e);
+    currentMouse = { x: pos.x, y: pos.y };
+  }
+}, { passive: false });
+
+window.addEventListener('touchend', e => {
+  if (dragging && cueBall) {
+    if (e.cancelable) e.preventDefault();
+    const pos = getTouchPos(e);
+    const dx = dragStart.x - pos.x;
+    const dy = dragStart.y - pos.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 6) {
+      const power = Math.min(dist * 0.17, 24);
+      const angle = Math.atan2(dy, dx);
+      cueBall.vx = Math.cos(angle) * power;
+      cueBall.vy = Math.sin(angle) * power;
+      playCueStrike(Math.min(1.5, power / 12));
+      hideHintBar();
+    }
+    dragging = false;
+  }
+}, { passive: false });
+
 cv.addEventListener('mousedown', e => {
   const mx = e.clientX, my = e.clientY;
   if (cueBall && Math.hypot(mx - cueBall.x, my - cueBall.y) < BALL_R * 3.2) {
@@ -814,6 +862,18 @@ function triggerStageClear() {
   `;
   document.getElementById('bannerModal').classList.add('show');
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const bBtn = document.getElementById('bannerNextBtn');
+  if (bBtn) {
+    const handleNext = (e) => {
+      if (e && e.cancelable) e.preventDefault();
+      nextStage();
+    };
+    bBtn.addEventListener('click', handleNext);
+    bBtn.addEventListener('touchend', handleNext);
+  }
+});
 
 function nextStage() {
   document.getElementById('bannerModal').classList.remove('show');
