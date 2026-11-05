@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>展厅入场二维码 · 亚罗士打新民独中电脑资讯社成果展</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #090d16;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #f8fafc;
+      background-image: 
+        radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.15), transparent 60%),
+        radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.12), transparent 50%);
+    }
+
+    /* 展牌外框 - 适合 A4 打印与展台立牌 */
+    .stand-card {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.25);
+      max-width: 480px;
+      width: 100%;
+      padding: 40px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stand-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, #38bdf8, #a855f7, #38bdf8);
+      background-size: 200% auto;
+      animation: barShift 4s linear infinite;
+    }
+
+    @keyframes barShift {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 200% 0%; }
+    }
+
+    .school-logo-wrap {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 14px;
+      padding: 6px;
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 20px rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .school-logo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .school-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .school-en {
+      font-size: 9px;
+      font-family: monospace;
+      color: #38bdf8;
+      letter-spacing: 0.15em;
+      margin-bottom: 12px;
+    }
+
+    .hero-title {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sub-title {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 24px;
+      letter-spacing: 0.05em;
+    }
+
+    /* 二维码展示区 */
+    .qr-frame {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+      border: 3px solid rgba(56, 189, 248, 0.4);
+      position: relative;
+    }
+
+    .qr-frame img {
+      width: 250px;
+      height: 250px;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .scan-tip {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .scan-tip i {
+      color: #38bdf8;
+      font-size: 16px;
+    }
+
+    /* 网址药丸胶囊 */
+    .url-pill {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #38bdf8;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.25s;
+      max-width: 100%;
+      word-break: break-all;
+    }
+
+    .url-pill:hover {
+      background: rgba(56, 189, 248, 0.18);
+      color: #ffffff;
+      border-color: #38bdf8;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(56, 189, 248, 0.3);
+    }
+
+    .badges-footer {
+      margin-top: 22px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .badges-footer span {
+      background: rgba(30, 41, 59, 0.6);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* 快捷功能按钮栏（屏幕预览时显示，打印时隐藏） */
+    .action-bar {
+      margin-top: 24px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 11px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.15);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: rgba(30, 41, 59, 0.85);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(51, 65, 85, 0.95);
+      color: #ffffff;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+      }
+      .stand-card {
+        background: #ffffff !important;
+        border: 2px solid #000000 !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        page-break-inside: avoid;
+      }
+      .school-name, .sub-title, .badges-footer {
+        color: #333333 !important;
+      }
+      .hero-title {
+        color: #000000 !important;
+      }
+      .hero-title span {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+      .qr-frame {
+        border: 2px solid #333333 !important;
+        box-shadow: none !important;
+      }
+      .url-pill {
+        background: #f1f5f9 !important;
+        color: #000000 !important;
+        border: 1px solid #94a3b8 !important;
+      }
+      .action-bar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="stand-card">
+    <div class="school-logo-wrap">
+      <img src="Sin Min Logo.png" alt="亚罗士打新民独中学校徽">
+    </div>
+
+    <div class="school-name">亚罗士打新民独中</div>
+    <div class="school-en">SEK. MEN. SIN MIN (PERSENDIRIAN) ALOR SETAR</div>
+
+    <h1 class="hero-title"><span>电脑资讯社 2026</span> 成果展</h1>
+    <p class="sub-title">32 项自主研发教育实验 · 视觉算法 · 3D 竞技游戏</p>
+
+    <!-- 高清带校徽二维码 -->
+    <div class="qr-frame">
+      <img src="sinmin_tech2026_qrcode_logo.png" alt="展厅入口二维码">
+    </div>
+
+    <div class="scan-tip">
+      <i class="fa-solid fa-camera"></i> 手机相机或微信扫一扫 · 立即进入观展
+    </div>
+
+    <a href="https://sinmin-tech2026.vercel.app" class="url-pill" target="_blank">
+      <i class="fa-solid fa-globe"></i> https://sinmin-tech2026.vercel.app
+    </a>
+
+    <div class="badges-footer">
+      <span><i class="fa-solid fa-graduation-cap"></i> 9 项科学教育</span>
+      <span><i class="fa-solid fa-palette"></i> 7 项生成艺术</span>
+      <span><i class="fa-solid fa-gamepad"></i> 16 项竞技游戏</span>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="window.print()">
+        <i class="fa-solid fa-print"></i> 打印展台立牌 (A4)
+      </button>
+      <a class="btn btn-secondary" href="sinmin_tech2026_qrcode_logo.png" download="新民独中电脑资讯社成果展二维码.png">
+        <i class="fa-solid fa-download"></i> 保存高清二维码
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>
