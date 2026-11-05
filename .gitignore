@@ -8,6 +8,7 @@ pro (1).html
 *.tmp
 古诗/
 学生 html 作品/
+增加/
 
 # Local logs
 *.log
