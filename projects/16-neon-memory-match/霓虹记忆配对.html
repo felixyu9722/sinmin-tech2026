@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>霓虹记忆配对</title>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;--c:#00f0ff;--m:#ff2bd6;--y:#ffe600}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden;background:#05010f;color:#e8f6ff;font-family:ui-monospace,"Courier New",monospace}
+body{background:linear-gradient(#05010f,#1d0836);display:flex;flex-direction:column;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px)}
+#hud{display:flex;gap:clamp(10px,3vw,28px);flex-wrap:wrap;justify-content:center;font-weight:700;font-size:clamp(12px,3.4vw,18px);margin-bottom:6px;text-shadow:0 0 10px currentColor}
+#hud span:nth-child(1){color:var(--c)}#hud span:nth-child(2){color:var(--m)}#hud span:nth-child(3){color:#3dff9a}#hud span:nth-child(5){color:var(--y)}
+#combo{color:var(--y);height:1.4em;font-weight:700;font-size:clamp(13px,3.6vw,20px);text-shadow:0 0 12px var(--y)}
+#bar{width:min(94vw,520px);height:6px;border:1px solid #3dff9a;border-radius:4px;margin-bottom:8px;box-shadow:0 0 8px #3dff9a}
+#bar i{display:block;height:100%;background:#3dff9a;box-shadow:0 0 10px #3dff9a;transition:width .1s linear}
+#wrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0}
+#grid{display:grid;grid-template-columns:repeat(var(--cols),1fr);gap:clamp(5px,1.4vmin,12px);width:min(94vw,calc((100dvh - 150px) * var(--cols) / var(--rows)));perspective:900px}
+.card{aspect-ratio:1;position:relative;cursor:pointer;transform-style:preserve-3d;transition:transform .35s}
+.card.on{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center}
+.back{border:2px solid var(--m);background:repeating-linear-gradient(45deg,#14052e 0 6px,#1d0a40 6px 12px);box-shadow:0 0 10px rgba(255,43,214,.5),inset 0 0 12px rgba(255,43,214,.25)}
+.back::after{content:"?";color:var(--m);font-size:clamp(14px,4vmin,30px);text-shadow:0 0 10px var(--m);font-weight:700}
+.card:hover .back{box-shadow:0 0 18px var(--m),inset 0 0 14px rgba(255,43,214,.4)}
+.front{transform:rotateY(180deg);background:#0a0320;border:2px solid var(--k);color:var(--k);font-size:clamp(20px,6.5vmin,52px);text-shadow:0 0 12px var(--k);box-shadow:0 0 14px var(--k),inset 0 0 14px rgba(255,255,255,.05)}
+.card.ok{cursor:default;animation:pulse 1.2s ease-in-out infinite}
+.card.ok .front{background:rgba(10,3,32,.6);opacity:.7}
+.card.bad .front{border-color:#ff3b3b;box-shadow:0 0 18px #ff3b3b}
+@keyframes pulse{50%{filter:brightness(1.5)}}
+#ov{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;background:rgba(5,1,15,.84);padding:24px;z-index:2}
+#ov.hide{display:none}
+#ov h1{margin:0;font-size:clamp(26px,7vw,50px);letter-spacing:.1em;color:var(--c);text-shadow:0 0 8px var(--c),0 0 28px var(--c),3px 3px 0 var(--m)}
+#ov p{margin:0;line-height:1.8;font-size:clamp(13px,2.6vw,16px);max-width:480px}
+#ov b{color:var(--y);text-shadow:0 0 8px var(--y)}
+#btn{margin-top:8px;padding:12px 34px;font:inherit;font-size:16px;letter-spacing:.2em;color:var(--c);background:transparent;border:2px solid var(--c);border-radius:6px;cursor:pointer;box-shadow:0 0 14px var(--c),inset 0 0 14px rgba(0,240,255,.25);text-shadow:0 0 8px var(--c)}
+#btn:hover{background:rgba(0,240,255,.15)}
+#banner{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font-size:clamp(28px,9vw,64px);font-weight:700;color:#ff9cf0;text-shadow:0 0 24px var(--m);pointer-events:none;opacity:0;transition:opacity .3s;z-index:3;text-align:center}
+#banner.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="hud"><span id="sc">SCORE 0</span><span id="lv">LEVEL 1</span><span id="tm">TIME 0</span><span id="mv">MOVES 0</span><span id="bs">BEST 0</span></div>
+<div id="combo"></div>
+<div id="bar"><i id="barI"></i></div>
+<div id="wrap"><div id="grid"></div></div>
+<div id="banner"></div>
+<div id="ov"><h1 id="t"></h1><p id="d"></p><button id="btn"></button></div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const SYM='◆▲●■★✚☾☀♥♠♣♦⚡✿☂☯✦❖☢♫✈⚓☠'.match(/./gu),NEON=['#00f0ff','#ff2bd6','#ffe600','#b26bff','#3dff9a','#ff7a3d'];
+const LEVELS=[[4,4],[4,5],[5,6],[6,6],[6,7]];
+let state='menu',level=1,score=0,moves=0,combo=0,maxCombo=0,timeLeft=0,timeMax=1,pairs=0,found=0,first=null,busy=false,tick=null,high=0,newRec=false;
+try{high=+localStorage.getItem('neonMemoryHigh')||0}catch(e){}
+const mult=()=>Math.min(5,combo);
+
+function show(t,d,b){$('t').textContent=t;$('d').innerHTML=d;$('btn').textContent=b;$('ov').classList.remove('hide')}
+function menu(){show('NEON MEMORY','翻开两张卡片，找出相同的一对。<br>连续配对成功会累积 <b>COMBO</b>（最高 ×5），翻错就归零。<br>每关有倒计时，剩余时间会转成奖励分。<br>通关后进入更大的棋盘，卡片更多、时间更紧！<br>历史最高分：<b>'+high+'</b>','开始游戏')}
+function hud(){$('sc').textContent='SCORE '+score;$('lv').textContent='LEVEL '+level;$('tm').textContent='TIME '+Math.ceil(timeLeft);$('mv').textContent='MOVES '+moves;$('bs').textContent='BEST '+Math.max(high,score);
+  $('combo').textContent=combo>1?`COMBO ${combo}  ×${mult()}`:'';$('barI').style.width=Math.max(0,timeLeft/timeMax*100)+'%'}
+function banner(txt){const b=$('banner');b.innerHTML=txt;b.classList.add('on');setTimeout(()=>b.classList.remove('on'),1100)}
+
+// ---- 发牌：从符号池随机抽 N 对，各配一种霓虹色，洗牌后铺成网格 ----
+function deal(){
+  const [r,c]=LEVELS[Math.min(level,LEVELS.length)-1];pairs=r*c/2;found=0;first=null;busy=false;
+  const pool=[...SYM.keys()].sort(()=>Math.random()-.5).slice(0,pairs);
+  const deck=[...pool,...pool].sort(()=>Math.random()-.5);
+  const g=$('grid');g.style.setProperty('--cols',c);g.style.setProperty('--rows',r);g.innerHTML='';
+  deck.forEach(id=>{
+    const d=document.createElement('div');d.className='card';d.dataset.id=id;
+    d.innerHTML=`<div class="face back"></div><div class="face front" style="--k:${NEON[id%NEON.length]}">${SYM[id]}</div>`;
+    d.onclick=()=>flip(d);g.appendChild(d);
+  });
+  timeMax=timeLeft=Math.round(pairs*(6-Math.min(2,level*.35))+10);hud();
+}
+function start(){score=0;moves=0;combo=0;maxCombo=0;level=1;newRec=false;state='play';$('ov').classList.add('hide');deal();run()}
+function run(){clearInterval(tick);tick=setInterval(()=>{if(state!=='play')return;timeLeft-=.1;if(timeLeft<=0){timeLeft=0;over()}hud()},100)}
+function over(){
+  state='over';clearInterval(tick);
+  if(score>high){high=score;newRec=true;try{localStorage.setItem('neonMemoryHigh',String(high))}catch(e){}}
+  show('TIME UP',`得分 <b>${score}</b> · 到达第 <b>${level}</b> 关 · 最高连击 <b>${maxCombo}</b><br>历史最高分 <b>${high}</b>${newRec?' 🎉 新纪录！':''}`,'再来一局');
+}
+
+// ---- 翻牌与配对判断 ----
+function flip(card){
+  if(state!=='play'||busy||card.classList.contains('on'))return;
+  card.classList.add('on');
+  if(!first){first=card;return}
+  moves++;busy=true;const a=first,b=card;first=null;
+  if(a.dataset.id===b.dataset.id){
+    combo++;maxCombo=Math.max(maxCombo,combo);score+=100*mult();found++;
+    setTimeout(()=>{a.classList.add('ok');b.classList.add('ok');busy=false;hud();if(found===pairs)clear()},350);
+  }else{
+    combo=0;a.classList.add('bad');b.classList.add('bad');
+    setTimeout(()=>{a.classList.remove('on','bad');b.classList.remove('on','bad');busy=false;hud()},Math.max(450,800-level*60));
+  }
+  hud();
+}
+function clear(){
+  const bonus=Math.round(timeLeft*5);score+=bonus;state='cleared';clearInterval(tick);
+  banner(`LEVEL ${level} CLEAR<br><span style="font-size:.4em;color:#ffe600">时间奖励 +${bonus}</span>`);hud();
+  setTimeout(()=>{level++;state='play';deal();run()},1600);
+}
+$('btn').onclick=()=>start();
+addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&(state==='menu'||state==='over')&&!$('ov').classList.contains('hide')){e.preventDefault();start()}});
+hud();menu();
+})();
+</script>
+</body>
+</html>

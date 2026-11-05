@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>边界防线：零点协议</title>
+  <style>
+    :root {
+      --bg: #071019;
+      --panel: #0c1a26;
+      --line: #244153;
+      --cyan: #6ee7f5;
+      --green: #8ef0b0;
+      --amber: #ffcf75;
+      --red: #ff6f78;
+      --text: #e5f0f7;
+      --muted: #91a8b7
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+      border: 1px solid #376076;
+      background: #102736;
+      color: var(--text);
+      padding: 10px 13px;
+      border-radius: 8px;
+      transition: .15s
+    }
+
+    button:hover {
+      border-color: var(--cyan);
+      background: #17394b
+    }
+
+    button:disabled {
+      opacity: .35;
+      cursor: not-allowed
+    }
+
+    #game {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #071019
+    }
+
+    .hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .hud-toggle-btn {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      pointer-events: auto;
+      background: rgba(10, 25, 37, 0.88);
+      border: 1px solid rgba(89, 151, 179, 0.6);
+      color: #6ee7f5;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 15px rgba(110, 231, 245, 0.25);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hud-toggle-btn:hover {
+      background: rgba(110, 231, 245, 0.2);
+      border-color: #6ee7f5;
+      color: #fff;
+      transform: translateX(-50%) scale(1.04);
+    }
+    .hud.hidden-hud .stats,
+    .hud.hidden-hud .mission {
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
+    }
+    .stats, .mission {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Mobile Touch Buttons */
+    .mobile-controls {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .mobile-action-btn {
+      position: fixed;
+      pointer-events: auto;
+      border-radius: 50%;
+      width: 58px;
+      height: 58px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      border: 2px solid;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+      touch-action: manipulation;
+      user-select: none;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .mobile-action-btn:active {
+      transform: scale(0.9);
+    }
+    .btn-mobile-dash {
+      right: 22px;
+      bottom: 88px;
+      background: rgba(10, 35, 55, 0.88);
+      border-color: #6ee7f5;
+      color: #6ee7f5;
+      box-shadow: 0 0 15px rgba(110, 231, 245, 0.35);
+    }
+    .btn-mobile-pulse {
+      right: 88px;
+      bottom: 35px;
+      background: rgba(35, 15, 45, 0.88);
+      border-color: #c58bff;
+      color: #c58bff;
+      box-shadow: 0 0 15px rgba(197, 139, 255, 0.35);
+    }
+    @media (max-width: 768px) {
+      .stats, .mission {
+        width: 48vw;
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+      .title {
+        font-size: 14px;
+        margin: 2px 0 4px;
+      }
+      .bottom .pill {
+        display: none;
+      }
+    }
+
+    .panel {
+      background: linear-gradient(145deg, rgba(10, 25, 37, .94), rgba(6, 15, 24, .88));
+      border: 1px solid rgba(89, 151, 179, .35);
+      border-radius: 12px;
+      box-shadow: 0 12px 36px #0005;
+      backdrop-filter: blur(7px)
+    }
+
+    .stats {
+      width: min(310px, 32vw);
+      padding: 13px 15px
+    }
+
+    .mission {
+      width: min(285px, 30vw);
+      padding: 13px 15px;
+      text-align: right
+    }
+
+    .eyebrow {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--cyan);
+      font-weight: 800
+    }
+
+    .title {
+      font-size: 19px;
+      font-weight: 800;
+      margin: 3px 0 9px;
+      letter-spacing: 1px
+    }
+
+    .sub {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6
+    }
+
+    .statrow {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+      margin: 8px 0 5px
+    }
+
+    .bar {
+      height: 7px;
+      background: #142b39;
+      border-radius: 9px;
+      overflow: hidden;
+      border: 1px solid #244050
+    }
+
+    .fill {
+      height: 100%;
+      width: 100%;
+      transition: width .12s
+    }
+
+    .hp {
+      background: linear-gradient(90deg, #46d9a2, #a3f6bd)
+    }
+
+    .energy {
+      background: linear-gradient(90deg, #31b6df, #8cecff)
+    }
+
+    .heat {
+      background: linear-gradient(90deg, #ffc86d, #ff756c)
+    }
+
+    .mission strong {
+      font-size: 13px
+    }
+
+    .mission .big {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--cyan);
+      margin: 5px 0
+    }
+
+    .mission .sub {
+      max-width: 260px;
+      margin-left: auto
+    }
+
+    .bottom {
+      position: fixed;
+      left: 50%;
+      bottom: 15px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      pointer-events: auto;
+      max-width: 96vw;
+      flex-wrap: wrap;
+      justify-content: center
+    }
+
+    .pill {
+      background: #091925dc;
+      border: 1px solid #27495a;
+      border-radius: 8px;
+      padding: 8px 11px;
+      font-size: 11px;
+      color: #b9d0dc;
+      white-space: nowrap
+    }
+
+    .pill b {
+      color: #fff
+    }
+
+    .action {
+      border-color: #347b91;
+      color: #c5f7ff
+    }
+
+    .centerToast {
+      position: fixed;
+      left: 50%;
+      top: 21%;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+      text-shadow: 0 2px 12px #000;
+      opacity: 0;
+      transition: opacity .25s
+    }
+
+    .centerToast.show {
+      opacity: 1
+    }
+
+    .centerToast .main {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 3px
+    }
+
+    .centerToast .detail {
+      font-size: 12px;
+      color: #b5c9d5;
+      margin-top: 7px
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: radial-gradient(ellipse at center, #0c2432dd, #03080def);
+      z-index: 5
+    }
+
+    .modal {
+      width: min(760px, 96vw);
+      max-height: 92vh;
+      overflow: auto;
+      padding: clamp(20px, 4vw, 36px);
+      border: 1px solid #376174;
+      border-radius: 18px;
+      background: linear-gradient(145deg, #0d2230, #08131d);
+      box-shadow: 0 20px 90px #000b
+    }
+
+    .kicker {
+      color: var(--cyan);
+      letter-spacing: 3px;
+      font-size: 11px;
+      font-weight: 800
+    }
+
+    .hero {
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1.1;
+      font-weight: 950;
+      margin: 12px 0 12px;
+      letter-spacing: 2px
+    }
+
+    .hero span {
+      color: var(--cyan)
+    }
+
+    .lead {
+      color: #b0c5d1;
+      line-height: 1.8;
+      font-size: 14px;
+      max-width: 640px
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 20px 0
+    }
+
+    .card {
+      padding: 13px;
+      border: 1px solid #244657;
+      background: #0b1b27;
+      border-radius: 10px
+    }
+
+    .card h3 {
+      margin: 0 0 7px;
+      font-size: 13px;
+      color: #e4f9ff
+    }
+
+    .card p {
+      font-size: 11px;
+      line-height: 1.7;
+      color: #9eb5c3;
+      margin: 0
+    }
+
+    .startrow {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 18px
+    }
+
+    .primary {
+      background: linear-gradient(110deg, #12627a, #16485e);
+      border-color: #62d8ef;
+      padding: 13px 20px;
+      font-weight: 800
+    }
+
+    .tiny {
+      font-size: 11px;
+      color: #819aa8;
+      line-height: 1.7
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    #upgradeCards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0
+    }
+
+    .upgrade {
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+      text-align: left;
+      min-height: 185px;
+      border-color: #315a6c;
+      background: linear-gradient(145deg, #102b3b, #091722);
+      transition: transform .18s, border-color .18s, box-shadow .18s
+    }
+
+    .upgrade:hover {
+      transform: translateY(-5px);
+      border-color: #7cecff;
+      box-shadow: 0 12px 32px #36c9e52b
+    }
+
+    .upgrade:before {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: var(--rarity, #6ee7f5)
+    }
+
+    .upgrade .symbol {
+      font-size: 30px;
+      margin-bottom: 9px;
+      color: var(--rarity, #6ee7f5);
+      text-shadow: 0 0 18px color-mix(in srgb, var(--rarity, #6ee7f5), transparent 50%)
+    }
+
+    .upgrade h3 {
+      font-size: 14px;
+      margin: 0 0 8px
+    }
+
+    .upgrade p {
+      font-size: 11px;
+      color: #a9c0cc;
+      line-height: 1.75;
+      margin: 0
+    }
+
+    .upgrade .tag {
+      display: inline-block;
+      margin-top: 12px;
+      color: var(--rarity, #8ef0b0);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1px
+    }
+
+    .upgrade .level {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      font-size: 9px;
+      color: #d8eaf1;
+      border: 1px solid #3a5b6b;
+      border-radius: 20px;
+      padding: 4px 7px
+    }
+
+    .upgrade .selecthint {
+      display: block;
+      margin-top: 8px;
+      color: #6e94a7;
+      font-size: 9px
+    }
+
+    #feed {
+      position: fixed;
+      left: 18px;
+      bottom: 70px;
+      max-width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      pointer-events: none
+    }
+
+    .feedline {
+      font-size: 11px;
+      color: #b5cbd6;
+      background: #071722c9;
+      border-left: 2px solid #4db9d1;
+      padding: 6px 9px;
+      animation: fade 5s forwards
+    }
+
+    @keyframes fade {
+
+      0%,
+      75% {
+        opacity: 1
+      }
+
+      100% {
+        opacity: 0
+      }
+    }
+
+    #pauseTag {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      color: #dffaff;
+      text-shadow: 0 0 25px #56cbe9;
+      pointer-events: none
+    }
+
+    @media(max-width:700px) {
+      .hud {
+        padding: 8px
+      }
+
+      .stats {
+        width: 47vw;
+        padding: 9px
+      }
+
+      .mission {
+        width: 42vw;
+        padding: 9px
+      }
+
+      .title {
+        font-size: 15px
+      }
+
+      .sub {
+        font-size: 10px
+      }
+
+      .grid,
+      #upgradeCards {
+        grid-template-columns: 1fr
+      }
+
+      .bottom {
+        bottom: 7px
+      }
+
+      .pill {
+        font-size: 10px;
+        padding: 6px 8px
+      }
+
+      .mission .big {
+        font-size: 18px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="game"></canvas>
+  <button id="hudToggleBtn" class="hud-toggle-btn" title="隐藏/显示界面信息 (快捷键 H)">
+    <span>👁️</span> <span id="hudToggleText">收起界面</span>
+  </button>
+  <div class="mobile-controls" id="mobileControls">
+    <button class="mobile-action-btn btn-mobile-dash" id="mobileDashBtn">⚡<span style="font-size:9px">冲刺</span></button>
+    <button class="mobile-action-btn btn-mobile-pulse" id="mobilePulseBtn">💥<span style="font-size:9px">脉冲</span></button>
+  </div>
+  <div class="hud" id="hud">
+    <div class="panel stats">
+      <div class="eyebrow">边境应急防卫署 / 前线终端</div>
+      <div class="title">零点协议 <span style="color:#6ee7f5;font-size:10px">· 实验版</span></div>
+      <div class="statrow"><span>外骨骼完整度</span><b id="hpText">100 / 100</b></div>
+      <div class="bar">
+        <div id="hpBar" class="fill hp"></div>
+      </div>
+      <div class="statrow"><span>电容储能</span><b id="energyText">100%</b></div>
+      <div class="bar">
+        <div id="energyBar" class="fill energy"></div>
+      </div>
+      <div class="statrow"><span>武器温度</span><b id="heatText">0%</b></div>
+      <div class="bar">
+        <div id="heatBar" class="fill heat"></div>
+      </div>
+      <div class="sub" style="margin-top:8px">装备：K-9 电磁脉冲步枪　｜　区域：北部工业缓冲区　｜　护盾：<span id="shieldText">0</span></div>
+    </div>
+    <div class="panel mission">
+      <div class="eyebrow">当前行动 / 实时态势</div>
+      <strong id="missionName">行动一：通信站外围</strong>
+      <div class="big"><span id="kills">0</span> <span style="font-size:11px;color:#9bb4c2;font-weight:600">目标已压制</span>
+      </div>
+      <div class="sub" id="missionText">清除无人侦察机，保护临时通信站。注意：敌方会尝试包抄。</div>
+      <div class="statrow"><span>剩余威胁</span><b id="threatText">0</b></div>
+      <div class="statrow"><span>战术点数</span><b id="credits">0</b></div>
+      <div class="statrow"><span>行动时间</span><b id="timer">00:00</b></div>
+    </div>
+  </div>
+  <div id="feed"></div>
+  <div id="toast" class="centerToast">
+    <div class="main" id="toastMain">接敌</div>
+    <div class="detail" id="toastDetail">发现未知信号</div>
+  </div>
+  <div id="pauseTag" class="hidden">行动暂停</div>
+  <div class="bottom" id="bottomBar">
+    <div class="pill"><b>移动</b>　W A S D</div>
+    <div class="pill"><b>瞄准 / 射击</b>　鼠标移动 / 左键</div>
+    <div class="pill"><b>冲刺</b>　空格</div>
+    <div class="pill"><b>电磁脉冲</b>　右键 / E</div><button class="action" id="audioBtn">🔊 音效: 开</button><button
+      class="action" id="pauseBtn">暂停行动 [P]</button>
+  </div>
+  <div class="overlay" id="startOverlay">
+    <div class="modal">
+      <div class="kicker">近未来战术生存 / 单机行动</div>
+      <div class="hero">边界防线：<br><span>零点协议</span></div>
+      <p class="lead">2041
+        年，连续极端气候与供应链中断使北部工业缓冲区进入长期紧急状态。通信站失联后，自动巡逻设备开始攻击救援车队。你是应急防卫队的现场技术员，任务不是“消灭所有人”，而是辨别威胁、维持装备、护送维修无人车并活着撤离。</p>
+      <div class="grid">
+        <div class="card">
+          <h3>▣ 现实化战术</h3>
+          <p>弹药、能量、过热和装甲都有限。连续开火会升温，脉冲能打断敌方攻击，但需要充能。</p>
+        </div>
+        <div class="card">
+          <h3>◈ 敌方行为</h3>
+          <p>侦察机保持距离，突击机尝试逼近，重型机发射慢速追踪弹。观察弹道，移动比站桩输出更重要。</p>
+        </div>
+        <div class="card">
+          <h3>⬡ 战术成长</h3>
+          <p>每波结束可用战术点数升级。选择冷却、护甲、脉冲或武器方案，适应后续威胁。</p>
+        </div>
+      </div>
+      <div class="startrow"><button class="primary" id="startBtn">开始行动</button><button id="howBtn">查看操作说明</button><span
+          class="tiny">建议使用键盘与鼠标。无需联网，无需安装，所有界面均为华文。</span></div>
+      <div id="howText" class="tiny hidden" style="margin-top:12px">WASD：移动；鼠标：瞄准；按住鼠标左键：连续射击；空格：短距离冲刺（消耗体力）；E
+        或鼠标右键：释放电磁脉冲，击退并短暂瘫痪附近无人机；P：暂停。每波结束进入升级阶段。屏幕边缘出现红色提示时，优先移动躲避。</div>
+    </div>
+  </div>
+  <div class="overlay hidden" id="upgradeOverlay">
+    <div class="modal">
+      <div class="kicker">战术整备 / 波次间隙</div>
+      <div class="hero" style="font-size:clamp(27px,4vw,40px)">选择下一项<span>改装</span></div>
+      <p class="lead" id="upgradeIntro">补给车只能提供一项主要改装。选择能弥补当前短板的方案。</p>
+      <div id="upgradeCards"></div>
+      <div class="tiny">提示：升级效果会持续至本次行动结束。没有绝对最强的方案，请根据当前状态选择。</div>
+    </div>
+  </div>
+  <div class="overlay hidden" id="endOverlay">
+    <div class="modal">
+      <div class="kicker" id="endKicker">行动报告 / 已归档</div>
+      <div class="hero" id="endTitle">行动结束</div>
+      <p class="lead" id="endText"></p>
+      <div class="grid">
+        <div class="card">
+          <h3>压制目标</h3>
+          <p id="endKills">0</p>
+        </div>
+        <div class="card">
+          <h3>坚持时间</h3>
+          <p id="endTime">00:00</p>
+        </div>
+        <div class="card">
+          <h3>行动评价</h3>
+          <p id="endRank">—</p>
+        </div>
+      </div>
+      <div class="startrow"><button class="primary" id="restartBtn">重新部署</button><span
+          class="tiny">本游戏为虚构近未来情境，强调资源管理、态势观察与风险判断。</span></div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      "use strict";
+      const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+      const $ = id => document.getElementById(id);
+
+      // Web Audio Tactical Combat SFX
+      let combatAudioCtx = null, soundOn = true;
+      function initCombatAudio() {
+        if (!combatAudioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) combatAudioCtx = new AC();
+        }
+        if (combatAudioCtx && combatAudioCtx.state === 'suspended') combatAudioCtx.resume();
+      }
+      function playShootSound() {
+        if (!soundOn) return;
+        initCombatAudio();
+        try {
+          const now = combatAudioCtx.currentTime;
+          const osc = combatAudioCtx.createOscillator(), g = combatAudioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(880, now);
+          osc.frequency.exponentialRampToValueAtTime(160, now + 0.08);
+          g.gain.setValueAtTime(0.12, now);
+          g.gain.linearRampToValueAtTime(0.001, now + 0.08);
+          osc.connect(g); g.connect(combatAudioCtx.destination);
+          osc.start(); osc.stop(now + 0.09);
+        } catch (e) { }
+      }
+      function playPulseSound() {
+        if (!soundOn) return;
+        initCombatAudio();
+        try {
+          const now = combatAudioCtx.currentTime;
+          // Sub rumble
+          const osc = combatAudioCtx.createOscillator(), g = combatAudioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(160, now);
+          osc.frequency.exponentialRampToValueAtTime(35, now + 0.6);
+          g.gain.setValueAtTime(0.4, now);
+          g.gain.linearRampToValueAtTime(0.001, now + 0.6);
+          osc.connect(g); g.connect(combatAudioCtx.destination);
+          osc.start(); osc.stop(now + 0.65);
+        } catch (e) { }
+      }
+      function playDashSound() {
+        if (!soundOn) return;
+        initCombatAudio();
+        try {
+          const now = combatAudioCtx.currentTime;
+          const osc = combatAudioCtx.createOscillator(), g = combatAudioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+          g.gain.setValueAtTime(0.15, now);
+          g.gain.linearRampToValueAtTime(0.001, now + 0.15);
+          osc.connect(g); g.connect(combatAudioCtx.destination);
+          osc.start(); osc.stop(now + 0.16);
+        } catch (e) { }
+      }
+      function playExplodeSound() {
+        if (!soundOn) return;
+        initCombatAudio();
+        try {
+          const now = combatAudioCtx.currentTime;
+          const osc = combatAudioCtx.createOscillator(), g = combatAudioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.exponentialRampToValueAtTime(25, now + 0.25);
+          g.gain.setValueAtTime(0.25, now);
+          g.gain.linearRampToValueAtTime(0.001, now + 0.25);
+          osc.connect(g); g.connect(combatAudioCtx.destination);
+          osc.start(); osc.stop(now + 0.26);
+        } catch (e) { }
+      }
+      $('audioBtn').onclick = () => {
+        soundOn = !soundOn;
+        initCombatAudio();
+        $('audioBtn').textContent = soundOn ? '🔊 音效: 开' : '🔇 音效: 关';
+      };
+      let W = innerWidth, H = innerHeight, DPR = Math.min(devicePixelRatio || 1, 2);
+      function resize() { W = innerWidth; H = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2); canvas.width = Math.floor(W * DPR); canvas.height = Math.floor(H * DPR); canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; ctx.setTransform(DPR, 0, 0, DPR, 0, 0) }
+      addEventListener('resize', resize); resize();
+      const rand = (a, b) => a + Math.random() * (b - a), clamp = (v, a, b) => Math.max(a, Math.min(b, v)), dist = (a, b, c, d) => Math.hypot(a - c, b - d);
+      const keys = {}, mouse = { x: W / 2, y: H / 2, down: false, right: false };
+      const touchJoy = { active: false, startX: 0, startY: 0, currX: 0, currY: 0, dx: 0, dy: 0, id: null };
+      let player, enemies = [], bullets = [], enemyBullets = [], particles = [], pickups = [], floaters = [], wave = 1, kills = 0, credits = 0, gameTime = 0, lastTime = 0, spawnClock = 0, spawned = 0, totalSpawn = 0, playing = false, paused = false, over = false, between = false;
+      let upgradeLevels = { damage: 0, armor: 0, cooling: 0, energy: 0, move: 0, rate: 0 };
+      let upgradesUsed = 0, runStart = 0, toastTimer = 0, screenShake = 0, warning = 0, highScore = 0;
+      const wavePlan = n => Math.min(5 + n * 2, 8 + n * 2);
+      function newPlayer() { return { x: W / 2, y: H * .62, r: 13, hp: 100, maxHp: 100, energy: 100, maxEnergy: 100, heat: 0, speed: 245, damage: 18, rate: .19, shotCd: 0, energyRegen: 8, dash: 0, dashCd: 0, invuln: 0, pulse: 0, pulseCd: 0, armor: 0, overheat: false } }
+      function reset() { player = newPlayer(); enemies = []; bullets = []; enemyBullets = []; particles = []; pickups = []; floaters = []; wave = 1; kills = 0; credits = 0; gameTime = 0; spawnClock = 1; spawned = 0; totalSpawn = wavePlan(wave); playing = true; paused = false; over = false; between = false; upgradesUsed = 0; upgradeLevels = { damage: 0, armor: 0, cooling: 0, energy: 0, move: 0, rate: 0 }; runStart = performance.now(); $('startOverlay').classList.add('hidden'); $('upgradeOverlay').classList.add('hidden'); $('endOverlay').classList.add('hidden'); $('pauseTag').classList.add('hidden'); $('hud').style.display = 'flex'; $('bottomBar').style.display = 'flex'; $('feed').innerHTML = ''; showToast('行动开始', '通信站外侧出现多组未识别飞行器'); log('行动开始：保持移动，优先观察弹道。'); updateHud() }
+      function log(s) { const el = document.createElement('div'); el.className = 'feedline'; el.textContent = s; $('feed').appendChild(el); while ($('feed').children.length > 4) $('feed').firstChild.remove(); setTimeout(() => el.remove(), 5200) }
+      function showToast(a, b) { $('toastMain').textContent = a; $('toastDetail').textContent = b; $('toast').classList.add('show'); toastTimer = 2.2 }
+      function formatTime(t) { let m = Math.floor(t / 60), s = Math.floor(t % 60); return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') }
+      function updateHud() {
+        $('hpText').textContent = Math.ceil(player.hp) + ' / ' + player.maxHp; $('hpBar').style.width = 100 * player.hp / player.maxHp + '%';
+        $('energyText').textContent = Math.floor(player.energy) + '%'; $('energyBar').style.width = player.energy + '%';
+        $('heatText').textContent = Math.floor(player.heat) + '%'; $('heatBar').style.width = player.heat + '%'; if ($('shieldText')) $('shieldText').textContent = Math.floor(player.shield || 0);
+        $('kills').textContent = kills; $('credits').textContent = credits; $('threatText').textContent = enemies.length;
+        $('timer').textContent = formatTime(gameTime); $('missionName').textContent = '行动' + ['一', '二', '三', '四', '五', '六', '七', '八', '九'][Math.min(wave - 1, 8)] + '：' + (['通信站外围', '物流通道', '供电设施', '临时医疗点', '铁路转运区', '河岸泵站', '应急仓储区', '撤离走廊'][Math.min(wave - 1, 7)]);
+        $('missionText').textContent = wave < 4 ? '清除失控巡逻设备，保护维修无人车。注意敌方会尝试包抄。' : wave < 7 ? '敌方设备数量增加，出现重型平台。节制使用电磁脉冲。' : '撤离路线受到干扰。保持移动，优先处理重型威胁。';
+      }
+      function addParticles(x, y, color, n = 8, spd = 120) { for (let i = 0; i < n; i++) { let a = rand(0, Math.PI * 2), v = rand(spd * .2, spd); particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rand(.2, .7), max: .7, r: rand(1, 3), color }) } }
+      function spawnEnemy() {
+        let edge = Math.floor(rand(0, 4)), x, y; if (edge === 0) { x = rand(30, W - 30); y = -25 } else if (edge === 1) { x = W + 25; y = rand(50, H - 60) } else if (edge === 2) { x = rand(30, W - 30); y = H + 25 } else { x = -25; y = rand(50, H - 60) }
+        let roll = Math.random(), type = wave < 2 ? 'scout' : roll < .52 ? 'scout' : roll < .82 ? 'striker' : 'heavy';
+        if (wave >= 4 && Math.random() < .16) type = 'heavy';
+        const data = { scout: { r: 11, hp: 34, speed: 80 + wave * 3, color: '#ffbd70', damage: 7, shoot: 1.7, score: 12 }, striker: { r: 14, hp: 62, speed: 63 + wave * 2, color: '#ff6f78', damage: 11, shoot: 1.25, score: 20 }, heavy: { r: 19, hp: 150 + wave * 12, speed: 34 + wave, color: '#c58bff', damage: 17, shoot: 2.2, score: 35 } };
+        let d = data[type]; enemies.push({ x, y, type, ...d, maxHp: d.hp, cd: rand(.4, 1.5), phase: rand(0, 6), stun: 0, flash: 0 });
+      }
+      function shoot() {
+        if (!playing || paused || between || over || player.shotCd > 0 || player.heat >= 100) return;
+        playShootSound();
+        const a = Math.atan2(mouse.y - player.y, mouse.x - player.x), spread = rand(-.035, .035), speed = 650;
+        let shotDamage = player.damage * (Math.random() < (player.crit || 0) ? 2 : 1); bullets.push({ x: player.x + Math.cos(a) * 18, y: player.y + Math.sin(a) * 18, vx: Math.cos(a + spread) * speed, vy: Math.sin(a + spread) * speed, r: 3.3, damage: shotDamage, life: 1.1 });
+        player.shotCd = player.rate; player.heat += 7.5; if (player.heat >= 100) { player.heat = 100; player.overheat = true; log('武器过热！停止射击，等待散热。') }
+      }
+      function pulse() {
+        if (!playing || paused || between || over || player.pulseCd > 0 || player.energy < 38) return;
+        playPulseSound();
+        player.energy -= 38; player.pulseCd = 5.8; player.pulse = .48; screenShake = 7; addParticles(player.x, player.y, '#69e9ff', 50, 250);
+        for (const e of enemies) { let d = dist(player.x, player.y, e.x, e.y); if (d < (player.pulseRadius || 210)) { e.stun = Math.max(e.stun, player.pulseStun || 1.8); e.hp -= player.damage * .85; let a = Math.atan2(e.y - player.y, e.x - player.x); e.x += Math.cos(a) * 45; e.y += Math.sin(a) * 45; floatText(e.x, e.y - 20, '系统瘫痪', '#7cecff'); } }
+        for (let i = enemyBullets.length - 1; i >= 0; i--)if (dist(player.x, player.y, enemyBullets[i].x, enemyBullets[i].y) < 235) { addParticles(enemyBullets[i].x, enemyBullets[i].y, '#8befff', 4); enemyBullets.splice(i, 1) }
+        showToast('电磁脉冲释放', '附近飞行器已受干扰'); log('电磁脉冲：范围内目标短暂瘫痪。');
+      }
+      function dash() {
+        if (!playing || paused || between || over || player.dashCd > 0 || player.energy < 22) return;
+        playDashSound();
+        let dx = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), dy = (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0);
+        if (!dx && !dy) { dx = mouse.x - player.x; dy = mouse.y - player.y }
+        let len = Math.hypot(dx, dy) || 1; player.x += dx / len * 155; player.y += dy / len * 155; player.x = clamp(player.x, 22, W - 22); player.y = clamp(player.y, 75, H - 35);
+        player.energy -= 22; player.dashCd = 1.35; player.invuln = .28; screenShake = 3; addParticles(player.x, player.y, '#70e9ff', 16, 180);
+      }
+      function enemyShoot(e) {
+        let a = Math.atan2(player.y - e.y, player.x - e.x), speed = e.type === 'heavy' ? 185 : e.type === 'striker' ? 240 : 270;
+        if (e.type === 'heavy') { for (let k = -1; k <= 1; k++) { let aa = a + k * .16; enemyBullets.push({ x: e.x, y: e.y, vx: Math.cos(aa) * speed, vy: Math.sin(aa) * speed, r: 6, damage: e.damage, life: 4, track: false, color: '#c58bff' }) } }
+        else enemyBullets.push({ x: e.x, y: e.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: e.type === 'striker' ? 5 : 4, damage: e.damage, life: 4, track: false, color: e.color });
+      }
+      function floatText(x, y, text, color) { floaters.push({ x, y, text, color, life: 1 }) }
+      function damagePlayer(dmg) { if (player.invuln > 0) return; let absorbed = Math.min(player.shield || 0, dmg); if (absorbed > 0) player.shield -= absorbed; let actual = Math.max(0, dmg - absorbed - player.armor); if (actual <= 0) { floatText(player.x, player.y - 24, '护盾吸收', '#8cecff'); return } player.hp -= actual; player.invuln = .42; screenShake = 8; addParticles(player.x, player.y, '#ff6877', 12, 150); floatText(player.x, player.y - 24, '-' + Math.ceil(actual), '#ff7b83'); if (player.hp <= 0) { player.hp = 0; endGame(false) } }
+      function killEnemy(i) { let e = enemies[i]; kills++; credits += e.score; if (player.killEnergy) player.energy = clamp(player.energy + player.killEnergy, 0, player.maxEnergy); addParticles(e.x, e.y, e.color, 17, 190); floatText(e.x, e.y - 15, '+' + e.score, '#8ef0b0'); if (Math.random() < .13) pickups.push({ x: e.x, y: e.y, r: 7, type: Math.random() < .5 ? 'energy' : 'repair', life: 8 }); enemies.splice(i, 1) }
+      function update(dt) {
+        if (!playing || paused || between || over) return;
+        gameTime += dt; player.shotCd -= dt; player.dashCd -= dt; player.pulseCd -= dt; player.invuln -= dt;
+        player.energy = clamp(player.energy + player.energyRegen * dt, 0, player.maxEnergy);
+        player.heat = clamp(player.heat - (upgradeLevels.cooling ? 23 : 15) * dt, 0, 100); if (player.heat < 35) player.overheat = false;
+        let dx = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + (touchJoy.active ? touchJoy.dx : 0),
+            dy = (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0) + (touchJoy.active ? touchJoy.dy : 0),
+            len = Math.hypot(dx, dy);
+        if (len > 0.05) {
+          let spd = Math.min(1, len);
+          player.x += (dx / len) * player.speed * spd * dt;
+          player.y += (dy / len) * player.speed * spd * dt;
+        }
+        player.x = clamp(player.x, 20, W - 20); player.y = clamp(player.y, 70, H - 24);
+
+        // Mobile touch auto-aim towards nearest enemy
+        if (touchJoy.active) {
+          let nearest = null, minDist = 600;
+          for (const e of enemies) {
+            let d = dist(player.x, player.y, e.x, e.y);
+            if (d < minDist) { minDist = d; nearest = e; }
+          }
+          if (nearest) {
+            mouse.x = nearest.x;
+            mouse.y = nearest.y;
+          } else if (Math.hypot(touchJoy.dx, touchJoy.dy) > 0.1) {
+            mouse.x = player.x + touchJoy.dx * 180;
+            mouse.y = player.y + touchJoy.dy * 180;
+          }
+        }
+
+        if (mouse.down && !player.overheat) shoot();
+        if (spawned < totalSpawn) { spawnClock -= dt; if (spawnClock <= 0) { spawnEnemy(); spawned++; spawnClock = Math.max(.34, 1.15 - wave * .055) * rand(.72, 1.28) } }
+        for (let i = enemies.length - 1; i >= 0; i--) {
+          let e = enemies[i]; e.flash -= dt; e.phase += dt; e.stun -= dt;
+          if (e.stun <= 0) {
+            let a = Math.atan2(player.y - e.y, player.x - e.x), d = dist(player.x, player.y, e.x, e.y);
+            let move = (e.type === 'scout' && d < 240) ? -.35 : 1;
+            if (e.type === 'striker' && d < 175) move = .25;
+            e.x += Math.cos(a) * e.speed * move * dt + Math.sin(e.phase * 1.7) * 12 * dt; e.y += Math.sin(a) * e.speed * move * dt + Math.cos(e.phase * 1.7) * 12 * dt;
+            e.cd -= dt; if (e.cd <= 0 && d < 570) { enemyShoot(e); e.cd = e.shoot * rand(.8, 1.25) }
+            if (d < e.r + player.r + 2) { damagePlayer(e.damage * .45); e.x -= Math.cos(a) * 20; e.y -= Math.sin(a) * 20 }
+          }
+          if (e.hp <= 0) killEnemy(i);
+        }
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          let b = bullets[i]; b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt; let hit = false;
+          for (let j = enemies.length - 1; j >= 0; j--) { let e = enemies[j]; if (dist(b.x, b.y, e.x, e.y) < e.r + b.r) { e.hp -= b.damage; e.flash = .08; addParticles(b.x, b.y, '#76eaff', 3, 70); bullets.splice(i, 1); hit = true; if (e.hp <= 0) killEnemy(j); break } }
+          if (!hit && (b.life <= 0 || b.x < -20 || b.x > W + 20 || b.y < -20 || b.y > H + 20)) bullets.splice(i, 1)
+        }
+        for (let i = enemyBullets.length - 1; i >= 0; i--) {
+          let b = enemyBullets[i]; b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+          if (dist(b.x, b.y, player.x, player.y) < player.r + b.r) { damagePlayer(b.damage); addParticles(b.x, b.y, b.color, 5); enemyBullets.splice(i, 1); continue }
+          if (b.life <= 0 || b.x < -50 || b.x > W + 50 || b.y < -50 || b.y > H + 50) enemyBullets.splice(i, 1)
+        }
+        for (let i = pickups.length - 1; i >= 0; i--) { let p = pickups[i]; p.life -= dt; if (player.pickupMagnet && dist(p.x, p.y, player.x, player.y) < player.pickupMagnet) { let ma = Math.atan2(player.y - p.y, player.x - p.x); p.x += Math.cos(ma) * 190 * dt; p.y += Math.sin(ma) * 190 * dt; } if (dist(p.x, p.y, player.x, player.y) < player.r + 13) { if (p.type === 'energy') { player.energy = clamp(player.energy + 28 * (1 + (player.pickupBoost || 0)), 0, player.maxEnergy); log('回收电容单元：电量恢复。') } else { player.hp = clamp(player.hp + 18 * (1 + (player.pickupBoost || 0)), 0, player.maxHp); log('回收维修包：装甲完整度恢复。') } addParticles(p.x, p.y, p.type === 'energy' ? '#6ee7f5' : '#8ef0b0', 12); pickups.splice(i, 1) } else if (p.life <= 0) pickups.splice(i, 1) }
+        for (let i = particles.length - 1; i >= 0; i--) { let p = particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= Math.pow(.04, dt); p.vy *= Math.pow(.04, dt); p.life -= dt; if (p.life <= 0) particles.splice(i, 1) }
+        for (let i = floaters.length - 1; i >= 0; i--) { let f = floaters[i]; f.y -= 22 * dt; f.life -= dt; if (f.life <= 0) floaters.splice(i, 1) }
+        if (spawned >= totalSpawn && enemies.length === 0) { waveClear() }
+        if (player.hp <= 0) endGame(false);
+        updateHud();
+      }
+      function waveClear() { if (wave >= 9) { endGame(true); return } between = true; credits += 20 + wave * 4; showToast('区域暂时安全', '额外获得战术点数：' + (20 + wave * 4)); log('本波威胁已清除。整备补给即将到达。'); setTimeout(() => { if (playing && !over) openUpgrade() }, 800) }
+      const upgradePool = [
+        { id: 'damage', symbol: '✦', title: '裂解线圈·超载', desc: '基础伤害提高 32%。命中重型目标时额外造成少量冲击伤害。', tag: '重火力 / 进攻', rarity: '稀有', color: '#ffbd70', apply: () => { player.damage = Math.round(player.damage * 1.32); upgradeLevels.damage++ } },
+        { id: 'armor', symbol: '⬡', title: '堡垒级复合装甲', desc: '最大完整度增加 28，立即修复 28 点，并获得 1 点减伤。', tag: '生存 / 前线保障', rarity: '稀有', color: '#8ef0b0', apply: () => { player.maxHp += 28; player.hp = Math.min(player.maxHp, player.hp + 28); player.armor = Math.min(8, player.armor + 1); upgradeLevels.armor++ } },
+        { id: 'cooling', symbol: '❄', title: '液氮脉冲冷却', desc: '散热速度大幅提高。武器过热后恢复更快，适合高频压制。', tag: '热管理 / 持续火力', rarity: '战术', color: '#6ee7f5', apply: () => { upgradeLevels.cooling++; } },
+        { id: 'energy', symbol: 'ϟ', title: '双层高密度电容', desc: '能源上限增加 30，恢复速度提升 3.5。冲刺与电磁脉冲更频繁。', tag: '能源 / 机动', rarity: '战术', color: '#6ee7f5', apply: () => { player.maxEnergy += 30; player.energy = player.maxEnergy; player.energyRegen += 3.5; upgradeLevels.energy++ } },
+        { id: 'move', symbol: '➤', title: '猎隼伺服关节', desc: '移动速度提升 18%，冲刺距离增加，转移阵地更快。', tag: '机动 / 躲避', rarity: '战术', color: '#8ef0b0', apply: () => { player.speed *= 1.18; upgradeLevels.move++ } },
+        { id: 'rate', symbol: '⟡', title: '磁轨供弹同步器', desc: '射击间隔缩短 17%，弹幕压制能力大幅增强。', tag: '射速 / 压制', rarity: '稀有', color: '#ffbd70', apply: () => { player.rate = Math.max(.07, player.rate * .83); upgradeLevels.rate++ } },
+        { id: 'pulse', symbol: '◎', title: '电磁脉冲扩域器', desc: '脉冲范围扩大 30%，瘫痪时间延长。释放时额外清除周围弹幕。', tag: '控制 / 区域拒止', rarity: '稀有', color: '#8cecff', apply: () => { player.pulseRadius = (player.pulseRadius || 210) * 1.3; player.pulseStun = (player.pulseStun || 1.8) + .45; upgradeLevels.pulse = (upgradeLevels.pulse || 0) + 1 } },
+        { id: 'repair', symbol: '✚', title: '战场自修复蜂群', desc: '每次清完一波，恢复 16 点完整度；当前立即恢复 20 点。', tag: '恢复 / 长线作战', rarity: '战术', color: '#8ef0b0', apply: () => { player.hp = clamp(player.hp + 20, 0, player.maxHp); player.waveRepair = (player.waveRepair || 0) + 16; upgradeLevels.repair = (upgradeLevels.repair || 0) + 1 } },
+        { id: 'capacitor', symbol: '◉', title: '击破回能模块', desc: '每击破一台敌方设备，额外恢复 2 点能源；拾取能源包效果增强。', tag: '循环 / 能源经济', rarity: '精良', color: '#c58bff', apply: () => { player.killEnergy = (player.killEnergy || 0) + 2; upgradeLevels.capacitor = (upgradeLevels.capacitor || 0) + 1 } },
+        { id: 'critical', symbol: '✹', title: '弱点识别瞄准器', desc: '有 18% 概率造成双倍伤害。对重型平台的收益尤其明显。', tag: '精准 / 爆发', rarity: '稀有', color: '#ff8b9a', apply: () => { player.crit = (player.crit || 0) + .18; upgradeLevels.critical = (upgradeLevels.critical || 0) + 1 } },
+        { id: 'shield', symbol: '◇', title: '一次性偏转护盾', desc: '获得 22 点临时护盾。护盾优先承受伤害，每波整备时补充 8 点。', tag: '防御 / 容错', rarity: '精良', color: '#8cecff', apply: () => { player.shield = (player.shield || 0) + 22; player.shieldWave = (player.shieldWave || 0) + 8; upgradeLevels.shield = (upgradeLevels.shield || 0) + 1 } },
+        { id: 'magnet', symbol: '⌖', title: '回收磁场', desc: '附近补给更容易被吸引，维修包与电容单元恢复量提高 35%。', tag: '回收 / 补给', rarity: '精良', color: '#c58bff', apply: () => { player.pickupMagnet = (player.pickupMagnet || 0) + 70; player.pickupBoost = (player.pickupBoost || 0) + .35; upgradeLevels.magnet = (upgradeLevels.magnet || 0) + 1 } }
+      ];
+      function openUpgrade() { if (over) return; between = true; $('upgradeOverlay').classList.remove('hidden'); $('upgradeIntro').textContent = '战场数据：完整度 ' + Math.ceil(player.hp) + '/' + player.maxHp + ' · 武器温度 ' + Math.floor(player.heat) + '% · 能源 ' + Math.floor(player.energy) + '%。挑选一项核心改装，构筑你的战斗流派。'; let pool = [...upgradePool].sort(() => Math.random() - .5).slice(0, 3); const wrap = $('upgradeCards'); wrap.innerHTML = ''; for (const u of pool) { let b = document.createElement('button'); b.className = 'upgrade'; b.style.setProperty('--rarity', u.color); let lvl = upgradeLevels[u.id] || 0; b.innerHTML = '<span class="level">' + u.rarity + (lvl ? ' · 已强化 ' + lvl + ' 次' : ' · 新模块') + '</span><div class="symbol">' + u.symbol + '</div><h3>' + u.title + '</h3><p>' + u.desc + '</p><span class="tag">' + u.tag + '</span><span class="selecthint">点击部署此模块 →</span>'; b.onclick = () => { u.apply(); upgradesUsed++; $('upgradeOverlay').classList.add('hidden'); wave++; spawned = 0; totalSpawn = wavePlan(wave); spawnClock = 1.2; between = false; player.energy = clamp(player.energy + 18, 0, player.maxEnergy); player.heat = Math.max(0, player.heat - 45); if (player.waveRepair) player.hp = clamp(player.hp + player.waveRepair, 0, player.maxHp); if (player.shieldWave) player.shield = (player.shield || 0) + player.shieldWave; $('missionName').textContent = '行动' + wave + '：新区域'; showToast('改装完成', '已部署：' + u.title); log('核心改装已安装：' + u.title); updateHud() }; wrap.appendChild(b) } }
+      function endGame(win) { if (over) return; over = true; playing = false; between = false; paused = false; $('upgradeOverlay').classList.add('hidden'); $('pauseTag').classList.add('hidden'); $('endOverlay').classList.remove('hidden'); $('endKicker').textContent = win ? '行动报告 / 任务完成' : '行动报告 / 中止撤离'; $('endTitle').innerHTML = win ? '区域已稳定<span style="color:var(--green)">，成功撤离</span>' : '行动中止<span style="color:var(--red)">，队员撤离</span>'; $('endText').textContent = win ? '你完成了全部行动阶段，维修车队已恢复通信。现场记录显示，谨慎使用脉冲、及时散热与持续移动是本次成功的关键。' : '外骨骼完整度归零，指挥部已启动紧急回收。复盘建议：不要在开阔区域停留过久；重型设备准备齐射时，应优先冲刺离开弹道。'; $('endKills').textContent = kills + ' 个目标'; $('endTime').textContent = formatTime(gameTime); let rank = kills >= 35 ? 'A · 稳健执行' : kills >= 20 ? 'B · 完成主要任务' : 'C · 有待改进'; $('endRank').textContent = rank; log('行动结束：' + rank) }
+      function drawBackground() {
+        ctx.fillStyle = '#071019'; ctx.fillRect(0, 0, W, H);
+        // industrial grid
+        ctx.save(); ctx.strokeStyle = 'rgba(61,111,133,.13)'; ctx.lineWidth = 1;
+        let spacing = 44, offset = (gameTime * 9) % spacing;
+        for (let x = -spacing; x < W + spacing; x += spacing) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke() }
+        for (let y = -spacing + offset; y < H + spacing; y += spacing) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke() }
+        // terrain / road lanes
+        ctx.strokeStyle = 'rgba(73,137,159,.22)'; ctx.lineWidth = 2; ctx.setLineDash([18, 12]); ctx.beginPath(); ctx.moveTo(W * .16, 0); ctx.lineTo(W * .16, H); ctx.moveTo(W * .84, 0); ctx.lineTo(W * .84, H); ctx.stroke(); ctx.setLineDash([]);
+        for (let i = 0; i < 12; i++) { let x = (i * 197 + 73) % W, y = (i * 139 + 41) % H; ctx.fillStyle = 'rgba(57,91,108,.22)'; ctx.fillRect(x, y, rand(22, 70), rand(3, 7)) }
+        // central comms node
+        let bx = W * .5, by = H * .24; ctx.strokeStyle = 'rgba(72,164,188,.23)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(bx, by, 60, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(bx, by, 83, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = '#0d2834'; ctx.fillRect(bx - 26, by - 20, 52, 40); ctx.strokeStyle = '#34788a'; ctx.strokeRect(bx - 26, by - 20, 52, 40); ctx.fillStyle = '#68d8e8'; ctx.fillRect(bx - 3, by - 13, 6, 26); ctx.fillRect(bx - 13, by - 3, 26, 6);
+        ctx.fillStyle = 'rgba(125,182,200,.48)'; ctx.font = '10px Microsoft YaHei'; ctx.textAlign = 'center'; ctx.fillText('临时通信站', bx, by + 76);
+        ctx.restore();
+      }
+      function drawShip(x, y, r, color, angle, playerShip = false, stun = 0, flash = 0) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+        if (playerShip) { ctx.shadowBlur = 18; ctx.shadowColor = '#60e8ff'; ctx.fillStyle = player.invuln > 0 && Math.floor(gameTime * 25) % 2 ? '#fff' : '#7beaff'; ctx.strokeStyle = '#d8fbff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(r + 7, 0); ctx.lineTo(-r * .7, -r * .75); ctx.lineTo(-r * .3, 0); ctx.lineTo(-r * .7, r * .75); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#0b2734'; ctx.fillRect(-r * .2, -r * .4, r * .65, r * .8) }
+        else { ctx.shadowBlur = stun > 0 ? 18 : 8; ctx.shadowColor = stun > 0 ? '#79edff' : color; ctx.fillStyle = flash > 0 ? '#fff' : color; ctx.strokeStyle = stun > 0 ? '#bffaff' : '#ffd3d7'; ctx.lineWidth = 1.2; ctx.beginPath(); if (stun > 0) { ctx.moveTo(0, -r); ctx.lineTo(r * .85, 0); ctx.lineTo(0, r); ctx.lineTo(-r * .85, 0) } else { ctx.moveTo(r, 0); ctx.lineTo(-r * .5, -r * .8); ctx.lineTo(-r * .2, 0); ctx.lineTo(-r * .5, r * .8) } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#07131d'; ctx.fillRect(-r * .1, -r * .25, r * .55, r * .5); if (stun > 0) { ctx.strokeStyle = '#a5f5ff'; ctx.beginPath(); ctx.arc(0, 0, r + 6, 0, Math.PI * 2); ctx.stroke() } }
+        ctx.restore();
+      }
+      function render() {
+        ctx.save(); if (screenShake > 0) { ctx.translate(rand(-screenShake, screenShake), rand(-screenShake, screenShake)); screenShake *= .86; if (screenShake < .2) screenShake = 0 }
+        drawBackground();
+        // threat indicators
+        for (const e of enemies) { if (e.x < -5 || e.x > W + 5 || e.y < -5 || e.y > H + 5) { let a = Math.atan2(e.y - H / 2, e.x - W / 2), x = clamp(e.x, 24, W - 24), y = clamp(e.y, 80, H - 24); ctx.fillStyle = e.color; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * 8, y + Math.sin(a) * 8); ctx.lineTo(x + Math.cos(a + 2.5) * 7, y + Math.sin(a + 2.5) * 7); ctx.lineTo(x + Math.cos(a - 2.5) * 7, y + Math.sin(a - 2.5) * 7); ctx.fill() } }
+        for (const p of pickups) { ctx.save(); ctx.globalAlpha = .7 + .3 * Math.sin(gameTime * 7); ctx.strokeStyle = p.type === 'energy' ? '#6ee7f5' : '#8ef0b0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 3, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = ctx.strokeStyle; ctx.fillRect(p.x - 3, p.y - 3, 6, 6); ctx.restore() }
+        for (const b of bullets) { ctx.strokeStyle = '#79eaff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(b.x - b.vx * .025, b.y - b.vy * .025); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.fillStyle = '#e1fcff'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill() }
+        for (const b of enemyBullets) { ctx.fillStyle = b.color; ctx.shadowBlur = 10; ctx.shadowColor = b.color; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; let a = Math.atan2(b.vy, b.vx); ctx.strokeStyle = b.color; ctx.globalAlpha = .45; ctx.beginPath(); ctx.moveTo(b.x - Math.cos(a) * 13, b.y - Math.sin(a) * 13); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.globalAlpha = 1 }
+        for (const e of enemies) { let a = Math.atan2(player.y - e.y, player.x - e.x); drawShip(e.x, e.y, e.r, e.color, a, false, e.stun, e.flash); ctx.fillStyle = '#182b37'; ctx.fillRect(e.x - e.r, e.y - e.r - 9, e.r * 2, 3); ctx.fillStyle = e.hp / e.maxHp > .5 ? '#80e7c1' : '#ff727a'; ctx.fillRect(e.x - e.r, e.y - e.r - 9, e.r * 2 * clamp(e.hp / e.maxHp, 0, 1), 3) }
+        if (player) {
+          let a = Math.atan2(mouse.y - player.y, mouse.x - player.x); drawShip(player.x, player.y, player.r, '#75eaff', a, true); ctx.strokeStyle = 'rgba(110,231,245,.18)'; ctx.beginPath(); ctx.arc(player.x, player.y, player.r + 7, 0, Math.PI * 2); ctx.stroke();
+          // pulse indicator
+          if (player.pulse > 0) { ctx.strokeStyle = '#79edff'; ctx.lineWidth = 3; ctx.globalAlpha = player.pulse / .48; ctx.beginPath(); ctx.arc(player.x, player.y, (player.pulseRadius || 210) * (1 - player.pulse / .48) + 20, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1 }
+        }
+        for (const p of particles) { ctx.globalAlpha = clamp(p.life / p.max, 0, 1); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.r, p.r) } ctx.globalAlpha = 1;
+        for (const f of floaters) { ctx.globalAlpha = clamp(f.life, 0, 1); ctx.fillStyle = f.color; ctx.font = 'bold 12px Microsoft YaHei'; ctx.textAlign = 'center'; ctx.fillText(f.text, f.x, f.y) } ctx.globalAlpha = 1;
+        // crosshair
+        if (playing && !paused && !between && !over) { ctx.strokeStyle = '#c9faff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 8, 0, Math.PI * 2); ctx.moveTo(mouse.x - 13, mouse.y); ctx.lineTo(mouse.x - 5, mouse.y); ctx.moveTo(mouse.x + 5, mouse.y); ctx.lineTo(mouse.x + 13, mouse.y); ctx.moveTo(mouse.x, mouse.y - 13); ctx.lineTo(mouse.x, mouse.y - 5); ctx.moveTo(mouse.x, mouse.y + 5); ctx.lineTo(mouse.x, mouse.y + 13); ctx.stroke() }
+        // virtual touch joystick
+        if (touchJoy.active) {
+          ctx.strokeStyle = 'rgba(110, 231, 245, 0.45)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(touchJoy.startX, touchJoy.startY, 45, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(110, 231, 245, 0.7)';
+          ctx.beginPath();
+          ctx.arc(touchJoy.currX, touchJoy.currY, 18, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // warning vignette
+        if (player && player.hp < 35) { let g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .25, W / 2, H / 2, Math.max(W, H) * .65); g.addColorStop(0, 'rgba(255,30,45,0)'); g.addColorStop(1, 'rgba(255,35,55,' + (0.10 + Math.sin(gameTime * 8) * .06) + ')'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H) }
+        ctx.restore();
+      }
+      function frame(t) { let dt = Math.min(.033, (t - (lastTime || t)) / 1000); lastTime = t; if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) $('toast').classList.remove('show') } update(dt); render(); requestAnimationFrame(frame) }
+      requestAnimationFrame(frame);
+      addEventListener('keydown', e => { keys[e.code] = true; if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); if (e.repeat) return; if (e.code === 'Space') dash(); if (e.code === 'KeyE') pulse(); if (e.code === 'KeyP') togglePause(); if (e.code === 'Escape' && playing && !between) togglePause() });
+      addEventListener('keyup', e => { keys[e.code] = false });
+      canvas.addEventListener('mousemove', e => { let r = canvas.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top });
+      canvas.addEventListener('mousedown', e => { if (e.button === 0) mouse.down = true; if (e.button === 2) pulse() });
+      addEventListener('mouseup', e => { if (e.button === 0) mouse.down = false; if (e.button === 2) mouse.right = false });
+      canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+      // Mobile Touch Handling
+      canvas.addEventListener('touchstart', e => {
+        if (!playing || paused || over || between) return;
+        const t = e.changedTouches[0];
+        if (!touchJoy.active) {
+          touchJoy.active = true;
+          touchJoy.id = t.identifier;
+          touchJoy.startX = t.clientX;
+          touchJoy.startY = t.clientY;
+          touchJoy.currX = t.clientX;
+          touchJoy.currY = t.clientY;
+          touchJoy.dx = 0;
+          touchJoy.dy = 0;
+          mouse.down = true;
+        }
+      }, { passive: true });
+
+      canvas.addEventListener('touchmove', e => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === touchJoy.id) {
+            touchJoy.currX = t.clientX;
+            touchJoy.currY = t.clientY;
+            let diffX = touchJoy.currX - touchJoy.startX;
+            let diffY = touchJoy.currY - touchJoy.startY;
+            let d = Math.hypot(diffX, diffY);
+            if (d > 6) {
+              let norm = Math.min(1, d / 50);
+              touchJoy.dx = (diffX / d) * norm;
+              touchJoy.dy = (diffY / d) * norm;
+            } else {
+              touchJoy.dx = 0; touchJoy.dy = 0;
+            }
+          }
+        }
+      }, { passive: true });
+
+      const endTouch = e => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchJoy.id) {
+            touchJoy.active = false;
+            touchJoy.dx = 0;
+            touchJoy.dy = 0;
+            touchJoy.id = null;
+            mouse.down = false;
+          }
+        }
+      };
+      canvas.addEventListener('touchend', endTouch, { passive: true });
+      canvas.addEventListener('touchcancel', endTouch, { passive: true });
+
+      // Mobile action buttons
+      $('mobileDashBtn').addEventListener('click', e => { e.preventDefault(); dash(); });
+      $('mobilePulseBtn').addEventListener('click', e => { e.preventDefault(); pulse(); });
+
+      // HUD Toggle
+      let hudHidden = false;
+      function toggleHud() {
+        hudHidden = !hudHidden;
+        $('hud').classList.toggle('hidden-hud', hudHidden);
+        $('hudToggleText').textContent = hudHidden ? '展开界面' : '收起界面';
+      }
+      $('hudToggleBtn').onclick = toggleHud;
+      window.addEventListener('keydown', e => {
+        if (e.key === 'h' || e.key === 'H') toggleHud();
+      });
+
+      function togglePause() { if (!playing || over || between) return; paused = !paused; $('pauseTag').classList.toggle('hidden', !paused); $('pauseBtn').textContent = paused ? '继续行动 [P]' : '暂停行动 [P]'; if (paused) mouse.down = false }
+      $('startBtn').onclick = reset; $('restartBtn').onclick = reset; $('howBtn').onclick = () => $('howText').classList.toggle('hidden'); $('pauseBtn').onclick = togglePause;
+      $('hud').style.display = 'none'; $('bottomBar').style.display = 'none';
+    })();
+  </script>
+</body>
+
+</html>

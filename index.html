@@ -1,0 +1,2128 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电脑资讯社 2026 · 创意互动作品展厅 | SHOWCASE HUB</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg: #030712;
+  --card-bg: rgba(15, 23, 42, 0.72);
+  --border: rgba(56, 189, 248, 0.18);
+  --border-hover: rgba(56, 189, 248, 0.65);
+  --cyan: #38bdf8;
+  --pink: #f43f5e;
+  --purple: #a855f7;
+  --amber: #f59e0b;
+  --emerald: #10b981;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.08), transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.08), transparent 40%),
+    repeating-linear-gradient(to bottom, transparent 0, rgba(255,255,255,0.015) 1px, transparent 2px);
+  background-size: 100% 100%, 100% 100%, 100% 4px;
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+
+/* Header */
+header {
+  padding: 42px 24px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.badge-year {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(56, 189, 248, 0.08);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: var(--cyan);
+  margin-bottom: 14px;
+  backdrop-filter: blur(8px);
+}
+
+.badge-year i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 10px var(--emerald);
+}
+
+h1.hero-title {
+  font-size: clamp(26px, 4.5vw, 42px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-sub {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 680px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+
+/* Quick Stats Bar */
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 18px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.stat-num {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--cyan);
+}
+
+.stat-desc {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Controls Toolbar & Filters */
+.toolbar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding: 0 16px;
+}
+
+.filters {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 9px 20px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-btn:hover {
+  color: #fff;
+  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.filter-btn.active {
+  color: #030712;
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.4);
+}
+
+/* View Mode Switcher */
+.view-switch-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  padding: 4px 6px;
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.view-switch-label {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 700;
+  padding-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-switch-label i {
+  color: var(--cyan);
+}
+
+.view-btn-group {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.view-btn {
+  padding: 6px 15px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.view-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.view-btn.active {
+  color: #030712;
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+  font-weight: 700;
+}
+
+/* Projects Grid */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+/* 简单名字排列模式 (Compact Simple View) */
+.grid.view-compact {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.compact-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.compact-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  background: rgba(20, 32, 54, 0.9);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 18px rgba(56, 189, 248, 0.2);
+}
+
+.compact-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.compact-id {
+  font-family: monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.compact-cat {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.compact-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.compact-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--cyan);
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.compact-card:hover .compact-btn {
+  background: var(--cyan);
+  color: #030712;
+  box-shadow: 0 0 12px var(--cyan);
+}
+
+/* Compact Card */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-hover);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 24px rgba(56, 189, 248, 0.15);
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-id {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+
+.card-cat {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+}
+
+.cat-edu {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.cat-visual {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.cat-game {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.tag-origin {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tag-origin.tag-net {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+  border-color: rgba(244, 63, 94, 0.35);
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-bottom: 16px;
+  flex: 1;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.btn-play {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.05) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-play:hover {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  border-color: #38bdf8;
+  color: #030712;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+}
+
+/* In-Page Fullscreen Modal */
+#modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #030712;
+  display: none;
+  flex-direction: column;
+}
+
+#modal.open {
+  display: flex;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.modal-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.2s;
+}
+
+.home-btn {
+  background: rgba(244, 63, 94, 0.18);
+  border-color: rgba(244, 63, 94, 0.45);
+  color: #ff9aa8;
+}
+
+.home-btn:hover {
+  background: #f43f5e;
+  border-color: #f43f5e;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.45);
+}
+
+#game-frame {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #000;
+}
+
+/* ==================== 开机画面 & 登录认证 ==================== */
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+}
+
+.boot-screen.hidden {
+  display: none !important;
+}
+
+.boot-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.boot-card {
+  position: relative;
+  z-index: 2;
+  width: min(88vw, 390px);
+  box-sizing: border-box;
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: rgba(10, 15, 28, 0.72);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 20px;
+  padding: 20px 20px;
+  text-align: center;
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  transition: transform 0.15s ease-out;
+  transform-style: preserve-3d;
+  perspective: 800px;
+  animation: cardBreathingShimmer 4s ease-in-out infinite alternate;
+}
+
+.boot-card::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* 登录界面微微透明呼吸闪烁光晕特效 */
+@keyframes cardBreathingShimmer {
+  0% {
+    background: rgba(8, 14, 26, 0.68);
+    border-color: rgba(56, 189, 248, 0.25);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(56, 189, 248, 0.18);
+  }
+  50% {
+    background: rgba(12, 19, 36, 0.82);
+    border-color: rgba(168, 85, 247, 0.45);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.85), 0 0 40px rgba(168, 85, 247, 0.28), 0 0 15px rgba(0, 240, 255, 0.25);
+  }
+  100% {
+    background: rgba(9, 15, 30, 0.72);
+    border-color: rgba(0, 255, 200, 0.35);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75), 0 0 30px rgba(0, 255, 200, 0.2);
+  }
+}
+
+.boot-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 21px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 0, 128, 0.45), rgba(0, 240, 255, 0.55), rgba(255, 215, 0, 0.45), rgba(0, 255, 128, 0.45));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* 鼠标悬停卡片时的全息彩虹激光扫描线 */
+.boot-card::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: linear-gradient(180deg, transparent, rgba(56, 189, 248, 0.25), rgba(255, 0, 128, 0.25), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.boot-card.hovered::after {
+  opacity: 1;
+  animation: cardScanBeam 1.8s infinite linear;
+}
+
+@keyframes cardScanBeam {
+  0% { top: -80px; }
+  100% { top: 120%; }
+}
+
+.boot-card.dismissing {
+  opacity: 0;
+  transform: scale(0.8) !important;
+  pointer-events: none;
+}
+
+.boot-logo-wrap {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boot-logo-halo {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #ff0055, #ff7700, #ffdd00, #00ff88, #00ffff, #0077ff, #aa00ff, #ff0055);
+  animation: rainbowSpin 5s linear infinite, bootPulse 2.5s infinite ease-in-out;
+  filter: blur(8px);
+  opacity: 0.8;
+}
+
+@keyframes rainbowSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes bootPulse {
+  0%, 100% { opacity: 0.65; transform: scale(1); }
+  50% { opacity: 0.98; transform: scale(1.08); }
+}
+
+.boot-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.65));
+  position: relative;
+  z-index: 2;
+}
+
+.boot-school-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #f1f5f9;
+  margin-bottom: 2px;
+}
+
+.boot-sub-school {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--cyan);
+  font-family: monospace;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.boot-hero-title {
+  font-size: clamp(18px, 3.5vw, 21px);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+
+.boot-hero-title span {
+  background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.boot-eng-title {
+  font-size: 8px;
+  font-family: monospace;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+
+.boot-intro {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 9px 12px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  text-align: justify;
+  text-justify: inter-ideograph;
+}
+
+.boot-login-btn {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #0369a1 100%);
+  color: #030712;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 0 26px rgba(56, 189, 248, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 4px;
+}
+
+.boot-login-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 40px rgba(56, 189, 248, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 50%, #0284c7 100%);
+}
+
+.boot-login-btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.boot-login-btn .btn-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: skewX(-20deg);
+  animation: btnShine 3.5s infinite;
+}
+
+@keyframes btnShine {
+  0% { left: -100%; }
+  25%, 100% { left: 200%; }
+}
+
+.boot-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 10.5px;
+  color: #64748b;
+  font-family: monospace;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.boot-meta-bar .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 8px var(--emerald);
+}
+
+.boot-meta-bar .divider {
+  opacity: 0.4;
+}
+
+.boot-meta-bar kbd {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.top-reboot-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: var(--cyan);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.top-reboot-btn:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: var(--cyan);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+  transform: translateY(-1px);
+}
+</style>
+</head>
+<body>
+
+<!-- 开机画面与进入界面 (背景纯黑) -->
+<div id="boot-screen" class="boot-screen">
+  <canvas id="boot-canvas" class="boot-canvas"></canvas>
+
+  <div class="boot-card" id="boot-card">
+    <div class="boot-logo-wrap">
+      <div class="boot-logo-halo"></div>
+      <img src="Sin Min Logo.png" alt="亚罗士打新民独中学校徽" class="boot-logo-img" id="boot-logo" onerror="this.style.display='none'">
+    </div>
+
+    <div class="boot-school-title">亚罗士打新民独中</div>
+    <div class="boot-sub-school">Sek. Men. Sin Min (Persendirian) Alor Setar</div>
+
+    <div class="boot-hero-title">
+      <span>电脑资讯社</span> 2026 成果展
+    </div>
+    <div class="boot-eng-title">COMPUTER INFORMATION SOCIETY // ANNUAL TECH HUB</div>
+
+    <p class="boot-intro">
+      探索科技边界，启迪数字未来。本展厅由亚罗士打新民独中电脑资讯社自主打造，汇聚现代电脑硬件架构剖析、科普天文物理模拟、前沿算法生成艺术与创意 3D 战术竞技游戏。
+    </p>
+
+    <!-- 直接点击进入展厅 -->
+    <button id="boot-login-btn" class="boot-login-btn" onclick="executeBootLogin()">
+      <span class="btn-shine"></span>
+      <i class="fa-solid fa-play"></i>
+      <span>点击进入展厅 // ENTER EXHIBITION</span>
+    </button>
+
+    <div class="boot-meta-bar">
+      <span class="status-dot"></span>
+      <span>SYSTEM READY</span>
+      <span class="divider">|</span>
+      <span>32 项交互成果</span>
+      <span class="divider">|</span>
+      <span>按 <kbd>任意键</kbd> 或 <kbd>ENTER ↵</kbd> 直接进入</span>
+    </div>
+  </div>
+</div>
+
+<header>
+  <button class="top-reboot-btn" onclick="showBootScreen(true)" title="重新体验开机与进入动画">
+    <i class="fa-solid fa-power-off"></i> 重新开机
+  </button>
+  <div class="badge-year">
+    <i></i> 亚罗士打新民独中 · 电脑资讯社 2026
+  </div>
+  <h1 class="hero-title">电脑资讯社 2026 互动作品全景展</h1>
+  <p class="hero-sub">包含教育性科学实验、视觉粒子算法艺术与战术竞技游戏。支持内嵌全屏交互体验与实时参数模拟。</p>
+</header>
+
+<div class="toolbar-wrap">
+  <div class="filters">
+    <button class="filter-btn active" data-cat="all"><i class="fa-solid fa-border-all"></i> 全部作品 (32)</button>
+    <button class="filter-btn" data-cat="edu"><i class="fa-solid fa-graduation-cap"></i> 📚 教育性 (9)</button>
+    <button class="filter-btn" data-cat="visual"><i class="fa-solid fa-palette"></i> 🎨 视觉 (7)</button>
+    <button class="filter-btn" data-cat="game"><i class="fa-solid fa-gamepad"></i> 🎮 游戏 (16)</button>
+  </div>
+
+  <div class="view-switch-bar">
+    <span class="view-switch-label"><i class="fa-solid fa-table-cells"></i> 排列选择：</span>
+    <div class="view-btn-group">
+      <button class="view-btn active" id="btn-view-card" onclick="setViewMode('card')">
+        <i class="fa-solid fa-table-cells-large"></i> 详细图文排列
+      </button>
+      <button class="view-btn" id="btn-view-compact" onclick="setViewMode('compact')">
+        <i class="fa-solid fa-list-ul"></i> 简单名字排列
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="container">
+  <div class="grid" id="projects-grid"></div>
+</main>
+
+<!-- In-page Fullscreen Modal -->
+<div id="modal">
+  <div class="modal-header">
+    <div class="modal-title-wrap">
+      <span class="card-id" id="modal-id">01</span>
+      <span class="modal-title" id="modal-title">作品标题</span>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn home-btn" onclick="closeModal()"><i class="fa-solid fa-house"></i> 回到主页</button>
+    </div>
+  </div>
+  <iframe id="game-frame" src=""></iframe>
+</div>
+
+<script>
+// 项目清单严格按顺序排列：教育性 -> 视觉 -> 游戏
+const PROJECTS = [
+  /* ================= 1. 教育性 (edu) ================= */
+  {
+    id: "01",
+    path: "projects/17-pc-geek-workshop/index.html",
+    title: "PC 极客工坊：电脑硬件探秘与装机模拟器",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "独中高中资讯科技互动教学实验平台，深入解析现代电脑硬件架构、CPU与主板透视X-Ray、装机模拟与网络拓扑仿真。"
+  },
+  {
+    id: "02",
+    path: "projects/33-ancient-poetry/index.html",
+    title: "古诗词沉浸式意境画卷 · 诗画雅集",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "水墨国风与古典文学沉浸交融！十首经典古诗词伴随动态意境画卷与环境粒子，融入真声逐句吟诵、拼音注音、诗意解析与《云水相望》古筝雅乐。"
+  },
+  {
+    id: "03",
+    path: "https://anthesis-flower-garden.vercel.app/",
+    title: "繁花之境 · 交互式花语艺术花园",
+    cat: "visual",
+    catName: "视觉",
+    origin: "网友设计",
+    desc: "沉浸式自然花卉交互艺术花园，细腻的植物生长算法、灵动光影变幻与治愈系自然视听共鸣。"
+  },
+  {
+    id: "04",
+    path: "https://felixyu9722.github.io/WebCrawlerMY/",
+    title: "WebCrawlerMY · 大马网络数据全景观测平台",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "面向马来西亚网络数据全景的数据爬取与分析可视化系统，探索网络数据流转、节点抓取机制与拓扑结构。"
+  },
+  {
+    id: "05",
+    path: "projects/13-solar-system-3d/index.html",
+    title: "八大行星 · 3D 太阳系科普探索 (HD Ultra)",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "超高清 3D 真实太阳系公转与行星自转模拟，顶部导航栏一键平滑特写追踪锁定目标天体，并支持黑洞引力假想模拟。"
+  },
+  {
+    id: "06",
+    path: "projects/14-orbit-gravity-simulator/index.html",
+    title: "万有引力轨道模拟器 · 天体多玩法沙盘",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "万有引力与开普勒轨道沙盘，支持不同大小恒星与黑洞切换，包含逃逸速度预测、完整八大行星、双星伴舞与三体混沌。"
+  },
+  {
+    id: "07",
+    path: "projects/07-earth-moon-orbit-eclipse/index.html",
+    title: "日地月引力轨迹与日食月食模拟",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "三维高精度天体引力轨迹计算，精确呈现本影与半影光锥，一键快进预测日全食、日环食与月全食发生瞬间。"
+  },
+  {
+    id: "08",
+    path: "projects/10-earth-simulator/index.html",
+    title: "地球模拟器 2.0 · 算法星球",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "纯算法着色程序化生成大陆板块、动态大气云层、城市璀璨夜景灯火与小行星切入碰撞地表实验。"
+  },
+  {
+    id: "09",
+    path: "projects/04-classroom-lab/index.html",
+    title: "课堂实验室 2.0 · 趣味物理",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "涵盖跨星球单摆周期对比、大炮抛体运动轨迹发射、动态水循环交互图解与趣味物理知识问答测验。"
+  },
+
+  {
+    id: "10",
+    path: "projects/32-silk-road-timeline/index.html",
+    title: "丝绸之路 · 交互历史地理时间轴",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "穿越千年丝路文明！交互式时间轴溯源张骞凿空、玄奘西行与郑和下西洋，矢量贸易地图动态呈现丝绸、香料跨洲流动，伴随丝路驼铃古乐与知识闯关。"
+  },
+
+
+  /* ================= 2. 视觉 (visual) ================= */
+  {
+    id: "11",
+    path: "projects/01-tech-blue-particle-core/index.html",
+    title: "科技蓝粒子核心 2.0 · 反应堆",
+    cat: "visual",
+    catName: "视觉",
+    origin: "精选交互",
+    desc: "高帧率量子引力连线场，包含四种色彩矩阵、旋转反应堆核心、可隐藏控制面板与超新星全屏坍缩引爆。"
+  },
+  {
+    id: "12",
+    path: "projects/02-neon-village-weather/index.html",
+    title: "赛博霓虹村落 · 动态天气 3D",
+    cat: "visual",
+    catName: "视觉",
+    origin: "精选交互",
+    desc: "基于 Three.js 的宏大曲面线框赛博村落，包含晴雨雷雪天气模拟，一键即时放飞天灯、漫天流星雨与新年烟火。"
+  },
+  {
+    id: "13",
+    path: "projects/03-particle-interaction/index.html",
+    title: "粒子互动 2.0 · 声学粒子拼字",
+    cat: "visual",
+    catName: "视觉",
+    origin: "精选交互",
+    desc: "输入任意文字或表情即时聚合成流光粒子拼字，融合暴雨倾泻、长按膨胀黑洞、万花筒等 15 种物理声学玩法。"
+  },
+  {
+    id: "14",
+    path: "projects/05-aurora-lake/index.html",
+    title: "极光湖 · Aurora Lake 2.0",
+    cat: "visual",
+    catName: "视觉",
+    origin: "精选交互",
+    desc: "WebGL 高性能光线步进渲染的北极深邃极光倒影湖，结合空灵氛围音与太阳风暴（Solar Flare）一键紫金光带爆发。"
+  },
+  {
+    id: "15",
+    path: "projects/08-data-tide/index.html",
+    title: "数据潮汐 · 互动流体艺术",
+    cat: "visual",
+    catName: "视觉",
+    origin: "精选交互",
+    desc: "十万级 WebGL 矢量流体粒子雕塑，跟随光标波澜起伏，集成特雷门琴声画互动与深水冲击波塑形。"
+  },
+  {
+    id: "16",
+    path: "projects/25-cyber-gravity-lab/index.html",
+    title: "赛博朋克：粒子重力球与星际防御实验室",
+    cat: "visual",
+    catName: "视觉",
+    origin: "精选交互",
+    desc: "赛博风格粒子物理引力沙盘，可调节引力常数、黑洞白洞与粒子碰撞，并可一键切入星际防御战拦截高能病毒。"
+  },
+
+  /* ================= 3. 游戏 (game) ================= */
+  {
+    id: "17",
+    path: "projects/30-quantum-grav-pinball/index.html",
+    title: "量子黑洞台球 · 霓虹引力弹珠",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "经典台球物理撞击融合微型量子黑洞引力场，击球拖曳出弯曲预测弹道，体验引力弹珠奇幻变轨。"
+  },
+  {
+    id: "18",
+    path: "projects/26-star-catcher/index.html",
+    title: "星际接星星 · 太空漫游版",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "驾驶定制涂装太空飞船在繁星银河穿梭接星，连续捕获触发最高 5 倍连击，搭配磁铁与护盾极限生存。"
+  },
+  {
+    id: "19",
+    path: "projects/22-ww2-joint-ops/index.html",
+    title: "二战 3D 联合作战 · 钢铁风暴",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "宏大二战全兵种立体联合作战，陆海空十类战具随心驾驭，战术小地图雷达扫描，实时呼叫空军地毯轰炸与大招核爆。"
+  },
+  {
+    id: "20",
+    path: "projects/23-neon-breakout/index.html",
+    title: "霓虹弹球破砖 · 超级进化版",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "动感赛博朋克合成器弹球打砖，击碎砖块递增五声音阶，全新加入贯穿激光炮、爆炸核弹球与底线激光护盾。"
+  },
+  {
+    id: "21",
+    path: "projects/24-neon-snake/index.html",
+    title: "霓虹贪吃蛇 · 超级进化版",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "高能赛博光流贪吃蛇，连吃叠积最高 6 倍连击，按空格激活瞬态超载疾冲，收集磁力核心与全屏清障脉冲炸弹。"
+  },
+  {
+    id: "22",
+    path: "projects/06-border-defense-protocol/index.html",
+    title: "边界防线：零点协议",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "硬核俯视射击生存，管理弹药、电容储能与枪管过热，全新支持手机端虚拟双摇杆与全屏电磁脉冲 EMP 瘫痪包抄。"
+  },
+  {
+    id: "23",
+    path: "projects/11-steel-naval-battle/index.html",
+    title: "钢铁海战 3D · 怒海交锋",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "Three.js 打造的高拟真战舰海战，红蓝高反差阵营对决，真实海水波动与主炮轰鸣，全新按 V 键呼叫空军战机俯冲投弹。"
+  },
+  {
+    id: "24",
+    path: "projects/12-interstellar-defense/index.html",
+    title: "星际防线：升级射击",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "纯正街机风格太空战机割草射击，自动开火弹幕，18 种升级分支（追踪弹/闪电链/暴击流）与巨型 BOSS 决战。"
+  },
+  {
+    id: "25",
+    path: "projects/18-star-collector/index.html",
+    title: "星空收集者：终极版",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "操纵太空收集飞船在星际尘埃与能量水晶之间灵巧穿梭，避开引力异常点与宇宙辐射，挑战极限能量收集纪录。"
+  },
+  {
+    id: "26",
+    path: "projects/21-titan-protocol/index.html",
+    title: "TITAN PROTOCOL · 泰坦协议",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "未来重装机甲战术对抗系统，多雷达威胁感知、火力点射击退以及紧急过载泰坦协议防御程序。"
+  },
+  {
+    id: "27",
+    path: "projects/19-neon-dodge/index.html",
+    title: "霓虹几何躲避战 · 超级进化版",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "高能赛博霓虹几何弹幕挑战，极速躲避各方位几何冲击波，触发子弹时间与极限闪避加分。"
+  },
+  {
+    id: "28",
+    path: "projects/20-scp-containment/index.html",
+    title: "SCP: CONTAINMENT BREACH",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "SCP 基金会地下设施收容失效紧急应对，文字与视觉探索、躲避异常实体追捕并设法逃出生天。"
+  },
+  {
+    id: "29",
+    path: "projects/15-type-strike-battle/index.html",
+    title: "打字对战 TYPE//STRIKE",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "赛博霓虹风格极速打字格斗，炮塔锁定射击、破甲音效，满 20 连击激活 OVERDRIVE 狂暴全屏残影。"
+  },
+  {
+    id: "30",
+    path: "projects/09-typing-magic-castle/index.html",
+    title: "魔法城堡保卫战",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "奇幻城堡打字守卫战，单词化身空袭怪物，连击触发暴风雪与全屏陨石，迎战破云而出的远古巨龙。"
+  },
+  {
+    id: "31",
+    path: "projects/16-neon-memory-match/index.html",
+    title: "霓虹记忆配对 2.0",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "赛博全息 3D 翻转卡牌记忆配对，配对成功阶梯上升 Do-Mi-Sol 和弦音阶，融入倒计时压力与连击挑战。"
+  },
+  {
+    id: "32",
+    path: "projects/31-prism-fall-arcade/index.html",
+    title: "棱镜坠落 · 全息电音街机 (PRISM//FALL)",
+    cat: "game",
+    catName: "游戏",
+    origin: "精选交互",
+    desc: "未来全息节奏方块电音街机！高能电子音浪与动态棱镜光影交织，指尖下落律动挑战，体验震撼视听盛宴。"
+  }
+];
+
+let currentFilter = 'all';
+let currentViewMode = 'card'; // 'card' 为目前排列, 'compact' 为简单名字排列
+
+function setViewMode(mode) {
+  currentViewMode = mode;
+  const btnCard = document.getElementById('btn-view-card');
+  const btnCompact = document.getElementById('btn-view-compact');
+  if (btnCard) btnCard.classList.toggle('active', mode === 'card');
+  if (btnCompact) btnCompact.classList.toggle('active', mode === 'compact');
+  renderGrid(currentFilter, currentViewMode);
+}
+
+function renderGrid(filter = currentFilter, viewMode = currentViewMode) {
+  currentFilter = filter;
+  currentViewMode = viewMode;
+  const grid = document.getElementById('projects-grid');
+  grid.innerHTML = '';
+  const filtered = filter === 'all' ? PROJECTS : PROJECTS.filter(p => p.cat === filter);
+
+  if (viewMode === 'compact') {
+    // 简单名字排列模式
+    grid.className = 'grid view-compact';
+    filtered.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'compact-card';
+      card.title = `${p.title}\n简介：${p.desc}`;
+      card.onclick = () => openModal(p.id, p.title, p.path);
+
+      card.innerHTML = `
+        <div class="compact-info">
+          <span class="compact-id">NO.${p.id}</span>
+          <span class="compact-cat cat-${p.cat}">${p.catName}</span>
+          <span class="compact-title" title="${p.title}">${p.title}</span>
+        </div>
+        <div class="compact-btn" title="立即体验">
+          <i class="fa-solid fa-play"></i>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  } else {
+    // 详细图文排列模式 (Card View)
+    grid.className = 'grid view-card';
+    filtered.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const originClass = p.origin === '网友设计' ? 'tag-net' : '';
+      const originIcon = p.origin === '网友设计' ? '<i class="fa-solid fa-palette"></i> ' : '<i class="fa-solid fa-wand-magic-sparkles"></i> ';
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="card-badges">
+            <span class="card-id">NO.${p.id}</span>
+            <span class="card-cat cat-${p.cat}">${p.catName}</span>
+          </div>
+          <span class="tag-origin ${originClass}">${originIcon}${p.origin}</span>
+        </div>
+        <h3 class="card-title">${p.title}</h3>
+        <p class="card-desc">${p.desc}</p>
+        <div class="card-actions">
+          <button class="btn-play" onclick="openModal('${p.id}', '${p.title}', '${p.path}')">
+            <i class="fa-solid fa-play"></i> 立即体验
+          </button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+}
+
+// 筛选切换
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderGrid(btn.dataset.cat, currentViewMode);
+  };
+});
+
+// 全屏模态弹窗逻辑
+function openModal(id, title, path) {
+  const modal = document.getElementById('modal');
+  const frame = document.getElementById('game-frame');
+  document.getElementById('modal-id').textContent = 'NO.' + id;
+  document.getElementById('modal-title').textContent = title;
+  frame.src = path;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  const modal = document.getElementById('modal');
+  const frame = document.getElementById('game-frame');
+  frame.src = '';
+  modal.classList.remove('open');
+  document.body.style.overflow = 'auto';
+}
+
+// Esc 退出全屏体验返回主页
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ==================== 电影级科技接入音效系统 ====================
+let bootAudioCtx = null;
+
+function playBootSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!bootAudioCtx) bootAudioCtx = new AudioContext();
+    if (bootAudioCtx.state === 'suspended') bootAudioCtx.resume();
+
+    const t = bootAudioCtx.currentTime;
+
+    // 1. 全息激光识别与确认高频琶音 (Laser Pulse Triplets)
+    [880, 1318.5, 1760, 2637].forEach((freq, idx) => {
+      const osc = bootAudioCtx.createOscillator();
+      const gain = bootAudioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t + idx * 0.05);
+      gain.gain.setValueAtTime(0.08, t + idx * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.05 + 0.28);
+      osc.connect(gain);
+      gain.connect(bootAudioCtx.destination);
+      osc.start(t + idx * 0.05);
+      osc.stop(t + idx * 0.05 + 0.3);
+    });
+
+    // 2. 次低频充能共鸣 (Sub-Bass Energy Swell: 50Hz -> 110Hz)
+    const subOsc = bootAudioCtx.createOscillator();
+    const subGain = bootAudioCtx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(50, t);
+    subOsc.frequency.exponentialRampToValueAtTime(110, t + 0.35);
+    subGain.gain.setValueAtTime(0.18, t);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
+    subOsc.connect(subGain);
+    subGain.connect(bootAudioCtx.destination);
+    subOsc.start(t);
+    subOsc.stop(t + 1.15);
+
+    // 3. 量子矩阵空间展开和弦 (D Maj9 Ambient Pad: D3, A3, F#4, C#5)
+    [146.83, 220, 369.99, 554.37].forEach((chordFreq, i) => {
+      const osc = bootAudioCtx.createOscillator();
+      const g = bootAudioCtx.createGain();
+      osc.type = i % 2 === 0 ? 'triangle' : 'sawtooth';
+      osc.frequency.setValueAtTime(chordFreq, t + 0.1);
+      g.gain.setValueAtTime(0.001, t + 0.1);
+      g.gain.linearRampToValueAtTime(0.06, t + 0.35);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
+      osc.connect(g);
+      g.connect(bootAudioCtx.destination);
+      osc.start(t + 0.1);
+      osc.stop(t + 1.65);
+    });
+
+    // 4. 数字空气撕裂轻扫 (Filtered Warp Air Whoosh)
+    const bufferSize = Math.floor(bootAudioCtx.sampleRate * 1.2);
+    const noiseBuffer = bootAudioCtx.createBuffer(1, bufferSize, bootAudioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+    const whiteNoise = bootAudioCtx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+
+    const filter = bootAudioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(320, t + 0.1);
+    filter.frequency.exponentialRampToValueAtTime(2600, t + 0.45);
+    filter.frequency.exponentialRampToValueAtTime(450, t + 1.15);
+    filter.Q.setValueAtTime(2.8, t + 0.1);
+
+    const noiseGain = bootAudioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0.001, t + 0.1);
+    noiseGain.gain.linearRampToValueAtTime(0.08, t + 0.4);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+
+    whiteNoise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(bootAudioCtx.destination);
+    whiteNoise.start(t + 0.1);
+    whiteNoise.stop(t + 1.25);
+  } catch (e) {
+    // 忽略音频受限异常
+  }
+}
+
+// 多尺寸四方形缺口打开转场类
+class SquareApertureTransition {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.blocks = [];
+    this.animId = null;
+    this.startTime = 0;
+    this.duration = 1500; // 动画总时长 1.5 秒
+    this.onComplete = null;
+    this.running = false;
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  initBlocks() {
+    this.resize();
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+    const maxDist = Math.hypot(cx, cy);
+    this.blocks = [];
+
+    // 基准方块尺寸（依屏幕自适应约 28~44px）
+    const base = Math.max(26, Math.min(42, Math.floor(Math.min(W, H) / 24)));
+    const cols = Math.ceil(W / base);
+    const rows = Math.ceil(H / base);
+    const grid = new Uint8Array(cols * rows);
+
+    // 随机组合生成大小不一的四方形（大 3x3、中 2x2、小 1x1）
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = r * cols + c;
+        if (grid[idx]) continue;
+
+        let multiplier = 1;
+        const rand = Math.random();
+
+        // 尝试生成大方块 (3x3)
+        if (rand < 0.16 && c + 2 < cols && r + 2 < rows) {
+          let fit = true;
+          for (let dr = 0; dr < 3; dr++) {
+            for (let dc = 0; dc < 3; dc++) {
+              if (grid[(r + dr) * cols + (c + dc)]) fit = false;
+            }
+          }
+          if (fit) {
+            multiplier = 3;
+            for (let dr = 0; dr < 3; dr++) {
+              for (let dc = 0; dc < 3; dc++) {
+                grid[(r + dr) * cols + (c + dc)] = 1;
+              }
+            }
+          }
+        }
+        // 尝试生成中方块 (2x2)
+        else if (rand < 0.52 && c + 1 < cols && r + 1 < rows) {
+          let fit = true;
+          for (let dr = 0; dr < 2; dr++) {
+            for (let dc = 0; dc < 2; dc++) {
+              if (grid[(r + dr) * cols + (c + dc)]) fit = false;
+            }
+          }
+          if (fit) {
+            multiplier = 2;
+            for (let dr = 0; dr < 2; dr++) {
+              for (let dc = 0; dc < 2; dc++) {
+                grid[(r + dr) * cols + (c + dc)] = 1;
+              }
+            }
+          }
+        }
+
+        if (multiplier === 1) {
+          grid[idx] = 1;
+        }
+
+        const w = multiplier * base;
+        const h = multiplier * base;
+        const x = c * base;
+        const y = r * base;
+        const bcx = x + w / 2;
+        const bcy = y + h / 2;
+        const dist = Math.hypot(bcx - cx, bcy - cy);
+        const normDist = dist / maxDist; // 0.0 (中心) -> 1.0 (四角)
+
+        // 核心：从中间逐渐向外展开！中心 delay = 0 最先产生缺口！
+        const delay = Math.pow(normDist, 0.85) * (this.duration * 0.72) + Math.random() * (this.duration * 0.18);
+        const fadeDuration = 320 + Math.random() * 160;
+
+        this.blocks.push({
+          x, y, w, h,
+          cx: bcx, cy: bcy,
+          delay,
+          fadeDuration,
+          multiplier
+        });
+      }
+    }
+  }
+
+  start(onComplete) {
+    this.initBlocks();
+    this.onComplete = onComplete;
+    this.startTime = performance.now();
+    this.running = true;
+    this.render();
+  }
+
+  render() {
+    if (!this.running) return;
+    const now = performance.now();
+    const elapsed = now - this.startTime;
+    const ctx = this.ctx;
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+
+    ctx.clearRect(0, 0, W, H);
+    let anyAlive = false;
+
+    for (let i = 0; i < this.blocks.length; i++) {
+      const b = this.blocks[i];
+      if (elapsed < b.delay) {
+        // 未开始消散：实心黑色方块遮罩
+        anyAlive = true;
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(b.x, b.y, b.w + 0.5, b.h + 0.5);
+      } else {
+        const p = (elapsed - b.delay) / b.fadeDuration;
+        if (p < 1) {
+          anyAlive = true;
+          // 从中心向内塌陷缩小：形成许多不同尺寸的镂空方形缺口！
+          const scale = 1 - Math.pow(p, 2.2);
+          const curW = b.w * scale;
+          const curH = b.h * scale;
+          const curX = b.cx - curW / 2;
+          const curY = b.cy - curH / 2;
+
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(curX, curY, curW, curH);
+
+          // 四方形缺口边缘赛博霓虹蓝微光
+          const alpha = (1 - p) * 0.8;
+          ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+          ctx.lineWidth = b.multiplier > 1 ? 1.5 : 1;
+          ctx.strokeRect(curX, curY, curW, curH);
+        }
+        // p >= 1 时：该方块完全消失，透明缺口显露！
+      }
+    }
+
+    if (anyAlive && elapsed < this.duration + 500) {
+      this.animId = requestAnimationFrame(() => this.render());
+    } else {
+      this.running = false;
+      ctx.clearRect(0, 0, W, H);
+      if (this.onComplete) this.onComplete();
+    }
+  }
+
+  destroy() {
+    this.running = false;
+    if (this.animId) cancelAnimationFrame(this.animId);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+}
+
+// ==================== 登录界面彩虹鼠标与全息背景特效 ====================
+class BootScreenFX {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.running = false;
+    this.animId = null;
+
+    this.mouse = { x: -100, y: -100, active: false, speed: 0, onCard: false };
+    this.lastMouse = { x: -100, y: -100 };
+    this.trail = [];
+    this.sparkles = [];
+    this.ripples = [];
+    this.ambientParticles = [];
+    this.baseHue = 0;
+    this.gridOffset = 0;
+
+    this.onMove = this.handleMove.bind(this);
+    this.onDown = this.handleDown.bind(this);
+    this.onLeave = this.handleLeave.bind(this);
+  }
+
+  init() {
+    this.resize();
+    this.initAmbient();
+    const target = document.getElementById('boot-screen');
+    target.addEventListener('pointermove', this.onMove);
+    target.addEventListener('pointerdown', this.onDown);
+    target.addEventListener('pointerleave', this.onLeave);
+
+    // 绑定卡片交互：鼠标进入登录卡片时的 3D 全息视差与扫描
+    const card = document.getElementById('boot-card');
+    if (card) {
+      card.onpointerenter = () => {
+        card.classList.add('hovered');
+        this.mouse.onCard = true;
+      };
+      card.onpointermove = (e) => {
+        const rect = card.getBoundingClientRect();
+        const cardX = e.clientX - rect.left - rect.width / 2;
+        const cardY = e.clientY - rect.top - rect.height / 2;
+        const rotY = (cardX / (rect.width / 2)) * 8;
+        const rotX = -(cardY / (rect.height / 2)) * 8;
+        card.style.transform = `perspective(800px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(1.02)`;
+      };
+      card.onpointerleave = () => {
+        card.classList.remove('hovered');
+        card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1)';
+        this.mouse.onCard = false;
+      };
+    }
+
+    this.running = true;
+    this.render();
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  initAmbient() {
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    this.ambientParticles = [];
+    // 增加至 65 颗大颗粒高亮星辰
+    const count = Math.min(65, Math.floor((W * H) / 16000));
+    for (let i = 0; i < count; i++) {
+      this.ambientParticles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.55,
+        vy: (Math.random() - 0.5) * 0.55,
+        size: 2.2 + Math.random() * 3.2,
+        hue: (i * 35) % 360,
+        alpha: 0.4 + Math.random() * 0.5,
+        pulse: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  handleMove(e) {
+    const x = e.clientX;
+    const y = e.clientY;
+    const dx = x - this.lastMouse.x;
+    const dy = y - this.lastMouse.y;
+    const dist = Math.hypot(dx, dy);
+
+    this.mouse.x = x;
+    this.mouse.y = y;
+    this.mouse.active = true;
+    this.mouse.speed = dist;
+    this.lastMouse.x = x;
+    this.lastMouse.y = y;
+
+    // 加入彩虹流光轨迹点
+    this.trail.push({
+      x, y,
+      time: performance.now(),
+      hue: this.baseHue,
+      size: Math.min(18, 5 + dist * 0.3)
+    });
+    if (this.trail.length > 36) this.trail.shift();
+
+    // 移动时抛洒七彩高亮星芒
+    if (dist > 2 && Math.random() < 0.85) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = 0.8 + Math.random() * 3;
+      this.sparkles.push({
+        x: x + (Math.random() - 0.5) * 10,
+        y: y + (Math.random() - 0.5) * 10,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        hue: (this.baseHue + Math.random() * 80) % 360,
+        size: 3.5 + Math.random() * 5.5,
+        rot: Math.random() * Math.PI,
+        rotSpd: (Math.random() - 0.5) * 0.25,
+        life: 1.0,
+        decay: 0.02 + Math.random() * 0.02
+      });
+    }
+  }
+
+  handleDown(e) {
+    const x = e.clientX;
+    const y = e.clientY;
+    // 点击触发强力彩虹涟漪冲击波
+    this.ripples.push({
+      x, y,
+      r: 8,
+      maxR: 200 + Math.random() * 60,
+      hue: this.baseHue,
+      life: 1.0
+    });
+
+    // 喷射 20 颗向四周辐射的七彩高能火花
+    for (let i = 0; i < 20; i++) {
+      const angle = (i / 20) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+      const spd = 2.5 + Math.random() * 5.5;
+      this.sparkles.push({
+        x, y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        hue: (this.baseHue + i * 18) % 360,
+        size: 5 + Math.random() * 6,
+        rot: Math.random() * Math.PI,
+        rotSpd: (Math.random() - 0.5) * 0.3,
+        life: 1.0,
+        decay: 0.018 + Math.random() * 0.018
+      });
+    }
+  }
+
+  handleLeave() {
+    this.mouse.active = false;
+  }
+
+  render() {
+    if (!this.running) return;
+    const ctx = this.ctx;
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    const now = performance.now();
+
+    this.baseHue = (this.baseHue + 1.2) % 360;
+    this.gridOffset = (this.gridOffset + 0.6) % 40;
+
+    // 纯黑背景
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, H);
+
+    // ================= 1. 鲜明的高光流体彩虹星云 =================
+    ctx.save();
+    // 星云 1：左上方青蓝高能发光云
+    const neb1 = ctx.createRadialGradient(W * 0.2, H * 0.25, 20, W * 0.2, H * 0.25, Math.min(W, H) * 0.45);
+    neb1.addColorStop(0, 'rgba(0, 240, 255, 0.16)');
+    neb1.addColorStop(0.5, 'rgba(0, 150, 255, 0.08)');
+    neb1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = neb1;
+    ctx.fillRect(0, 0, W, H);
+
+    // 星云 2：右侧霓虹紫梦幻光晕
+    const neb2 = ctx.createRadialGradient(W * 0.8, H * 0.6, 20, W * 0.8, H * 0.6, Math.min(W, H) * 0.5);
+    neb2.addColorStop(0, 'rgba(168, 85, 247, 0.18)');
+    neb2.addColorStop(0.5, 'rgba(236, 72, 153, 0.08)');
+    neb2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = neb2;
+    ctx.fillRect(0, 0, W, H);
+
+    // 星云 3：中心暖金品红脉动光斑
+    const nebPulse = 0.12 + 0.04 * Math.sin(now * 0.002);
+    const neb3 = ctx.createRadialGradient(W * 0.5, H * 0.5, 10, W * 0.5, H * 0.5, Math.min(W, H) * 0.4);
+    neb3.addColorStop(0, `rgba(244, 63, 94, ${nebPulse})`);
+    neb3.addColorStop(0.6, 'rgba(56, 189, 248, 0.05)');
+    neb3.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = neb3;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    // ================= 2. 鲜明的赛博透视网格地平线 =================
+    ctx.save();
+    const horizonY = H * 0.58;
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+    ctx.lineWidth = 1;
+
+    // 纵深透视线
+    const centerX = W / 2;
+    const numLines = 26;
+    for (let i = 0; i <= numLines; i++) {
+      const bottomX = (i / numLines) * W;
+      ctx.beginPath();
+      ctx.moveTo(centerX + (bottomX - centerX) * 0.08, horizonY);
+      ctx.lineTo(bottomX, H);
+      ctx.stroke();
+    }
+
+    // 横向滚动网格线
+    for (let d = this.gridOffset; d < H - horizonY; d += 36) {
+      const py = horizonY + Math.pow(d / (H - horizonY), 1.6) * (H - horizonY);
+      const alpha = Math.min(0.28, (py - horizonY) / (H - horizonY) * 0.35);
+      ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(0, py);
+      ctx.lineTo(W, py);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // ================= 3. 大颗粒高亮度量子粒子与引力物理互动 =================
+    for (let i = 0; i < this.ambientParticles.length; i++) {
+      const p = this.ambientParticles[i];
+
+      // 鼠标引力物理互动
+      if (this.mouse.active) {
+        const dx = p.x - this.mouse.x;
+        const dy = p.y - this.mouse.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 160 && d > 1) {
+          const force = (1 - d / 160) * 2.2;
+          p.x += (dx / d) * force;
+          p.y += (dy / d) * force;
+        }
+      }
+
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = W; else if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; else if (p.y > H) p.y = 0;
+      p.pulse += 0.03;
+      const alpha = p.alpha * (0.7 + 0.3 * Math.sin(p.pulse));
+
+      // 绘制粒子发光光晕
+      ctx.save();
+      ctx.shadowColor = `hsla(${p.hue}, 100%, 65%, 0.8)`;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = `hsla(${p.hue}, 100%, 75%, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // 粒子鲜明发光连线
+      for (let j = i + 1; j < this.ambientParticles.length; j++) {
+        const p2 = this.ambientParticles[j];
+        const d = Math.hypot(p.x - p2.x, p.y - p2.y);
+        if (d < 130) {
+          ctx.strokeStyle = `hsla(${(p.hue + p2.hue) / 2}, 95%, 65%, ${(1 - d / 130) * 0.28})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // ================= 4. 绘制彩虹点击涟漪冲击波 =================
+    for (let i = this.ripples.length - 1; i >= 0; i--) {
+      const rip = this.ripples[i];
+      rip.r += (rip.maxR - rip.r) * 0.12 + 2;
+      rip.life -= 0.02;
+      if (rip.life <= 0 || rip.r >= rip.maxR) {
+        this.ripples.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.lineWidth = 3.5 * rip.life;
+      ctx.shadowColor = `hsla(${rip.hue}, 100%, 60%, 0.9)`;
+      ctx.shadowBlur = 16;
+      ctx.strokeStyle = `hsla(${rip.hue}, 100%, 65%, ${rip.life * 0.9})`;
+      ctx.beginPath();
+      ctx.arc(rip.x, rip.y, rip.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ================= 5. 绘制彩虹流光光带拖尾 =================
+    const validTrail = [];
+    for (let i = 0; i < this.trail.length; i++) {
+      const pt = this.trail[i];
+      const age = now - pt.time;
+      if (age < 520) validTrail.push(pt);
+    }
+    this.trail = validTrail;
+
+    if (this.trail.length > 1) {
+      for (let i = 0; i < this.trail.length - 1; i++) {
+        const p1 = this.trail[i];
+        const p2 = this.trail[i + 1];
+        const ratio = i / this.trail.length;
+        const lineHue = (p1.hue + ratio * 140) % 360;
+
+        ctx.save();
+        ctx.strokeStyle = `hsla(${lineHue}, 100%, 65%, ${ratio * 0.9})`;
+        ctx.shadowColor = `hsla(${lineHue}, 100%, 60%, 0.7)`;
+        ctx.shadowBlur = 12;
+        ctx.lineWidth = ratio * p1.size;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // ================= 6. 绘制七彩星芒星尘 =================
+    for (let i = this.sparkles.length - 1; i >= 0; i--) {
+      const s = this.sparkles[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vx *= 0.95;
+      s.vy *= 0.95;
+      s.rot += s.rotSpd;
+      s.life -= s.decay;
+
+      if (s.life <= 0) {
+        this.sparkles.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.rot);
+      ctx.fillStyle = `hsla(${s.hue}, 100%, 75%, ${s.life})`;
+      ctx.shadowColor = `hsla(${s.hue}, 100%, 65%, ${s.life})`;
+      ctx.shadowBlur = 12;
+
+      const r = s.size * s.life;
+      ctx.beginPath();
+      ctx.moveTo(0, -r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.quadraticCurveTo(0, 0, 0, r);
+      ctx.quadraticCurveTo(0, 0, -r, 0);
+      ctx.quadraticCurveTo(0, 0, 0, -r);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ================= 7. 鼠标进入登录画面的不一样呈现 (卡片上方特殊全息准星) =================
+    if (this.mouse.active) {
+      ctx.save();
+      ctx.translate(this.mouse.x, this.mouse.y);
+
+      if (this.mouse.onCard) {
+        // 【专属效果】：当鼠标移入登录卡片内部时，变为高精度全息战术锁定准星！
+        const reticleHue = (now * 0.2) % 360;
+        ctx.strokeStyle = `hsla(${reticleHue}, 100%, 65%, 0.95)`;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = `hsla(${reticleHue}, 100%, 60%, 0.8)`;
+        ctx.shadowBlur = 12;
+
+        // 旋转瞄准四角括号
+        ctx.save();
+        ctx.rotate(now * 0.002);
+        const s = 14;
+        // 左上
+        ctx.beginPath(); ctx.moveTo(-s, -s + 6); ctx.lineTo(-s, -s); ctx.lineTo(-s + 6, -s); ctx.stroke();
+        // 右上
+        ctx.beginPath(); ctx.moveTo(s - 6, -s); ctx.lineTo(s, -s); ctx.lineTo(s, -s + 6); ctx.stroke();
+        // 右下
+        ctx.beginPath(); ctx.moveTo(s, s - 6); ctx.lineTo(s, s); ctx.lineTo(s - 6, s); ctx.stroke();
+        // 左下
+        ctx.beginPath(); ctx.moveTo(-s + 6, s); ctx.lineTo(-s, s); ctx.lineTo(-s, s - 6); ctx.stroke();
+        ctx.restore();
+
+        // 十字准星微线
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-6, 0); ctx.lineTo(6, 0);
+        ctx.moveTo(0, -6); ctx.lineTo(0, 6);
+        ctx.stroke();
+
+        // 中心高能发光核
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // 【常态效果】：在全屏深空背景时，呈现旋转彩虹流光光环
+        const grad = ctx.createConicGradient(now * 0.003, 0, 0);
+        grad.addColorStop(0, '#ff0055');
+        grad.addColorStop(0.2, '#ffaa00');
+        grad.addColorStop(0.4, '#00ff88');
+        grad.addColorStop(0.6, '#00ffff');
+        grad.addColorStop(0.8, '#aa00ff');
+        grad.addColorStop(1, '#ff0055');
+
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2.8;
+        ctx.shadowColor = `hsla(${this.baseHue}, 100%, 65%, 0.9)`;
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    this.animId = requestAnimationFrame(() => this.render());
+  }
+
+  destroy() {
+    this.running = false;
+    if (this.animId) cancelAnimationFrame(this.animId);
+    const target = document.getElementById('boot-screen');
+    if (target) {
+      target.removeEventListener('pointermove', this.onMove);
+      target.removeEventListener('pointerdown', this.onDown);
+      target.removeEventListener('pointerleave', this.onLeave);
+    }
+    const card = document.getElementById('boot-card');
+    if (card) {
+      card.onpointerenter = null;
+      card.onpointermove = null;
+      card.onpointerleave = null;
+      card.style.transform = '';
+      card.classList.remove('hovered');
+    }
+    this.trail = [];
+    this.sparkles = [];
+    this.ripples = [];
+  }
+}
+
+let apertureTransition = null;
+let bootFX = null;
+
+function showBootScreen(force = false) {
+  const bootScreen = document.getElementById('boot-screen');
+  const bootCard = document.getElementById('boot-card');
+  const canvas = document.getElementById('boot-canvas');
+
+  if (apertureTransition) apertureTransition.destroy();
+  if (bootFX) bootFX.destroy();
+
+  bootScreen.classList.remove('hidden');
+  bootCard.classList.remove('dismissing');
+  bootCard.style.display = 'block';
+
+  // 启动彩虹滑鼠与全息背景特效系统
+  bootFX = new BootScreenFX(canvas);
+  bootFX.init();
+}
+
+function executeBootLogin() {
+  const bootScreen = document.getElementById('boot-screen');
+  const bootCard = document.getElementById('boot-card');
+  const canvas = document.getElementById('boot-canvas');
+
+  // 防止连击
+  if (bootCard.classList.contains('dismissing')) return;
+
+  // 1. 播放电影级科技空间接入音效
+  playBootSound();
+
+  // 2. 卡片收缩淡出
+  bootCard.classList.add('dismissing');
+
+  // 3. 停止鼠标彩虹渲染，启动四方形缺口打开转场动画
+  setTimeout(() => {
+    if (bootFX) bootFX.destroy();
+    bootCard.style.display = 'none';
+
+    if (!apertureTransition) {
+      apertureTransition = new SquareApertureTransition(canvas);
+    }
+    apertureTransition.start(() => {
+      // 动画完成，完全隐藏遮罩
+      bootScreen.classList.add('hidden');
+      sessionStorage.setItem('sinmin_boot_entered', 'true');
+    });
+  }, 220);
+}
+
+// 支持键盘任意键或回车直接进入
+window.addEventListener('keydown', e => {
+  const bootScreen = document.getElementById('boot-screen');
+  if (bootScreen && !bootScreen.classList.contains('hidden')) {
+    if (['Control', 'Shift', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
+    e.preventDefault();
+    executeBootLogin();
+  }
+});
+
+// 窗口尺寸自适应
+window.addEventListener('resize', () => {
+  if (bootFX && bootFX.running) bootFX.resize();
+  if (apertureTransition && apertureTransition.running) apertureTransition.resize();
+});
+
+// 首次渲染
+renderGrid();
+
+// 初始化开机检查（支持会话刷新平滑，同时默认初次必现开机登录）
+window.addEventListener('DOMContentLoaded', () => {
+  showBootScreen();
+});
+</script>
+</body>
+</html>
+

@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>星空收集者：终极版 - Star Collector: Ultimate Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&family=Orbitron:wght@600;800;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #04050c;
+            font-family: 'Noto Sans SC', sans-serif;
+            touch-action: none;
+        }
+
+        /* 宇宙深空渐变背景 */
+        .space-bg {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at bottom, #162238 0%, #06070d 100%);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.8s ease;
+        }
+
+        /* FEVER 狂热模式背景特效 */
+        .space-bg.fever-active {
+            background: radial-gradient(ellipse at bottom, #3b1054 0%, #1a062b 60%, #07030d 100%);
+        }
+
+        /* 星云装饰发光效果 */
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(85px);
+            opacity: 0.38;
+            pointer-events: none;
+            z-index: 1;
+            transition: all 0.8s ease;
+        }
+        .nebula-1 {
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, #7928ca, transparent 70%);
+            top: 8%;
+            left: 12%;
+            animation: floatNebula 18s ease-in-out infinite alternate;
+        }
+        .nebula-2 {
+            width: 520px;
+            height: 520px;
+            background: radial-gradient(circle, #0070f3, transparent 70%);
+            bottom: 8%;
+            right: 10%;
+            animation: floatNebula 22s ease-in-out infinite alternate-reverse;
+        }
+        .space-bg.fever-active .nebula-1 {
+            background: radial-gradient(circle, #f59e0b, transparent 70%);
+            opacity: 0.55;
+            transform: scale(1.25);
+        }
+        .space-bg.fever-active .nebula-2 {
+            background: radial-gradient(circle, #ec4899, transparent 70%);
+            opacity: 0.55;
+            transform: scale(1.25);
+        }
+
+        @keyframes floatNebula {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(45px, -35px) scale(1.15); }
+        }
+
+        /* CSS 多层视差滚动星空 */
+        .star-layer {
+            position: absolute;
+            top: -100%;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 200%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .stars-small {
+            background-image: 
+                radial-gradient(1px 1px at 25px 5px, #fff, transparent),
+                radial-gradient(1px 1px at 50px 25px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 125px 20px, #fff, transparent),
+                radial-gradient(1.5px 1.5px at 50px 75px, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 15px 125px, #fff, transparent),
+                radial-gradient(1px 1px at 110px 80px, rgba(255,255,255,0.7), transparent),
+                radial-gradient(1.5px 1.5px at 90px 140px, #fff, transparent);
+            background-repeat: repeat;
+            background-size: 150px 150px;
+            animation: scrollStars 32s linear infinite;
+            opacity: 0.65;
+        }
+
+        .stars-medium {
+            background-image: 
+                radial-gradient(2px 2px at 40px 60px, #fff, transparent),
+                radial-gradient(2px 2px at 110px 90px, #a5f3fc, transparent),
+                radial-gradient(2px 2px at 180px 30px, #fde047, transparent),
+                radial-gradient(1.5px 1.5px at 70px 170px, #fff, transparent),
+                radial-gradient(2px 2px at 150px 140px, #e879f9, transparent);
+            background-repeat: repeat;
+            background-size: 220px 220px;
+            animation: scrollStars 20s linear infinite;
+            opacity: 0.78;
+        }
+
+        .stars-large {
+            background-image: 
+                radial-gradient(2.5px 2.5px at 80px 120px, #fff, transparent),
+                radial-gradient(3px 3px at 220px 80px, #38bdf8, transparent),
+                radial-gradient(2.5px 2.5px at 150px 260px, #facc15, transparent);
+            background-repeat: repeat;
+            background-size: 300px 300px;
+            animation: scrollStars 12s linear infinite;
+            opacity: 0.92;
+        }
+
+        .space-bg.fever-active .stars-large {
+            animation-duration: 5s;
+        }
+        .space-bg.fever-active .stars-medium {
+            animation-duration: 9s;
+        }
+
+        @keyframes scrollStars {
+            from { transform: translateY(0); }
+            to { transform: translateY(50%); }
+        }
+
+        /* 偶发流星动画 */
+        .shooting-star {
+            position: absolute;
+            top: 12%;
+            left: 85%;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.95), transparent);
+            transform: rotate(-38deg);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 3;
+            animation: shootStar 9s ease-in-out infinite;
+        }
+        .shooting-star-2 {
+            top: 28%;
+            left: 65%;
+            animation-delay: 4.5s;
+            animation-duration: 11s;
+        }
+        @keyframes shootStar {
+            0%, 88% { opacity: 0; transform: translate(0, 0) rotate(-38deg) scaleX(0.4); }
+            91% { opacity: 1; transform: translate(-180px, 140px) rotate(-38deg) scaleX(1.1); }
+            95%, 100% { opacity: 0; transform: translate(-420px, 330px) rotate(-38deg) scaleX(0.2); }
+        }
+
+        /* 游戏主舞台容器 */
+        #game-stage {
+            position: relative;
+            width: 100%;
+            max-width: 560px;
+            height: 100%;
+            z-index: 10;
+            box-shadow: 0 0 65px rgba(0, 212, 255, 0.16);
+            border-left: 1px solid rgba(255, 255, 255, 0.09);
+            border-right: 1px solid rgba(255, 255, 255, 0.09);
+            overflow: hidden;
+            transition: box-shadow 0.5s ease, border-color 0.5s ease;
+        }
+
+        #game-stage.fever-stage {
+            box-shadow: 0 0 85px rgba(245, 158, 11, 0.35), inset 0 0 40px rgba(236, 72, 153, 0.22);
+            border-left-color: rgba(251, 191, 36, 0.35);
+            border-right-color: rgba(251, 191, 36, 0.35);
+        }
+
+        /* 受伤红光闪烁效果 */
+        .damage-flash {
+            animation: flashRed 0.42s ease-out;
+        }
+        @keyframes flashRed {
+            0% { box-shadow: inset 0 0 90px rgba(239, 68, 68, 0.9); }
+            100% { box-shadow: inset 0 0 0px rgba(239, 68, 68, 0); }
+        }
+
+        /* 护盾抵消蓝光闪烁 */
+        .shield-flash {
+            animation: flashCyan 0.45s ease-out;
+        }
+        @keyframes flashCyan {
+            0% { box-shadow: inset 0 0 95px rgba(56, 189, 248, 0.9); }
+            100% { box-shadow: inset 0 0 0px rgba(56, 189, 248, 0); }
+        }
+
+        /* 游戏画布 */
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: block;
+        }
+
+        /* 收集篮：纯 CSS + SVG 飞船容器 */
+        #collector {
+            position: absolute;
+            bottom: 44px;
+            left: 50%;
+            width: 92px;
+            height: 92px;
+            transform: translateX(-50%);
+            z-index: 15;
+            pointer-events: none;
+            will-change: transform, left;
+            transition: filter 0.2s;
+        }
+
+        .collector-glow {
+            filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.78));
+        }
+
+        .collector-fever-glow {
+            filter: drop-shadow(0 0 22px rgba(250, 204, 21, 0.95)) drop-shadow(0 0 35px rgba(236, 72, 153, 0.8));
+        }
+
+        .collector-hit {
+            animation: shakeShip 0.42s cubic-bezier(.36,.07,.19,.97) both;
+            filter: drop-shadow(0 0 24px rgba(239, 68, 68, 0.98)) !important;
+        }
+
+        @keyframes shakeShip {
+            10%, 90% { transform: translateX(-50%) translate3d(-5px, 0, 0) rotate(-7deg); }
+            20%, 80% { transform: translateX(-50%) translate3d(6px, 0, 0) rotate(7deg); }
+            30%, 50%, 70% { transform: translateX(-50%) translate3d(-7px, 0, 0) rotate(-5deg); }
+            40%, 60% { transform: translateX(-50%) translate3d(7px, 0, 0) rotate(5deg); }
+        }
+
+        /* 喷射尾焰动画 */
+        .thruster-flame {
+            transform-origin: center top;
+            animation: flamePulse 0.11s infinite alternate;
+        }
+        @keyframes flamePulse {
+            0% { transform: scaleY(0.84) scaleX(0.94); opacity: 0.85; }
+            100% { transform: scaleY(1.24) scaleX(1.06); opacity: 1; }
+        }
+
+        /* 能量引力波动画 */
+        .tractor-beam {
+            animation: beamWave 1.3s ease-in-out infinite alternate;
+        }
+        @keyframes beamWave {
+            0% { opacity: 0.35; transform: translateY(0) scaleX(0.95); }
+            100% { opacity: 0.78; transform: translateY(-3px) scaleX(1.05); }
+        }
+
+        /* 飞船外围全息能量护盾圈 */
+        #ship-shield-ring {
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            border: 2.5px solid rgba(56, 189, 248, 0.85);
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 40%, rgba(56, 189, 248, 0.32) 100%);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.65), inset 0 0 15px rgba(56, 189, 248, 0.45);
+            pointer-events: none;
+            animation: shieldSpin 4s linear infinite;
+        }
+        @keyframes shieldSpin {
+            0% { transform: rotate(0deg) scale(0.98); }
+            50% { transform: rotate(180deg) scale(1.03); }
+            100% { transform: rotate(360deg) scale(0.98); }
+        }
+
+        /* 飞船磁铁引力脉冲环 */
+        #ship-magnet-ring {
+            position: absolute;
+            inset: -26px;
+            border-radius: 50%;
+            border: 2px dashed rgba(192, 132, 252, 0.75);
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
+            pointer-events: none;
+            animation: magnetPulse 1.1s ease-in-out infinite;
+        }
+        @keyframes magnetPulse {
+            0% { transform: scale(1.18); opacity: 0.25; }
+            50% { opacity: 0.8; }
+            100% { transform: scale(0.82); opacity: 0.15; }
+        }
+
+        /* 双联激光炮挂载点 */
+        #ship-laser-wing {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        /* 数字与科技感字体 */
+        .font-cyber {
+            font-family: 'Orbitron', 'Noto Sans SC', sans-serif;
+        }
+
+        /* 毛玻璃卡片 */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), 0 0 30px rgba(56, 189, 248, 0.18);
+        }
+
+        /* 渐变发光按钮 */
+        .cyber-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+            background-size: 200% 200%;
+            animation: gradientMove 4s ease infinite;
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .cyber-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 0 35px rgba(236, 72, 153, 0.85), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+        }
+        .cyber-btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 皮肤选择卡片 */
+        .skin-card {
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            background: rgba(15, 23, 42, 0.65);
+        }
+        .skin-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+        .skin-card.selected {
+            border-color: #38bdf8;
+            background: linear-gradient(180deg, rgba(14, 165, 233, 0.25) 0%, rgba(15, 23, 42, 0.85) 100%);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.2);
+            transform: translateY(-3px) scale(1.03);
+        }
+
+        /* 生命值心形跳动动画 */
+        .heart-icon {
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.7));
+        }
+        .heart-lost {
+            transform: scale(0.55);
+            opacity: 0.18;
+            filter: grayscale(100%) drop-shadow(0 0 0px transparent);
+        }
+
+        /* 弹窗与徽章动画 */
+        .badge-pop {
+            animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.65); opacity: 0; }
+            55% { transform: scale(1.18); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 成就解锁通知横幅过渡 */
+        #achievement-toast {
+            transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* 自定义滚动条隐藏 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="space-bg" class="space-bg">
+        <!-- 梦幻星云层 -->
+        <div class="nebula nebula-1"></div>
+        <div class="nebula nebula-2"></div>
+
+        <!-- 偶发流星 -->
+        <div class="shooting-star"></div>
+        <div class="shooting-star shooting-star-2"></div>
+
+        <!-- 三层视差滚动星空 -->
+        <div class="star-layer stars-small"></div>
+        <div class="star-layer stars-medium"></div>
+        <div class="star-layer stars-large"></div>
+
+        <!-- 游戏主舞台 -->
+        <div id="game-stage">
+
+            <!-- 顶部成就解锁通知 Toast -->
+            <div id="achievement-toast" class="absolute top-24 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 pointer-events-none z-40 glass-panel px-4 py-2.5 rounded-2xl border border-amber-400/60 flex items-center gap-3 shadow-lg shadow-amber-500/20 whitespace-nowrap">
+                <div id="toast-icon" class="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-300/50 flex items-center justify-center text-lg">🏆</div>
+                <div class="text-left">
+                    <div class="text-[10px] font-cyber text-amber-300 uppercase tracking-wider">ACHIEVEMENT UNLOCKED</div>
+                    <div id="toast-title" class="text-xs sm:text-sm font-bold text-white">成就达成！</div>
+                </div>
+            </div>
+
+            <!-- 顶部 HUD 状态栏 -->
+            <header class="absolute top-0 left-0 right-0 z-20 p-3 sm:p-4 flex flex-col gap-2 pointer-events-none">
+                <div class="flex justify-between items-center gap-2">
+                    <!-- 左侧：得分、等级与连击倍率 -->
+                    <div class="glass-panel px-3.5 py-2 rounded-2xl flex items-center gap-2.5 pointer-events-auto">
+                        <div class="w-9 h-9 rounded-xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-amber-300" style="filter: drop-shadow(0 0 6px rgba(251,191,36,0.8));" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] text-slate-300 font-bold tracking-wider uppercase">SCORE</span>
+                                <span id="level-badge" class="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 font-cyber">LV.1</span>
+                                <span id="combo-badge" class="hidden text-[10px] px-1.5 py-0.2 rounded bg-fuchsia-500/30 border border-fuchsia-400/50 text-fuchsia-200 font-cyber font-bold">0 COMBO</span>
+                            </div>
+                            <div class="flex items-baseline gap-2">
+                                <span id="score-display" class="text-xl sm:text-2xl font-extrabold text-white font-cyber tracking-wide leading-tight">0</span>
+                                <span id="multiplier-badge" class="hidden text-xs font-cyber font-black text-amber-300 animate-pulse">x1.5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：生命值、暂停与音效按钮 -->
+                    <div class="flex items-center gap-2 pointer-events-auto">
+                        <div id="lives-container" class="glass-panel px-3 py-2 rounded-2xl flex items-center gap-1">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-rose-500 heart-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-rose-500 heart-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-rose-500 heart-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </div>
+
+                        <!-- 暂停按钮 -->
+                        <button id="pause-toggle" title="暂停游戏 (P)" class="glass-panel w-10 h-10 rounded-2xl flex items-center justify-center text-slate-200 hover:text-white hover:border-cyan-400/50 transition active:scale-90">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                            </svg>
+                        </button>
+
+                        <!-- 音效开关 -->
+                        <button id="sound-toggle" title="音效开关" class="glass-panel w-10 h-10 rounded-2xl flex items-center justify-center text-cyan-300 hover:text-white hover:border-cyan-400/50 transition active:scale-90">
+                            <svg id="sound-on-icon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                            </svg>
+                            <svg id="sound-off-icon" class="w-5 h-5 hidden text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 第二行：FEVER 狂热能量槽 & 激活中的增益道具状态栏 -->
+                <div class="flex items-center justify-between gap-2">
+                    <!-- FEVER 能量槽 -->
+                    <div class="glass-panel px-3 py-1.5 rounded-xl flex items-center gap-2 flex-1">
+                        <span id="fever-label" class="text-[10px] font-cyber font-bold text-amber-300 tracking-wider shrink-0">🌟 FEVER</span>
+                        <div class="w-full h-2 bg-slate-800/90 rounded-full overflow-hidden border border-white/10">
+                            <div id="fever-bar" class="h-full w-0 bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-300 transition-all duration-150"></div>
+                        </div>
+                    </div>
+
+                    <!-- 增益道具倒计时图标容器 -->
+                    <div id="active-buffs" class="flex items-center gap-1.5">
+                        <!-- 护盾标签 -->
+                        <div id="buff-shield" class="hidden glass-panel px-2 py-1 rounded-xl border border-sky-400/50 items-center gap-1 text-[11px] text-sky-300 font-bold">
+                            <span>🛡️</span><span class="font-cyber">READY</span>
+                        </div>
+                        <!-- 磁铁标签 -->
+                        <div id="buff-magnet" class="hidden glass-panel px-2 py-1 rounded-xl border border-purple-400/50 items-center gap-1 text-[11px] text-purple-300 font-bold">
+                            <span>🧲</span><span id="buff-magnet-time" class="font-cyber">8.0s</span>
+                        </div>
+                        <!-- 激光标签 -->
+                        <div id="buff-laser" class="hidden glass-panel px-2 py-1 rounded-xl border border-rose-400/50 items-center gap-1 text-[11px] text-rose-300 font-bold">
+                            <span>🔫</span><span id="buff-laser-time" class="font-cyber">8.0s</span>
+                        </div>
+                        <!-- 缓速怀表标签 -->
+                        <div id="buff-slow" class="hidden glass-panel px-2 py-1 rounded-xl border border-teal-400/50 items-center gap-1 text-[11px] text-teal-300 font-bold">
+                            <span>⏱️</span><span id="buff-slow-time" class="font-cyber">6.0s</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 底部操作提示与移动端“⚡极速冲刺”按钮 -->
+            <div class="absolute bottom-2.5 left-3 right-3 z-20 flex items-center justify-between pointer-events-none">
+                <div id="control-hint" class="transition-opacity duration-700 opacity-75">
+                    <span class="text-[11px] text-slate-300 bg-slate-900/70 px-3 py-1 rounded-full border border-white/10">
+                        ⌨️ A/D或方向键移动 · 空格冲刺 · 📱 触屏滑动
+                    </span>
+                </div>
+
+                <!-- 极速冲刺按钮（支持点击或按 Space/Shift 触发） -->
+                <button id="dash-btn" class="pointer-events-auto glass-panel px-3.5 py-1.5 rounded-full border border-cyan-400/50 flex items-center gap-1.5 text-xs font-bold text-cyan-200 active:scale-90 transition shadow-lg shadow-cyan-500/20">
+                    <span>⚡ 冲刺</span>
+                    <span id="dash-status" class="font-cyber text-[10px] text-emerald-300">READY</span>
+                </button>
+            </div>
+
+            <!-- 2D 渲染画布（负责绘制星星、陨石、精英晶核陨石、激光束、增益道具、冲刺残影、粒子与飘字） -->
+            <canvas id="game-canvas"></canvas>
+
+            <!-- 底部玩家控制的飞船容器（内含4套可切换 SVG 皮肤 + 护盾/磁铁/激光组件） -->
+            <div id="collector" class="collector-glow">
+                <!-- 磁铁引力场圆环 -->
+                <div id="ship-magnet-ring" class="hidden"></div>
+                <!-- 全息护盾圆环 -->
+                <div id="ship-shield-ring" class="hidden"></div>
+                <!-- 双联激光发射器光效 -->
+                <div id="ship-laser-wing" class="hidden">
+                    <div class="absolute left-1 top-6 w-2.5 h-5 rounded-full bg-rose-500 shadow-[0_0_12px_#f43f5e] border border-white"></div>
+                    <div class="absolute right-1 top-6 w-2.5 h-5 rounded-full bg-rose-500 shadow-[0_0_12px_#f43f5e] border border-white"></div>
+                </div>
+
+                <!-- 皮肤 1：呆萌宇航员舱 (Default Astronaut Pod) -->
+                <svg id="skin-svg-astronaut" class="ship-skin-svg" viewBox="0 0 120 120" width="100%" height="100%" fill="none">
+                    <defs>
+                        <linearGradient id="beamGrad1" x1="60" y1="0" x2="60" y2="42" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0"/>
+                            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.55"/>
+                        </linearGradient>
+                        <linearGradient id="hullGrad1" x1="20" y1="55" x2="100" y2="95" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#f8fafc"/>
+                            <stop offset="50%" stop-color="#cbd5e1"/>
+                            <stop offset="100%" stop-color="#64748b"/>
+                        </linearGradient>
+                        <linearGradient id="visorGrad1" x1="42" y1="30" x2="78" y2="58" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#0ea5e9"/>
+                            <stop offset="50%" stop-color="#1e3a8a"/>
+                            <stop offset="100%" stop-color="#0f172a"/>
+                        </linearGradient>
+                        <linearGradient id="rimGrad1" x1="12" y1="62" x2="108" y2="62" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#ec4899"/>
+                            <stop offset="50%" stop-color="#8b5cf6"/>
+                            <stop offset="100%" stop-color="#06b6d4"/>
+                        </linearGradient>
+                    </defs>
+                    <path class="tractor-beam" d="M14 60 L2 18 L118 18 L106 60 Z" fill="url(#beamGrad1)" />
+                    <ellipse class="tractor-beam" cx="60" cy="24" rx="46" ry="6" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="6 4" fill="none"/>
+                    <g class="thruster-flame">
+                        <path d="M45 94 L60 118 L75 94 Z" fill="#f97316" opacity="0.85"/>
+                        <path d="M50 94 L60 111 L70 94 Z" fill="#fde047"/>
+                        <path d="M27 89 L33 105 L39 89 Z" fill="#38bdf8" opacity="0.85"/>
+                        <path d="M81 89 L87 105 L93 89 Z" fill="#38bdf8" opacity="0.85"/>
+                    </g>
+                    <path d="M30 62 C30 25, 90 25, 90 62" fill="rgba(186, 230, 253, 0.18)" stroke="rgba(125, 211, 252, 0.65)" stroke-width="2"/>
+                    <line x1="60" y1="22" x2="60" y2="12" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="60" cy="10" r="4.5" fill="#f43f5e"/>
+                    <circle cx="60" cy="46" r="21" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+                    <rect x="43" y="34" width="34" height="21" rx="10.5" fill="url(#visorGrad1)" stroke="#38bdf8" stroke-width="1.5"/>
+                    <ellipse cx="51" cy="39" rx="5" ry="2.2" transform="rotate(-15 51 39)" fill="#ffffff" opacity="0.75"/>
+                    <path d="M50 46 Q53 42 56 46" stroke="#7dd3fc" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+                    <path d="M64 46 Q67 42 70 46" stroke="#7dd3fc" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+                    <circle cx="35" cy="58" r="5.5" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+                    <circle cx="85" cy="58" r="5.5" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+                    <path d="M12 62 Q60 72 108 62 L94 92 Q60 100 26 92 Z" fill="url(#hullGrad1)" stroke="#475569" stroke-width="2"/>
+                    <path d="M10 61 Q60 71 110 61" stroke="url(#rimGrad1)" stroke-width="6" stroke-linecap="round"/>
+                    <circle cx="38" cy="78" r="3.5" fill="#38bdf8"/>
+                    <circle cx="60" cy="80" r="4.5" fill="#facc15"/>
+                    <circle cx="82" cy="78" r="3.5" fill="#ec4899"/>
+                </svg>
+
+                <!-- 皮肤 2：星际飞碟 UFO (Cyber UFO) -->
+                <svg id="skin-svg-ufo" class="ship-skin-svg hidden" viewBox="0 0 120 120" width="100%" height="100%" fill="none">
+                    <path class="tractor-beam" d="M20 58 L5 16 L115 16 L100 58 Z" fill="rgba(168, 85, 247, 0.28)" />
+                    <ellipse class="tractor-beam" cx="60" cy="22" rx="48" ry="6" stroke="#c084fc" stroke-width="1.8" stroke-dasharray="5 5" fill="none"/>
+                    <g class="thruster-flame">
+                        <ellipse cx="60" cy="96" rx="22" ry="12" fill="#a855f7" opacity="0.75"/>
+                        <ellipse cx="60" cy="94" rx="12" ry="7" fill="#fde047"/>
+                    </g>
+                    <!-- 飞碟透明座舱与小外星人 -->
+                    <path d="M32 60 C32 22, 88 22, 88 60" fill="rgba(192, 132, 252, 0.25)" stroke="#c084fc" stroke-width="2"/>
+                    <ellipse cx="60" cy="45" rx="14" ry="16" fill="#4ade80"/>
+                    <ellipse cx="54" cy="43" rx="4.5" ry="6.5" transform="rotate(-12 54 43)" fill="#0f172a"/>
+                    <ellipse cx="66" cy="43" rx="4.5" ry="6.5" transform="rotate(12 66 43)" fill="#0f172a"/>
+                    <circle cx="53" cy="41" r="1.5" fill="#ffffff"/>
+                    <circle cx="65" cy="41" r="1.5" fill="#ffffff"/>
+                    <!-- 飞碟金属圆盘主体 -->
+                    <ellipse cx="60" cy="68" rx="52" ry="18" fill="#334155" stroke="#94a3b8" stroke-width="2"/>
+                    <ellipse cx="60" cy="64" rx="48" ry="12" fill="#64748b"/>
+                    <!-- 环形霓虹跑马灯 -->
+                    <circle cx="24" cy="68" r="4.5" fill="#22d3ee"/>
+                    <circle cx="42" cy="73" r="4.5" fill="#facc15"/>
+                    <circle cx="60" cy="75" r="5" fill="#f43f5e"/>
+                    <circle cx="78" cy="73" r="4.5" fill="#facc15"/>
+                    <circle cx="96" cy="68" r="4.5" fill="#22d3ee"/>
+                </svg>
+
+                <!-- 皮肤 3：赤焰火箭号 (Crimson Rocket) -->
+                <svg id="skin-svg-rocket" class="ship-skin-svg hidden" viewBox="0 0 120 120" width="100%" height="100%" fill="none">
+                    <path class="tractor-beam" d="M22 55 L8 16 L112 16 L98 55 Z" fill="rgba(251, 146, 60, 0.28)" />
+                    <g class="thruster-flame">
+                        <path d="M36 92 L46 119 L56 92 Z" fill="#ef4444"/>
+                        <path d="M64 92 L74 119 L84 92 Z" fill="#ef4444"/>
+                        <path d="M40 92 L46 110 L52 92 Z" fill="#fef08a"/>
+                        <path d="M68 92 L74 110 L80 92 Z" fill="#fef08a"/>
+                    </g>
+                    <!-- 两侧红色尾翼 -->
+                    <path d="M26 58 L8 88 L32 86 Z" fill="#dc2626" stroke="#fecaca" stroke-width="1.5"/>
+                    <path d="M94 58 L112 88 L88 86 Z" fill="#dc2626" stroke="#fecaca" stroke-width="1.5"/>
+                    <!-- 火箭宽体收集主舱 -->
+                    <path d="M26 42 Q60 22 94 42 L88 92 Q60 98 32 92 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+                    <path d="M26 42 Q60 52 94 42" stroke="#ef4444" stroke-width="6" stroke-linecap="round"/>
+                    <!-- 经典红白棋盘装饰与观察窗 -->
+                    <rect x="34" y="78" width="52" height="8" rx="4" fill="#ef4444"/>
+                    <circle cx="60" cy="62" r="14" fill="#0ea5e9" stroke="#334155" stroke-width="3.5"/>
+                    <ellipse cx="55" cy="57" rx="4" ry="2" transform="rotate(-25 55 57)" fill="#ffffff" opacity="0.8"/>
+                </svg>
+
+                <!-- 皮肤 4：星喵战机 (Meow Starfighter - 黑白奶牛猫宇航员座驾) -->
+                <svg id="skin-svg-meow" class="ship-skin-svg hidden" viewBox="0 0 120 120" width="100%" height="100%" fill="none">
+                    <!-- 粉色猫爪引力光束 -->
+                    <path class="tractor-beam" d="M16 60 L4 18 L116 18 L104 60 Z" fill="rgba(244, 114, 182, 0.28)" />
+                    <ellipse class="tractor-beam" cx="60" cy="24" rx="45" ry="6" stroke="#f472b6" stroke-width="1.5" stroke-dasharray="6 4" fill="none"/>
+                    <g class="thruster-flame">
+                        <path d="M44 93 L60 118 L76 93 Z" fill="#ec4899" opacity="0.85"/>
+                        <path d="M50 93 L60 110 L70 93 Z" fill="#fdf2f8"/>
+                    </g>
+                    <!-- 飞船猫耳造型护甲 -->
+                    <path d="M22 64 L16 30 L42 46 Z" fill="#1e293b" stroke="#f472b6" stroke-width="2"/>
+                    <path d="M25 56 L21 36 L37 47 Z" fill="#f472b6" opacity="0.7"/>
+                    <path d="M98 64 L104 30 L78 46 Z" fill="#1e293b" stroke="#f472b6" stroke-width="2"/>
+                    <path d="M95 56 L99 36 L83 47 Z" fill="#f472b6" opacity="0.7"/>
+
+                    <!-- 太空舱内可爱的黑白奶牛猫宇航员 -->
+                    <circle cx="60" cy="46" r="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+                    <!-- 奶牛猫黑色斑块与耳朵 -->
+                    <path d="M43 33 L39 17 L53 26 Z" fill="#1e293b"/>
+                    <path d="M77 33 L81 17 L67 26 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+                    <path d="M41 42 C41 30, 56 26, 62 36 C56 42, 46 46, 41 42 Z" fill="#1e293b"/>
+                    <!-- 猫咪金色大眼睛与粉色鼻头 -->
+                    <circle cx="51" cy="44" r="3.5" fill="#f59e0b"/>
+                    <circle cx="69" cy="44" r="3.5" fill="#f59e0b"/>
+                    <circle cx="50" cy="43" r="1.2" fill="#ffffff"/>
+                    <circle cx="68" cy="43" r="1.2" fill="#ffffff"/>
+                    <polygon points="58,48 62,48 60,51" fill="#f472b6"/>
+                    <!-- 猫须与W嘴 -->
+                    <path d="M56 52 Q58 55 60 52 Q62 55 64 52" stroke="#334155" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                    <line x1="36" y1="46" x2="44" y2="47" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="76" y1="47" x2="84" y2="46" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
+
+                    <!-- 猫爪飞船主体 -->
+                    <path d="M12 62 Q60 72 108 62 L94 92 Q60 100 26 92 Z" fill="#f8fafc" stroke="#1e293b" stroke-width="2.5"/>
+                    <!-- 奶牛斑纹涂装 -->
+                    <path d="M22 66 Q38 72 42 88 L26 91 Z" fill="#1e293b"/>
+                    <path d="M82 66 Q96 70 94 88 L76 90 Z" fill="#1e293b"/>
+                    <path d="M10 61 Q60 71 110 61" stroke="#f472b6" stroke-width="5.5" stroke-linecap="round"/>
+                    <!-- 船身正中央粉红肉垫徽章 -->
+                    <ellipse cx="60" cy="81" rx="6" ry="4.5" fill="#f472b6"/>
+                    <circle cx="53" cy="74" r="2.3" fill="#f472b6"/>
+                    <circle cx="60" cy="72" r="2.3" fill="#f472b6"/>
+                    <circle cx="67" cy="74" r="2.3" fill="#f472b6"/>
+                </svg>
+            </div>
+
+            <!-- 暂停游戏遮罩层 -->
+            <div id="pause-overlay" class="absolute inset-0 z-30 hidden items-center justify-center p-5 bg-slate-950/70 backdrop-blur-md">
+                <div class="glass-panel w-full max-w-xs rounded-3xl p-6 text-center border border-white/15">
+                    <div class="text-4xl mb-2">⏸️</div>
+                    <h2 class="text-2xl font-black text-white mb-1">游戏已暂停</h2>
+                    <p class="text-xs text-slate-400 mb-6">深空航行待命中，随时准备继续收集星辰</p>
+                    <div class="space-y-3">
+                        <button id="resume-btn" class="cyber-btn w-full py-3.5 rounded-2xl font-bold text-white cursor-pointer">
+                            ▶️ 继续游戏
+                        </button>
+                        <button id="quit-to-menu-btn" class="w-full py-3 rounded-2xl font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 border border-white/10 transition cursor-pointer">
+                            🏠 返回主菜单换肤
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 开始游戏遮罩层（含飞船皮肤工坊、道具图鉴与成就墙） -->
+            <div id="start-overlay" class="absolute inset-0 z-30 flex items-center justify-center p-4 bg-slate-950/65 backdrop-blur-md transition-opacity duration-300">
+                <div class="glass-panel w-full max-w-md max-h-[94vh] overflow-y-auto no-scrollbar rounded-3xl p-5 sm:p-6 text-center border border-white/15 relative">
+
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-[11px] font-cyber mb-2">
+                        <span>✨ ULTIMATE EDITION</span>
+                    </div>
+
+                    <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-amber-300 mb-1">
+                        星空收集者：终极版
+                    </h1>
+                    <p class="text-[11px] text-slate-400 mb-4">连击狂热 · 激光碎石 · 增益道具 · 极速闪避</p>
+
+                    <!-- 1. 飞船皮肤选择工坊 -->
+                    <div class="text-left mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-cyan-300">🛸 选择出战飞船皮肤</span>
+                            <span id="skin-desc-label" class="text-[11px] text-amber-300">呆萌宇航员 · 均衡标准型</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2" id="skin-selector">
+                            <button data-skin="astronaut" data-desc="呆萌宇航员 · 均衡标准型" class="skin-card selected rounded-2xl p-2 flex flex-col items-center cursor-pointer">
+                                <span class="text-2xl mb-1">👩‍🚀</span>
+                                <span class="text-[11px] font-bold text-white">宇航员舱</span>
+                            </button>
+                            <button data-skin="ufo" data-desc="星际飞碟 · 外星科技引力" class="skin-card rounded-2xl p-2 flex flex-col items-center cursor-pointer">
+                                <span class="text-2xl mb-1">🛸</span>
+                                <span class="text-[11px] font-bold text-white">赛博飞碟</span>
+                            </button>
+                            <button data-skin="rocket" data-desc="赤焰火箭 · 双尾焰重装" class="skin-card rounded-2xl p-2 flex flex-col items-center cursor-pointer">
+                                <span class="text-2xl mb-1">🚀</span>
+                                <span class="text-[11px] font-bold text-white">赤焰火箭</span>
+                            </button>
+                            <button data-skin="meow" data-desc="星喵战机 · 奶牛猫王牌座驾" class="skin-card rounded-2xl p-2 flex flex-col items-center cursor-pointer">
+                                <span class="text-2xl mb-1">🐱</span>
+                                <span class="text-[11px] font-bold text-pink-300">星喵战机</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2. 道具与全新玩法速览 -->
+                    <div class="bg-slate-900/80 rounded-2xl p-3.5 mb-4 text-left border border-white/10 space-y-2.5 text-xs">
+                        <div class="font-bold text-slate-200 flex items-center justify-between">
+                            <span>⚡ 终极版核心机制</span>
+                            <span class="text-[10px] text-amber-300 font-normal">接住星星积攒 FEVER 狂热星雨！</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+                            <div class="bg-slate-800/70 rounded-xl p-2 border border-white/5">
+                                <span class="text-rose-400 font-bold">🔫 双联激光：</span>自动发射激光击碎陨石！击碎<span class="text-purple-300">巨型晶核陨石</span>爆出多颗金星！
+                            </div>
+                            <div class="bg-slate-800/70 rounded-xl p-2 border border-white/5">
+                                <span class="text-sky-300 font-bold">🛡️ 护盾 & 🧲 磁铁：</span>全息护盾抵消撞击并清屏；引力磁铁自动吸附全屏星星！
+                            </div>
+                            <div class="bg-slate-800/70 rounded-xl p-2 border border-white/5">
+                                <span class="text-teal-300 font-bold">⏱️ 怀表 & ❤️ 医疗：</span>时空怀表减缓陨石速度50%；星际医疗包恢复生命心！
+                            </div>
+                            <div class="bg-slate-800/70 rounded-xl p-2 border border-white/5">
+                                <span class="text-cyan-300 font-bold">⚡ 极速冲刺：</span>按<kbd class="px-1 bg-slate-700 rounded text-white">空格</kbd>或点右下角按钮无敌闪避！
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. 个人荣誉与成就徽章墙 -->
+                    <div class="bg-slate-900/70 rounded-2xl p-3 mb-5 border border-white/10 text-left">
+                        <div class="flex justify-between items-center text-[11px] text-slate-400 mb-2">
+                            <span>🏅 星际成就徽章</span>
+                            <span>最高分: <strong id="start-best-score" class="text-amber-300 font-cyber">0</strong> · 最高连击: <strong id="start-max-combo" class="text-fuchsia-300 font-cyber">0</strong></span>
+                        </div>
+                        <div id="achievements-grid" class="grid grid-cols-4 gap-1.5 text-center">
+                            <!-- 由 JS 动态渲染解锁状态 -->
+                        </div>
+                    </div>
+
+                    <button id="start-btn" class="cyber-btn w-full py-3.5 rounded-2xl font-bold text-base sm:text-lg text-white tracking-wider cursor-pointer">
+                        🚀 立即点火启航
+                    </button>
+                </div>
+            </div>
+
+            <!-- 游戏结束遮罩层 -->
+            <div id="gameover-overlay" class="absolute inset-0 z-30 hidden items-center justify-center p-5 bg-slate-950/80 backdrop-blur-md transition-opacity duration-300">
+                <div class="glass-panel w-full max-w-md rounded-3xl p-6 text-center border border-white/15 relative overflow-hidden">
+                    <div class="w-16 h-16 mx-auto mb-2 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-3xl">
+                        🛸
+                    </div>
+
+                    <h2 class="text-2xl sm:text-3xl font-black text-white mb-1">航行结束</h2>
+                    <p id="new-record-tag" class="hidden text-xs font-bold text-amber-300 bg-amber-400/20 border border-amber-400/40 px-3 py-1 rounded-full inline-block mb-3 animate-bounce">
+                        🏆 新纪录达成！
+                    </p>
+                    <p class="text-xs text-slate-400 mb-4">飞船护盾耗尽，已安全传送回母舰空间站</p>
+
+                    <!-- 详细战绩统计卡片 -->
+                    <div class="grid grid-cols-2 gap-2.5 mb-5">
+                        <div class="bg-slate-900/80 border border-white/10 rounded-2xl p-3">
+                            <div class="text-[11px] text-slate-400">本局最终得分</div>
+                            <div id="final-score" class="text-2xl font-black text-cyan-300 font-cyber">0</div>
+                        </div>
+                        <div class="bg-slate-900/80 border border-white/10 rounded-2xl p-3">
+                            <div class="text-[11px] text-slate-400">历史最高得分</div>
+                            <div id="best-score" class="text-2xl font-black text-amber-300 font-cyber">0</div>
+                        </div>
+                        <div class="bg-slate-900/80 border border-white/10 rounded-2xl p-3">
+                            <div class="text-[11px] text-slate-400">本局最高连击</div>
+                            <div id="final-combo" class="text-lg font-black text-fuchsia-300 font-cyber">0 COMBO</div>
+                        </div>
+                        <div class="bg-slate-900/80 border border-white/10 rounded-2xl p-3">
+                            <div class="text-[11px] text-slate-400">激光粉碎陨石</div>
+                            <div id="final-meteors" class="text-lg font-black text-rose-400 font-cyber">0 颗</div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button id="back-menu-btn" class="w-1/3 py-3.5 rounded-2xl font-bold text-sm text-slate-200 bg-slate-800 hover:bg-slate-700 border border-white/10 transition cursor-pointer">
+                            🛸 换肤/菜单
+                        </button>
+                        <button id="restart-btn" class="cyber-btn w-2/3 py-3.5 rounded-2xl font-bold text-base text-white tracking-wider cursor-pointer">
+                            🔄 再次出击
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Web Audio API 合成音效引擎（零外部音频依赖）
+         */
+        class SoundManager {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) this.ctx = new AudioContext();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggle() {
+                this.enabled = !this.enabled;
+                return this.enabled;
+            }
+
+            // 收集星星（连击越高音调越明亮）
+            playStar(isSuper = false, combo = 0) {
+                if (!this.enabled || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                // 连击升调加成
+                const pitchBoost = Math.min(1.5, 1 + combo * 0.012);
+                osc.type = 'sine';
+                if (isSuper) {
+                    osc.frequency.setValueAtTime(587.33 * pitchBoost, now);
+                    osc.frequency.exponentialRampToValueAtTime(880 * pitchBoost, now + 0.08);
+                    osc.frequency.exponentialRampToValueAtTime(1174.66 * pitchBoost, now + 0.22);
+                } else {
+                    osc.frequency.setValueAtTime(523.25 * pitchBoost, now);
+                    osc.frequency.exponentialRampToValueAtTime(783.99 * pitchBoost, now + 0.14);
+                }
+
+                gain.gain.setValueAtTime(0.16, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + (isSuper ? 0.26 : 0.16));
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + (isSuper ? 0.26 : 0.16));
+            }
+
+            // 发射激光音效
+            playLaser() {
+                if (!this.enabled || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(920, now);
+                osc.frequency.exponentialRampToValueAtTime(220, now + 0.09);
+
+                gain.gain.setValueAtTime(0.09, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.09);
+            }
+
+            // 激光击碎陨石音效
+            playDestroyMeteor(isCrystal = false) {
+                if (!this.enabled || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = isCrystal ? 'square' : 'sawtooth';
+                osc.frequency.setValueAtTime(isCrystal ? 320 : 210, now);
+                osc.frequency.exponentialRampToValueAtTime(65, now + 0.2);
+
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.22);
+            }
+
+            // 拾取增益道具欢快和弦
+            playPowerUp() {
+                if (!this.enabled || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const freqs = [523.25, 659.25, 783.99, 1046.50];
+                freqs.forEach((f, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(f, now + idx * 0.055);
+                    gain.gain.setValueAtTime(0.14, now + idx * 0.055);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.055 + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.055);
+                    osc.stop(now + idx * 0.055 + 0.18);
+                });
+            }
+
+            // 极速冲刺音效
+            playDash() {
+                if (!this.enabled || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(280, now);
+                osc.frequency.exponentialRampToValueAtTime(680, now + 0.15);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.16);
+            }
+
+            // 受伤或护盾破裂音效
+            playHit(isShieldBlock = false) {
+                if (!this.enabled || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                if (isShieldBlock) {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(480, now);
+                    osc.frequency.exponentialRampToValueAtTime(140, now + 0.28);
+                } else {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.32);
+                }
+
+                gain.gain.setValueAtTime(0.24, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.32);
+            }
+
+            // 游戏结束音效
+            playGameOver() {
+                if (!this.enabled || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const notes = [392.00, 349.23, 329.63, 261.63];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.14);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.14 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.14);
+                    osc.stop(now + idx * 0.14 + 0.25);
+                });
+            }
+        }
+
+        /**
+         * 游戏主控制器
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            const spaceBg = document.getElementById('space-bg');
+            const stage = document.getElementById('game-stage');
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+            const collectorEl = document.getElementById('collector');
+
+            // 飞船外挂视觉组件
+            const shipShieldRing = document.getElementById('ship-shield-ring');
+            const shipMagnetRing = document.getElementById('ship-magnet-ring');
+            const shipLaserWing = document.getElementById('ship-laser-wing');
+
+            // HUD 与 UI 元素
+            const scoreDisplay = document.getElementById('score-display');
+            const levelBadge = document.getElementById('level-badge');
+            const comboBadge = document.getElementById('combo-badge');
+            const multiplierBadge = document.getElementById('multiplier-badge');
+            const feverBar = document.getElementById('fever-bar');
+            const feverLabel = document.getElementById('fever-label');
+
+            const buffShieldEl = document.getElementById('buff-shield');
+            const buffMagnetEl = document.getElementById('buff-magnet');
+            const buffMagnetTime = document.getElementById('buff-magnet-time');
+            const buffLaserEl = document.getElementById('buff-laser');
+            const buffLaserTime = document.getElementById('buff-laser-time');
+            const buffSlowEl = document.getElementById('buff-slow');
+            const buffSlowTime = document.getElementById('buff-slow-time');
+
+            const livesContainer = document.getElementById('lives-container');
+            const heartIcons = livesContainer.querySelectorAll('.heart-icon');
+
+            const startOverlay = document.getElementById('start-overlay');
+            const pauseOverlay = document.getElementById('pause-overlay');
+            const gameoverOverlay = document.getElementById('gameover-overlay');
+
+            const startBtn = document.getElementById('start-btn');
+            const resumeBtn = document.getElementById('resume-btn');
+            const quitToMenuBtn = document.getElementById('quit-to-menu-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const backMenuBtn = document.getElementById('back-menu-btn');
+            const pauseToggleBtn = document.getElementById('pause-toggle');
+            const soundToggleBtn = document.getElementById('sound-toggle');
+            const soundOnIcon = document.getElementById('sound-on-icon');
+            const soundOffIcon = document.getElementById('sound-off-icon');
+            const dashBtn = document.getElementById('dash-btn');
+            const dashStatus = document.getElementById('dash-status');
+            const controlHint = document.getElementById('control-hint');
+
+            // 结算与成就展示元素
+            const finalScoreEl = document.getElementById('final-score');
+            const bestScoreEl = document.getElementById('best-score');
+            const finalComboEl = document.getElementById('final-combo');
+            const finalMeteorsEl = document.getElementById('final-meteors');
+            const newRecordTag = document.getElementById('new-record-tag');
+            const startBestScoreEl = document.getElementById('start-best-score');
+            const startMaxComboEl = document.getElementById('start-max-combo');
+            const achievementsGrid = document.getElementById('achievements-grid');
+            const achievementToast = document.getElementById('achievement-toast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastTitle = document.getElementById('toast-title');
+
+            const sound = new SoundManager();
+
+            // 本地持久化数据
+            let bestScore = parseInt(localStorage.getItem('star_ult_best') || '0', 10);
+            let maxComboRecord = parseInt(localStorage.getItem('star_ult_combo') || '0', 10);
+            let currentSkin = localStorage.getItem('star_ult_skin') || 'astronaut';
+            let unlockedAch = JSON.parse(localStorage.getItem('star_ult_ach') || '{}');
+
+            // 4项内置成就定义
+            const ACHIEVEMENTS = [
+                { id: 'first_blood', icon: '🌟', name: '初入星海', desc: '单局得分达到 300 分' },
+                { id: 'combo_master', icon: '🔥', name: '连击大师', desc: '达成 25 连击 (Combo)' },
+                { id: 'meteor_crusher', icon: '💥', name: '碎石先锋', desc: '单局用激光击碎 8 颗陨石' },
+                { id: 'star_legend', icon: '👑', name: '星际传奇', desc: '单局得分突破 1500 分' }
+            ];
+
+            // 游戏核心状态变量
+            let stageWidth = stage.clientWidth;
+            let stageHeight = stage.clientHeight;
+            let gameState = 'START'; // START | PLAYING | PAUSED | GAMEOVER
+            let score = 0;
+            let lives = 3;
+            let difficultyLevel = 1;
+            let combo = 0;
+            let maxSessionCombo = 0;
+            let destroyedMeteors = 0;
+
+            // FEVER 狂热状态
+            let feverGauge = 0; // 0 ~ 100
+            let isFever = false;
+            let feverTimeLeft = 0;
+
+            // 增益道具状态
+            const buffs = {
+                shield: false,
+                magnetTime: 0,
+                laserTime: 0,
+                slowTime: 0
+            };
+
+            let laserFireTimer = 0;
+            let spawnTimer = 0;
+            let powerupSpawnTimer = 6;
+            let lastFrameTime = 0;
+
+            // 玩家飞船属性与极速冲刺 (Dash)
+            const player = {
+                width: 92,
+                height: 92,
+                x: stageWidth / 2,
+                targetX: stageWidth / 2,
+                y: stageHeight - 44 - 46,
+                speed: 590,
+                tilt: 0,
+                dashCooldown: 0,
+                dashActiveTime: 0
+            };
+
+            // 实体对象列表
+            let items = [];         // 星星、陨石、晶核陨石、增益道具
+            let lasers = [];        // 玩家发射的双联激光
+            let particles = [];     // 爆炸粒子
+            let floatingTexts = []; // 飘字反馈
+            let afterimages = [];   // 冲刺残影
+
+            // 渲染成就面板
+            function renderAchievementsUI() {
+                startBestScoreEl.textContent = bestScore;
+                startMaxComboEl.textContent = maxComboRecord;
+                achievementsGrid.innerHTML = ACHIEVEMENTS.map(a => {
+                    const isUnlocked = !!unlockedAch[a.id];
+                    return `
+                        <div title="${a.desc}" class="p-2 rounded-xl border ${isUnlocked ? 'bg-amber-400/15 border-amber-400/50 text-white' : 'bg-slate-800/50 border-white/5 text-slate-500 grayscale opacity-60'} flex flex-col items-center">
+                            <span class="text-lg mb-0.5">${a.icon}</span>
+                            <span class="text-[10px] font-bold leading-tight">${a.name}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 解锁成就并弹出顶部通知
+            function unlockAchievement(id) {
+                if (unlockedAch[id]) return;
+                const ach = ACHIEVEMENTS.find(a => a.id === id);
+                if (!ach) return;
+
+                unlockedAch[id] = true;
+                localStorage.setItem('star_ult_ach', JSON.stringify(unlockedAch));
+                sound.playPowerUp();
+
+                toastIcon.textContent = ach.icon;
+                toastTitle.textContent = `${ach.name}（${ach.desc}）`;
+                achievementToast.classList.remove('-translate-y-24', 'opacity-0');
+                achievementToast.classList.add('translate-y-0', 'opacity-100');
+
+                setTimeout(() => {
+                    achievementToast.classList.add('-translate-y-24', 'opacity-0');
+                    achievementToast.classList.remove('translate-y-0', 'opacity-100');
+                }, 3200);
+
+                renderAchievementsUI();
+            }
+
+            // 皮肤切换逻辑
+            function applySkin(skinKey) {
+                currentSkin = skinKey;
+                localStorage.setItem('star_ult_skin', skinKey);
+                document.querySelectorAll('.ship-skin-svg').forEach(svg => svg.classList.add('hidden'));
+                const targetSvg = document.getElementById(`skin-svg-${skinKey}`);
+                if (targetSvg) targetSvg.classList.remove('hidden');
+
+                document.querySelectorAll('#skin-selector .skin-card').forEach(btn => {
+                    const isMatch = btn.getAttribute('data-skin') === skinKey;
+                    btn.classList.toggle('selected', isMatch);
+                    if (isMatch) {
+                        document.getElementById('skin-desc-label').textContent = btn.getAttribute('data-desc');
+                    }
+                });
+            }
+
+            document.querySelectorAll('#skin-selector .skin-card').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    sound.init();
+                    sound.playStar(false, 5);
+                    applySkin(btn.getAttribute('data-skin'));
+                });
+            });
+
+            // 初始化皮肤与成就展示
+            applySkin(currentSkin);
+            renderAchievementsUI();
+
+            // 响应式调整画布尺寸
+            function resizeCanvas() {
+                stageWidth = stage.clientWidth;
+                stageHeight = stage.clientHeight;
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = stageWidth * dpr;
+                canvas.height = stageHeight * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                const halfW = player.width / 2;
+                player.x = Math.max(halfW, Math.min(stageWidth - halfW, player.x));
+                player.targetX = Math.max(halfW, Math.min(stageWidth - halfW, player.targetX));
+                player.y = stageHeight - 44 - player.height / 2;
+                updateCollectorDOM();
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            function updateCollectorDOM() {
+                collectorEl.style.left = `${player.x}px`;
+                collectorEl.style.transform = `translateX(-50%) rotate(${player.tilt}deg)`;
+            }
+
+            // 键盘与触控状态
+            const keys = { left: false, right: false };
+            let lastMoveDir = 1;
+            let isPointerDown = false;
+            let pointerStartX = 0;
+            let playerStartX = 0;
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    keys.left = true;
+                    lastMoveDir = -1;
+                }
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    keys.right = true;
+                    lastMoveDir = 1;
+                }
+                if (e.code === 'Space' || e.key === 'Shift') {
+                    e.preventDefault();
+                    triggerDash();
+                }
+                if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+                    togglePause();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+            });
+
+            // 触控与鼠标拖拽
+            function handlePointerStart(clientX) {
+                if (gameState !== 'PLAYING') return;
+                isPointerDown = true;
+                pointerStartX = clientX;
+                playerStartX = player.targetX;
+            }
+
+            function handlePointerMove(clientX) {
+                if (!isPointerDown || gameState !== 'PLAYING') return;
+                const deltaX = clientX - pointerStartX;
+                if (Math.abs(deltaX) > 3) lastMoveDir = deltaX > 0 ? 1 : -1;
+                const halfW = player.width / 2;
+                player.targetX = Math.max(halfW, Math.min(stageWidth - halfW, playerStartX + deltaX));
+            }
+
+            function handlePointerEnd() {
+                isPointerDown = false;
+            }
+
+            stage.addEventListener('touchstart', (e) => {
+                if (e.target.closest('button') || e.target.closest('header')) return;
+                if (e.touches.length > 0) handlePointerStart(e.touches[0].clientX);
+            }, { passive: true });
+
+            stage.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) handlePointerMove(e.touches[0].clientX);
+            }, { passive: true });
+
+            window.addEventListener('touchend', handlePointerEnd);
+
+            stage.addEventListener('mousedown', (e) => {
+                if (e.target.closest('button') || e.target.closest('header')) return;
+                handlePointerStart(e.clientX);
+            });
+            window.addEventListener('mousemove', (e) => handlePointerMove(e.clientX));
+            window.addEventListener('mouseup', handlePointerEnd);
+
+            // 极速闪避冲刺 (Dash)
+            function triggerDash() {
+                if (gameState !== 'PLAYING' || player.dashCooldown > 0) return;
+                sound.playDash();
+                player.dashCooldown = 3.0;     // 3秒冷却
+                player.dashActiveTime = 0.26;  // 0.26秒无敌与残影
+
+                const halfW = player.width / 2;
+                const dashDist = 145 * lastMoveDir;
+                player.targetX = Math.max(halfW, Math.min(stageWidth - halfW, player.targetX + dashDist));
+                createFloatingText(player.x, player.y - 30, '⚡ DASH!', '#38bdf8');
+            }
+
+            dashBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sound.init();
+                triggerDash();
+            });
+
+            // 暂停与音效控制
+            function togglePause() {
+                if (gameState === 'PLAYING') {
+                    gameState = 'PAUSED';
+                    pauseOverlay.classList.remove('hidden');
+                    pauseOverlay.classList.add('flex');
+                } else if (gameState === 'PAUSED') {
+                    gameState = 'PLAYING';
+                    pauseOverlay.classList.add('hidden');
+                    pauseOverlay.classList.remove('flex');
+                    lastFrameTime = performance.now();
+                }
+            }
+
+            pauseToggleBtn.addEventListener('click', togglePause);
+            resumeBtn.addEventListener('click', togglePause);
+            quitToMenuBtn.addEventListener('click', () => {
+                pauseOverlay.classList.add('hidden');
+                pauseOverlay.classList.remove('flex');
+                showMainMenu();
+            });
+
+            soundToggleBtn.addEventListener('click', () => {
+                sound.init();
+                const isOn = sound.toggle();
+                soundOnIcon.classList.toggle('hidden', !isOn);
+                soundOffIcon.classList.toggle('hidden', isOn);
+            });
+
+            // 计算当前连击得分倍率
+            function getComboMultiplier() {
+                if (combo >= 40) return 3.0;
+                if (combo >= 25) return 2.0;
+                if (combo >= 10) return 1.5;
+                return 1.0;
+            }
+
+            // 增加 FEVER 能量
+            function addFeverGauge(amount) {
+                if (isFever) return;
+                feverGauge = Math.min(100, feverGauge + amount);
+                feverBar.style.width = `${feverGauge}%`;
+
+                if (feverGauge >= 100) {
+                    isFever = true;
+                    feverTimeLeft = 7.0; // 7秒狂热时间
+                    sound.playPowerUp();
+                    spaceBg.classList.add('fever-active');
+                    stage.classList.add('fever-stage');
+                    collectorEl.classList.add('collector-fever-glow');
+                    feverLabel.textContent = '🔥 FEVER MAX!';
+                    createFloatingText(stageWidth / 2, stageHeight / 2 - 40, '🌟 FEVER TIME! 星雨降临!', '#facc15', 26);
+                }
+            }
+
+            // 生成星星或陨石
+            function spawnRegularItem() {
+                const padding = 36;
+                const x = padding + Math.random() * (stageWidth - padding * 2);
+                const speedMultiplier = 1 + (difficultyLevel - 1) * 0.13;
+
+                // FEVER 狂热模式下只掉落高密度黄金星与彩钻星
+                if (isFever) {
+                    const isSuper = Math.random() < 0.35;
+                    const radius = isSuper ? 20 : 16;
+                    items.push({
+                        type: isSuper ? 'super_star' : 'star',
+                        x,
+                        y: -radius - 20,
+                        radius,
+                        vy: (230 + Math.random() * 120),
+                        vx: (Math.random() - 0.5) * 40,
+                        rotation: Math.random() * Math.PI * 2,
+                        vRot: 2.5,
+                        twinklePhase: Math.random() * Math.PI * 2,
+                        trailTimer: 0
+                    });
+                    return;
+                }
+
+                const meteorChance = Math.min(0.45, 0.27 + (difficultyLevel - 1) * 0.028);
+                const rand = Math.random();
+
+                if (rand < meteorChance) {
+                    // 22% 概率生成精英“巨型晶核陨石”（需3发激光击碎，爆出奖励星星）
+                    const isCrystal = Math.random() < 0.22;
+                    const radius = isCrystal ? 30 : (19 + Math.random() * 8);
+                    const vertices = [];
+                    const vertexCount = isCrystal ? 10 : 8;
+                    for (let i = 0; i < vertexCount; i++) {
+                        const angle = (i / vertexCount) * Math.PI * 2;
+                        const r = radius * (0.84 + Math.random() * 0.28);
+                        vertices.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
+                    }
+
+                    items.push({
+                        type: isCrystal ? 'crystal_meteor' : 'meteor',
+                        hp: isCrystal ? 3 : 1,
+                        maxHp: isCrystal ? 3 : 1,
+                        x,
+                        y: -radius - 25,
+                        radius,
+                        vy: (isCrystal ? 135 : (180 + Math.random() * 110)) * speedMultiplier,
+                        vx: (Math.random() - 0.5) * 40,
+                        rotation: Math.random() * Math.PI * 2,
+                        vRot: (Math.random() - 0.5) * 3,
+                        vertices,
+                        trailTimer: 0
+                    });
+                } else {
+                    const isSuper = Math.random() < 0.16;
+                    const radius = isSuper ? 20 : 16;
+                    items.push({
+                        type: isSuper ? 'super_star' : 'star',
+                        x,
+                        y: -radius - 20,
+                        radius,
+                        vy: (155 + Math.random() * 95) * speedMultiplier * (isSuper ? 1.15 : 1),
+                        vx: isSuper ? (Math.random() - 0.5) * 45 : 0,
+                        rotation: Math.random() * Math.PI * 2,
+                        vRot: (Math.random() < 0.5 ? 1 : -1) * 2.2,
+                        twinklePhase: Math.random() * Math.PI * 2,
+                        trailTimer: 0
+                    });
+                }
+            }
+
+            // 生成5种增益道具胶囊
+            function spawnPowerUpItem() {
+                const padding = 45;
+                const x = padding + Math.random() * (stageWidth - padding * 2);
+                const pool = [
+                    { subType: 'shield', icon: '🛡️', color: '#38bdf8', label: 'SHIELD 护盾!' },
+                    { subType: 'magnet', icon: '🧲', color: '#c084fc', label: 'MAGNET 磁力场!' },
+                    { subType: 'laser',  icon: '🔫', color: '#f43f5e', label: 'LASER 双联激光!' },
+                    { subType: 'slow',   icon: '⏱️', color: '#2dd4bf', label: 'SLOW 时空减速!' }
+                ];
+                // 如果玩家不满血，加入医疗包掉落
+                if (lives < 3 || Math.random() < 0.25) {
+                    pool.push({ subType: 'heal', icon: '❤️', color: '#ec4899', label: 'HEAL 生命恢复!' });
+                }
+
+                const chosen = pool[Math.floor(Math.random() * pool.length)];
+                items.push({
+                    type: 'powerup',
+                    subType: chosen.subType,
+                    icon: chosen.icon,
+                    color: chosen.color,
+                    label: chosen.label,
+                    x,
+                    y: -30,
+                    radius: 21,
+                    vy: 155,
+                    vx: 0,
+                    rotation: 0,
+                    vRot: 0,
+                    twinklePhase: Math.random() * Math.PI * 2,
+                    trailTimer: 0
+                });
+            }
+
+            // 创建粒子爆发特效
+            function createBurstParticles(x, y, colors, count = 18) {
+                for (let i = 0; i < count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 55 + Math.random() * 195;
+                    particles.push({
+                        x,
+                        y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 20,
+                        radius: 2 + Math.random() * 3.5,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        alpha: 1,
+                        life: 0.45 + Math.random() * 0.35,
+                        maxLife: 0.8
+                    });
+                }
+            }
+
+            // 创建飘字反馈
+            function createFloatingText(x, y, text, color, fontSize = 19) {
+                floatingTexts.push({
+                    x: Math.max(55, Math.min(stageWidth - 55, x)),
+                    y,
+                    text,
+                    color,
+                    fontSize,
+                    alpha: 1,
+                    vy: -72,
+                    scale: 0.75,
+                    life: 0.9,
+                    maxLife: 0.9
+                });
+            }
+
+            // 更新顶部 HUD 与成就检查
+            function updateHUD() {
+                scoreDisplay.textContent = score;
+
+                const newLevel = Math.floor(score / 120) + 1;
+                if (newLevel !== difficultyLevel) {
+                    difficultyLevel = newLevel;
+                    levelBadge.textContent = `LV.${difficultyLevel}`;
+                    levelBadge.classList.remove('badge-pop');
+                    void levelBadge.offsetWidth;
+                    levelBadge.classList.add('badge-pop');
+                }
+
+                // 连击与倍率展示
+                if (combo >= 2) {
+                    comboBadge.classList.remove('hidden');
+                    comboBadge.textContent = `${combo} COMBO`;
+                } else {
+                    comboBadge.classList.add('hidden');
+                }
+
+                const mult = getComboMultiplier();
+                if (mult > 1) {
+                    multiplierBadge.classList.remove('hidden');
+                    multiplierBadge.textContent = `x${mult.toFixed(1)}`;
+                } else {
+                    multiplierBadge.classList.add('hidden');
+                }
+
+                // 更新生命值红心
+                heartIcons.forEach((icon, index) => {
+                    icon.classList.toggle('heart-lost', index >= lives);
+                });
+
+                // 实时检查成就解锁
+                if (score >= 300) unlockAchievement('first_blood');
+                if (score >= 1500) unlockAchievement('star_legend');
+                if (combo >= 25) unlockAchievement('combo_master');
+                if (destroyedMeteors >= 8) unlockAchievement('meteor_crusher');
+            }
+
+            // 更新增益道具 UI 与飞船特效环
+            function updateBuffVisuals() {
+                const hasMagnet = buffs.magnetTime > 0 || isFever;
+                const hasLaser = buffs.laserTime > 0 || isFever;
+                const hasSlow = buffs.slowTime > 0;
+
+                shipShieldRing.classList.toggle('hidden', !buffs.shield);
+                shipMagnetRing.classList.toggle('hidden', !hasMagnet);
+                shipLaserWing.classList.toggle('hidden', !hasLaser);
+
+                buffShieldEl.classList.toggle('hidden', !buffs.shield);
+                buffShieldEl.classList.toggle('flex', buffs.shield);
+
+                buffMagnetEl.classList.toggle('hidden', buffs.magnetTime <= 0);
+                buffMagnetEl.classList.toggle('flex', buffs.magnetTime > 0);
+                if (buffs.magnetTime > 0) buffMagnetTime.textContent = `${buffs.magnetTime.toFixed(1)}s`;
+
+                buffLaserEl.classList.toggle('hidden', buffs.laserTime <= 0);
+                buffLaserEl.classList.toggle('flex', buffs.laserTime > 0);
+                if (buffs.laserTime > 0) buffLaserTime.textContent = `${buffs.laserTime.toFixed(1)}s`;
+
+                buffSlowEl.classList.toggle('hidden', !hasSlow);
+                buffSlowEl.classList.toggle('flex', hasSlow);
+                if (hasSlow) buffSlowTime.textContent = `${buffs.slowTime.toFixed(1)}s`;
+            }
+
+            // 护盾震碎周围陨石
+            function triggerShieldShockwave() {
+                buffs.shield = false;
+                sound.playHit(true);
+                stage.classList.remove('shield-flash');
+                void stage.offsetWidth;
+                stage.classList.add('shield-flash');
+                createFloatingText(player.x, player.y - 35, '🛡️ 护盾抵消震波!', '#38bdf8', 21);
+
+                // 震碎飞船附近 220px 内的所有陨石
+                for (let j = items.length - 1; j >= 0; j--) {
+                    const other = items[j];
+                    if (other.type === 'meteor' || other.type === 'crystal_meteor') {
+                        if (Math.hypot(other.x - player.x, other.y - player.y) < 220) {
+                            createBurstParticles(other.x, other.y, ['#38bdf8', '#f97316', '#ffffff'], 18);
+                            items.splice(j, 1);
+                        }
+                    }
+                }
+                updateBuffVisuals();
+            }
+
+            // 绘制五角星路径
+            function drawStarShape(ctx, cx, cy, spikes, outerRadius, innerRadius, rotation) {
+                let rot = (Math.PI / 2) * 3 + rotation;
+                const step = Math.PI / spikes;
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(rot) * outerRadius, cy + Math.sin(rot) * outerRadius);
+                for (let i = 0; i < spikes; i++) {
+                    ctx.lineTo(cx + Math.cos(rot) * outerRadius, cy + Math.sin(rot) * outerRadius);
+                    rot += step;
+                    ctx.lineTo(cx + Math.cos(rot) * innerRadius, cy + Math.sin(rot) * innerRadius);
+                    rot += step;
+                }
+                ctx.closePath();
+            }
+
+            // 核心帧更新逻辑 (dt 单位: 秒)
+            function updateGame(dt) {
+                // 1. 冲刺冷却与状态更新
+                if (player.dashCooldown > 0) {
+                    player.dashCooldown = Math.max(0, player.dashCooldown - dt);
+                    dashStatus.textContent = player.dashCooldown > 0 ? `${player.dashCooldown.toFixed(1)}s` : 'READY';
+                    dashStatus.className = player.dashCooldown > 0
+                        ? 'font-cyber text-[10px] text-slate-400'
+                        : 'font-cyber text-[10px] text-emerald-300';
+                }
+                if (player.dashActiveTime > 0) {
+                    player.dashActiveTime = Math.max(0, player.dashActiveTime - dt);
+                    afterimages.push({
+                        x: player.x,
+                        y: player.y,
+                        alpha: 0.55,
+                        life: 0.22
+                    });
+                }
+
+                // 2. FEVER 狂热倒计时
+                if (isFever) {
+                    feverTimeLeft -= dt;
+                    feverBar.style.width = `${Math.max(0, (feverTimeLeft / 7.0) * 100)}%`;
+                    if (feverTimeLeft <= 0) {
+                        isFever = false;
+                        feverGauge = 0;
+                        feverBar.style.width = '0%';
+                        feverLabel.textContent = '🌟 FEVER';
+                        spaceBg.classList.remove('fever-active');
+                        stage.classList.remove('fever-stage');
+                        collectorEl.classList.remove('collector-fever-glow');
+                    }
+                }
+
+                // 3. 增益道具倒计时
+                if (buffs.magnetTime > 0) buffs.magnetTime = Math.max(0, buffs.magnetTime - dt);
+                if (buffs.laserTime > 0) buffs.laserTime = Math.max(0, buffs.laserTime - dt);
+                if (buffs.slowTime > 0) buffs.slowTime = Math.max(0, buffs.slowTime - dt);
+                updateBuffVisuals();
+
+                // 4. 双联激光自动发射
+                const laserActive = buffs.laserTime > 0 || isFever;
+                if (laserActive) {
+                    laserFireTimer -= dt;
+                    if (laserFireTimer <= 0) {
+                        laserFireTimer = 0.22; // 每0.22秒齐射一次双联激光
+                        sound.playLaser();
+                        lasers.push(
+                            { x: player.x - 28, y: player.y - 18, vy: -760 },
+                            { x: player.x + 28, y: player.y - 18, vy: -760 }
+                        );
+                    }
+                }
+
+                // 5. 玩家飞船平滑移动
+                const halfW = player.width / 2;
+                let moveDir = 0;
+                if (keys.left) moveDir -= 1;
+                if (keys.right) moveDir += 1;
+
+                if (moveDir !== 0) {
+                    player.targetX += moveDir * player.speed * dt;
+                    player.targetX = Math.max(halfW, Math.min(stageWidth - halfW, player.targetX));
+                }
+
+                const prevX = player.x;
+                player.x += (player.targetX - player.x) * Math.min(1, dt * 18);
+                const velocityX = (player.x - prevX) / Math.max(0.001, dt);
+                const targetTilt = Math.max(-15, Math.min(15, velocityX * 0.024));
+                player.tilt += (targetTilt - player.tilt) * Math.min(1, dt * 12);
+                updateCollectorDOM();
+
+                // 6. 掉落物与道具生成计时
+                spawnTimer -= dt;
+                if (spawnTimer <= 0) {
+                    spawnRegularItem();
+                    if (isFever) {
+                        spawnTimer = 0.16; // 狂热模式高密度星星雨
+                    } else {
+                        const baseInterval = Math.max(0.30, 0.80 - (difficultyLevel - 1) * 0.052);
+                        spawnTimer = baseInterval * (0.75 + Math.random() * 0.48);
+                    }
+                }
+
+                powerupSpawnTimer -= dt;
+                if (powerupSpawnTimer <= 0) {
+                    spawnPowerUpItem();
+                    powerupSpawnTimer = 9 + Math.random() * 6; // 每9~15秒掉落一个增益胶囊
+                }
+
+                // 7. 更新激光束并检测与陨石碰撞
+                for (let l = lasers.length - 1; l >= 0; l--) {
+                    const laser = lasers[l];
+                    laser.y += laser.vy * dt;
+                    if (laser.y < -30) {
+                        lasers.splice(l, 1);
+                        continue;
+                    }
+
+                    let laserHit = false;
+                    for (let i = items.length - 1; i >= 0; i--) {
+                        const item = items[i];
+                        if (item.type === 'meteor' || item.type === 'crystal_meteor') {
+                            if (Math.hypot(laser.x - item.x, laser.y - item.y) < item.radius + 10) {
+                                laserHit = true;
+                                item.hp -= 1;
+                                createBurstParticles(laser.x, laser.y, ['#f43f5e', '#fde047'], 6);
+
+                                if (item.hp <= 0) {
+                                    destroyedMeteors += 1;
+                                    const isCrystal = item.type === 'crystal_meteor';
+                                    const pts = isCrystal ? 40 : 15;
+                                    score += pts;
+                                    addFeverGauge(isCrystal ? 18 : 8);
+                                    sound.playDestroyMeteor(isCrystal);
+                                    updateHUD();
+
+                                    createBurstParticles(
+                                        item.x,
+                                        item.y,
+                                        isCrystal ? ['#c084fc', '#38bdf8', '#fde047', '#ffffff'] : ['#f97316', '#ef4444', '#fde047'],
+                                        isCrystal ? 30 : 18
+                                    );
+                                    createFloatingText(item.x, item.y, `💥 +${pts}`, isCrystal ? '#c084fc' : '#fb923c');
+
+                                    // 巨型晶核陨石被击碎时分裂爆出 4 颗奖励金星！
+                                    if (isCrystal) {
+                                        for (let s = 0; s < 4; s++) {
+                                            items.push({
+                                                type: s === 0 ? 'super_star' : 'star',
+                                                x: item.x + (s - 1.5) * 22,
+                                                y: item.y,
+                                                radius: s === 0 ? 19 : 15,
+                                                vy: 130 + Math.random() * 60,
+                                                vx: (s - 1.5) * 55,
+                                                rotation: Math.random() * Math.PI,
+                                                vRot: 3,
+                                                twinklePhase: Math.random() * Math.PI,
+                                                trailTimer: 0
+                                            });
+                                        }
+                                    }
+                                    items.splice(i, 1);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    if (laserHit) lasers.splice(l, 1);
+                }
+
+                // 8. 更新所有掉落物并处理磁铁吸附与飞船碰撞
+                const hitCenterX = player.x;
+                const hitCenterY = player.y - 6;
+                const catchRadius = 38;
+                const magnetActive = buffs.magnetTime > 0 || isFever;
+                const slowFactor = buffs.slowTime > 0 ? 0.48 : 1.0;
+
+                for (let i = items.length - 1; i >= 0; i--) {
+                    const item = items[i];
+                    const isMeteor = item.type === 'meteor' || item.type === 'crystal_meteor';
+
+                    // 磁铁引力场自动吸附范围内的星星与道具
+                    if (magnetActive && !isMeteor) {
+                        const dxMag = hitCenterX - item.x;
+                        const dyMag = hitCenterY - item.y;
+                        const distMag = Math.hypot(dxMag, dyMag);
+                        if (distMag < 270 && distMag > 5) {
+                            const pullSpeed = 480 * (1 - distMag / 320);
+                            item.x += (dxMag / distMag) * pullSpeed * dt;
+                            item.y += (dyMag / distMag) * pullSpeed * dt;
+                        }
+                    }
+
+                    // 怀表道具仅减缓陨石下落速度
+                    const currentVy = isMeteor ? item.vy * slowFactor : item.vy;
+                    item.y += currentVy * dt;
+                    item.x += item.vx * dt;
+                    item.rotation += item.vRot * dt;
+
+                    if (item.x < item.radius || item.x > stageWidth - item.radius) {
+                        item.vx *= -1;
+                    }
+
+                    // 尾迹粒子
+                    item.trailTimer += dt;
+                    if (item.trailTimer > 0.05) {
+                        item.trailTimer = 0;
+                        if (isMeteor) {
+                            particles.push({
+                                x: item.x + (Math.random() - 0.5) * item.radius * 0.7,
+                                y: item.y - item.radius * 0.6,
+                                vx: (Math.random() - 0.5) * 18,
+                                vy: -25 - Math.random() * 25,
+                                radius: 2 + Math.random() * 2.2,
+                                color: item.type === 'crystal_meteor' ? '#c084fc' : '#f97316',
+                                alpha: 0.75,
+                                life: 0.25,
+                                maxLife: 0.25
+                            });
+                        }
+                    }
+
+                    // 碰撞检测
+                    const dist = Math.hypot(item.x - hitCenterX, item.y - hitCenterY);
+                    const effectiveRadius = isMeteor
+                        ? catchRadius * 0.70 + item.radius * 0.74
+                        : catchRadius + item.radius * 0.88;
+
+                    if (dist < effectiveRadius) {
+                        if (item.type === 'star' || item.type === 'super_star') {
+                            combo += 1;
+                            if (combo > maxSessionCombo) maxSessionCombo = combo;
+                            if (combo > maxComboRecord) {
+                                maxComboRecord = combo;
+                                localStorage.setItem('star_ult_combo', maxComboRecord.toString());
+                            }
+
+                            const mult = getComboMultiplier();
+                            const basePts = item.type === 'super_star' ? 30 : 10;
+                            const finalPts = Math.round(basePts * mult);
+                            score += finalPts;
+                            addFeverGauge(item.type === 'super_star' ? 16 : 7);
+                            sound.playStar(item.type === 'super_star', combo);
+                            updateHUD();
+
+                            const burstColors = item.type === 'super_star'
+                                ? ['#38bdf8', '#e879f9', '#facc15', '#ffffff']
+                                : ['#fde047', '#f59e0b', '#fef08a', '#ffffff'];
+                            createBurstParticles(item.x, item.y, burstColors, item.type === 'super_star' ? 24 : 15);
+
+                            const labelText = mult > 1 ? `+${finalPts} (x${mult})` : `+${finalPts}`;
+                            createFloatingText(item.x, item.y - 10, labelText, item.type === 'super_star' ? '#38bdf8' : '#fde047');
+
+                        } else if (item.type === 'powerup') {
+                            sound.playPowerUp();
+                            createBurstParticles(item.x, item.y, [item.color, '#ffffff', '#fde047'], 22);
+                            createFloatingText(item.x, item.y - 12, item.label, item.color, 20);
+
+                            if (item.subType === 'shield') buffs.shield = true;
+                            if (item.subType === 'magnet') buffs.magnetTime = 8.0;
+                            if (item.subType === 'laser')  buffs.laserTime = 8.0;
+                            if (item.subType === 'slow')   buffs.slowTime = 6.0;
+                            if (item.subType === 'heal') {
+                                if (lives < 3) {
+                                    lives += 1;
+                                } else {
+                                    score += 50;
+                                    createFloatingText(item.x, item.y - 34, '满血奖励 +50!', '#facc15');
+                                }
+                            }
+                            updateHUD();
+                            updateBuffVisuals();
+
+                        } else if (isMeteor) {
+                            // 如果处于极速闪避冲刺无敌帧，直接穿过陨石
+                            if (player.dashActiveTime > 0) {
+                                continue;
+                            }
+                            // 如果有能量护盾，抵消此次伤害并震碎周围陨石
+                            if (buffs.shield) {
+                                items.splice(i, 1);
+                                triggerShieldShockwave();
+                                continue;
+                            }
+
+                            // 正常受伤逻辑
+                            combo = 0;
+                            score = Math.max(0, score - 5);
+                            lives -= 1;
+                            sound.playHit(false);
+                            updateHUD();
+
+                            createBurstParticles(item.x, item.y, ['#ef4444', '#f97316', '#94a3b8', '#fde047'], 24);
+                            createFloatingText(item.x, item.y - 10, '-5 ❤️-1', '#f43f5e');
+
+                            collectorEl.classList.remove('collector-hit');
+                            stage.classList.remove('damage-flash');
+                            void collectorEl.offsetWidth;
+                            collectorEl.classList.add('collector-hit');
+                            stage.classList.add('damage-flash');
+
+                            if (lives <= 0) {
+                                items.splice(i, 1);
+                                triggerGameOver();
+                                return;
+                            }
+                        }
+
+                        items.splice(i, 1);
+                        continue;
+                    }
+
+                    // 掉落出屏幕底部处理
+                    if (item.y - item.radius > stageHeight + 35) {
+                        // 普通模式下漏掉星星会中断连击（FEVER 星雨模式不中断连击）
+                        if ((item.type === 'star' || item.type === 'super_star') && !isFever && combo > 0) {
+                            combo = 0;
+                            updateHUD();
+                        }
+                        items.splice(i, 1);
+                    }
+                }
+
+                // 9. 更新粒子、飘字与冲刺残影
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+                    p.life -= dt;
+                    p.alpha = Math.max(0, p.life / p.maxLife);
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+
+                for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                    const ft = floatingTexts[i];
+                    ft.y += ft.vy * dt;
+                    ft.life -= dt;
+                    ft.alpha = Math.max(0, ft.life / ft.maxLife);
+                    ft.scale = Math.min(1.12, ft.scale + dt * 2.2);
+                    if (ft.life <= 0) floatingTexts.splice(i, 1);
+                }
+
+                for (let i = afterimages.length - 1; i >= 0; i--) {
+                    const img = afterimages[i];
+                    img.life -= dt;
+                    img.alpha = Math.max(0, (img.life / 0.22) * 0.5);
+                    if (img.life <= 0) afterimages.splice(i, 1);
+                }
+            }
+
+            // 渲染画布内容
+            function renderGame(timestamp) {
+                ctx.clearRect(0, 0, stageWidth, stageHeight);
+
+                // 1. 绘制冲刺残影光圈
+                for (let i = 0; i < afterimages.length; i++) {
+                    const img = afterimages[i];
+                    ctx.save();
+                    ctx.globalAlpha = img.alpha;
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.shadowColor = '#38bdf8';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.arc(img.x, img.y, 28, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                // 2. 绘制双联激光束
+                for (let i = 0; i < lasers.length; i++) {
+                    const l = lasers[i];
+                    ctx.save();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = '#f43f5e';
+                    ctx.shadowBlur = 14;
+                    ctx.beginPath();
+                    ctx.roundRect(l.x - 3, l.y - 14, 6, 26, 3);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                // 3. 绘制粒子
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fillStyle = p.color;
+                    ctx.shadowColor = p.color;
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                // 4. 绘制星星、陨石、晶核陨石与增益胶囊
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    ctx.save();
+                    ctx.translate(item.x, item.y);
+
+                    if (item.type === 'star' || item.type === 'super_star') {
+                        const isSuper = item.type === 'super_star';
+                        const pulse = 1 + Math.sin(timestamp * 0.008 + item.twinklePhase) * 0.12;
+                        ctx.scale(pulse, pulse);
+
+                        ctx.shadowColor = isSuper ? '#38bdf8' : '#facc15';
+                        ctx.shadowBlur = isSuper ? 22 : 16;
+
+                        drawStarShape(ctx, 0, 0, 5, item.radius, item.radius * 0.46, item.rotation);
+                        const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, item.radius);
+                        if (isSuper) {
+                            grad.addColorStop(0, '#ffffff');
+                            grad.addColorStop(0.45, '#7dd3fc');
+                            grad.addColorStop(1, '#c084fc');
+                        } else {
+                            grad.addColorStop(0, '#fef9c3');
+                            grad.addColorStop(0.5, '#facc15');
+                            grad.addColorStop(1, '#f59e0b');
+                        }
+                        ctx.fillStyle = grad;
+                        ctx.fill();
+
+                        ctx.shadowBlur = 0;
+                        drawStarShape(ctx, 0, 0, 5, item.radius * 0.48, item.radius * 0.22, item.rotation);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fill();
+
+                    } else if (item.type === 'powerup') {
+                        const pulse = 1 + Math.sin(timestamp * 0.009 + item.twinklePhase) * 0.08;
+                        ctx.scale(pulse, pulse);
+
+                        // 发光能量球外框
+                        ctx.shadowColor = item.color;
+                        ctx.shadowBlur = 18;
+                        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                        ctx.strokeStyle = item.color;
+                        ctx.lineWidth = 2.5;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // 内部图标
+                        ctx.shadowBlur = 0;
+                        ctx.font = '20px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(item.icon, 0, 1);
+
+                    } else if (item.type === 'meteor' || item.type === 'crystal_meteor') {
+                        const isCrystal = item.type === 'crystal_meteor';
+
+                        // 大气摩擦外焰
+                        const flameGrad = ctx.createRadialGradient(0, -item.radius * 0.3, item.radius * 0.3, 0, -item.radius * 0.5, item.radius * 1.45);
+                        if (isCrystal) {
+                            flameGrad.addColorStop(0, 'rgba(192, 132, 252, 0.6)');
+                            flameGrad.addColorStop(0.6, 'rgba(56, 189, 248, 0.25)');
+                            flameGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+                        } else {
+                            flameGrad.addColorStop(0, 'rgba(251, 146, 60, 0.55)');
+                            flameGrad.addColorStop(0.6, 'rgba(239, 68, 68, 0.25)');
+                            flameGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+                        }
+                        ctx.fillStyle = flameGrad;
+                        ctx.beginPath();
+                        ctx.arc(0, -item.radius * 0.25, item.radius * 1.4, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        ctx.save();
+                        ctx.rotate(item.rotation);
+                        ctx.shadowColor = isCrystal ? '#c084fc' : '#ef4444';
+                        ctx.shadowBlur = 14;
+
+                        ctx.beginPath();
+                        const verts = item.vertices;
+                        ctx.moveTo(verts[0].x, verts[0].y);
+                        for (let v = 1; v < verts.length; v++) ctx.lineTo(verts[v].x, verts[v].y);
+                        ctx.closePath();
+
+                        const rockGrad = ctx.createRadialGradient(-item.radius * 0.3, -item.radius * 0.3, 2, 0, 0, item.radius);
+                        if (isCrystal) {
+                            rockGrad.addColorStop(0, '#e879f9');
+                            rockGrad.addColorStop(0.55, '#6b21a8');
+                            rockGrad.addColorStop(1, '#1e1b4b');
+                        } else {
+                            rockGrad.addColorStop(0, '#94a3b8');
+                            rockGrad.addColorStop(0.65, '#475569');
+                            rockGrad.addColorStop(1, '#1e293b');
+                        }
+                        ctx.fillStyle = rockGrad;
+                        ctx.fill();
+
+                        ctx.lineWidth = 2.2;
+                        ctx.strokeStyle = isCrystal ? '#38bdf8' : '#f97316';
+                        ctx.stroke();
+
+                        // 晶核陨石内部发光核心
+                        if (isCrystal) {
+                            drawStarShape(ctx, 0, 0, 4, item.radius * 0.45, item.radius * 0.2, 0);
+                            ctx.fillStyle = '#fde047';
+                            ctx.fill();
+                        }
+                        ctx.restore();
+
+                        // 巨型晶核陨石顶部生命条
+                        if (isCrystal && item.hp < item.maxHp) {
+                            const barW = 36;
+                            const barH = 5;
+                            ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+                            ctx.fillRect(-barW / 2, -item.radius - 12, barW, barH);
+                            ctx.fillStyle = '#e879f9';
+                            ctx.fillRect(-barW / 2, -item.radius - 12, (item.hp / item.maxHp) * barW, barH);
+                        }
+                    }
+
+                    ctx.restore();
+                }
+
+                // 5. 绘制碰撞飘字
+                for (let i = 0; i < floatingTexts.length; i++) {
+                    const ft = floatingTexts[i];
+                    ctx.save();
+                    ctx.globalAlpha = ft.alpha;
+                    ctx.translate(ft.x, ft.y);
+                    ctx.scale(ft.scale, ft.scale);
+                    ctx.font = `900 ${ft.fontSize || 19}px "Orbitron", "Noto Sans SC", sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+                    ctx.shadowBlur = 6;
+                    ctx.fillStyle = ft.color;
+                    ctx.fillText(ft.text, 0, 0);
+                    ctx.restore();
+                }
+            }
+
+            // 主游戏循环
+            function gameLoop(timestamp) {
+                if (!lastFrameTime) lastFrameTime = timestamp;
+                const dt = Math.min(0.05, (timestamp - lastFrameTime) / 1000);
+                lastFrameTime = timestamp;
+
+                if (gameState === 'PLAYING') {
+                    updateGame(dt);
+                } else if (gameState === 'GAMEOVER') {
+                    for (let i = particles.length - 1; i >= 0; i--) {
+                        const p = particles[i];
+                        p.x += p.vx * dt;
+                        p.y += p.vy * dt;
+                        p.life -= dt;
+                        p.alpha = Math.max(0, p.life / p.maxLife);
+                        if (p.life <= 0) particles.splice(i, 1);
+                    }
+                }
+
+                renderGame(timestamp);
+                requestAnimationFrame(gameLoop);
+            }
+
+            // 开始新游戏
+            function startGame() {
+                sound.init();
+                score = 0;
+                lives = 3;
+                difficultyLevel = 1;
+                combo = 0;
+                maxSessionCombo = 0;
+                destroyedMeteors = 0;
+
+                feverGauge = 0;
+                isFever = false;
+                feverTimeLeft = 0;
+                feverBar.style.width = '0%';
+                feverLabel.textContent = '🌟 FEVER';
+                spaceBg.classList.remove('fever-active');
+                stage.classList.remove('fever-stage');
+                collectorEl.classList.remove('collector-fever-glow');
+
+                buffs.shield = false;
+                buffs.magnetTime = 0;
+                buffs.laserTime = 0;
+                buffs.slowTime = 0;
+                updateBuffVisuals();
+
+                items = [];
+                lasers = [];
+                particles = [];
+                floatingTexts = [];
+                afterimages = [];
+                spawnTimer = 0.25;
+                powerupSpawnTimer = 5.5;
+
+                player.x = stageWidth / 2;
+                player.targetX = stageWidth / 2;
+                player.tilt = 0;
+                player.dashCooldown = 0;
+                player.dashActiveTime = 0;
+                dashStatus.textContent = 'READY';
+                updateCollectorDOM();
+
+                levelBadge.textContent = 'LV.1';
+                updateHUD();
+
+                startOverlay.classList.add('hidden');
+                gameoverOverlay.classList.add('hidden');
+                gameoverOverlay.classList.remove('flex');
+                pauseOverlay.classList.add('hidden');
+                pauseOverlay.classList.remove('flex');
+
+                controlHint.style.opacity = '0.75';
+                setTimeout(() => {
+                    if (gameState === 'PLAYING') controlHint.style.opacity = '0';
+                }, 4500);
+
+                gameState = 'PLAYING';
+                lastFrameTime = performance.now();
+            }
+
+            // 返回主菜单换肤
+            function showMainMenu() {
+                gameState = 'START';
+                items = [];
+                lasers = [];
+                renderAchievementsUI();
+                gameoverOverlay.classList.add('hidden');
+                gameoverOverlay.classList.remove('flex');
+                startOverlay.classList.remove('hidden');
+            }
+
+            // 触发游戏结束
+            function triggerGameOver() {
+                gameState = 'GAMEOVER';
+                sound.playGameOver();
+
+                const isNewRecord = score > bestScore && score > 0;
+                if (score > bestScore) {
+                    bestScore = score;
+                    localStorage.setItem('star_ult_best', bestScore.toString());
+                }
+
+                finalScoreEl.textContent = score;
+                bestScoreEl.textContent = bestScore;
+                finalComboEl.textContent = `${maxSessionCombo} COMBO`;
+                finalMeteorsEl.textContent = `${destroyedMeteors} 颗`;
+                newRecordTag.classList.toggle('hidden', !isNewRecord);
+
+                gameoverOverlay.classList.remove('hidden');
+                gameoverOverlay.classList.add('flex');
+            }
+
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', startGame);
+            backMenuBtn.addEventListener('click', showMainMenu);
+
+            requestAnimationFrame(gameLoop);
+        });
+    </script>
+</body>
+</html>

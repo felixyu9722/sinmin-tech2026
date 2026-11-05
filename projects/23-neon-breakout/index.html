@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>霓虹弹球破砖 · 超级进化版 | NEON BREAKOUT</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{color-scheme:dark;box-sizing:border-box;--c:#00f0ff;--m:#ff2bd6;--y:#ffe600;--g:#00ff88;--r:#ff3366}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none}
+html,body{height:100%;margin:0;overflow:hidden;background:#05010f;font-family:ui-monospace,"SF Mono","Courier New",sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:none}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px)}
+
+/* 浮动顶部控制工具栏 */
+.top-nav{position:fixed;top:12px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;z-index:10;pointer-events:auto}
+.nav-btn{background:rgba(15,8,30,0.75);border:1px solid rgba(0,240,255,0.4);color:var(--c);padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(8px);transition:0.18s;box-shadow:0 0 10px rgba(0,240,255,0.15)}
+.nav-btn:hover{background:rgba(0,240,255,0.2);box-shadow:0 0 16px var(--c);color:#fff}
+.nav-btn.home{border-color:rgba(255,43,214,0.5);color:var(--m)}
+.nav-btn.home:hover{background:rgba(255,43,214,0.25);box-shadow:0 0 16px var(--m);color:#fff}
+
+/* 遮罩面板 */
+#ov{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;background:rgba(5,1,15,.88);color:#e8f6ff;padding:24px;z-index:20;backdrop-filter:blur(10px)}
+#ov.hide{display:none}
+#ov h1{margin:0;font-size:clamp(28px,7vw,54px);letter-spacing:.12em;color:var(--c);text-shadow:0 0 10px var(--c),0 0 28px var(--c),3px 3px 0 var(--m)}
+#ov p{margin:0;line-height:1.9;font-size:clamp(13px,2.6vw,15.5px);max-width:520px;color:#cbd5e1}
+#ov b{color:var(--y);text-shadow:0 0 8px var(--y)}
+.item-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin:8px 0;width:100%;max-width:440px}
+.item-badge{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);padding:6px;border-radius:6px;font-size:12px}
+#btn{margin-top:10px;padding:12px 36px;font:inherit;font-size:16px;font-weight:700;letter-spacing:.15em;color:var(--c);background:transparent;border:2px solid var(--c);border-radius:8px;cursor:pointer;box-shadow:0 0 18px var(--c),inset 0 0 14px rgba(0,240,255,.25);text-shadow:0 0 8px var(--c);transition:0.2s}
+#btn:hover{background:var(--c);color:#05010f;box-shadow:0 0 28px var(--c)}
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <button class="nav-btn" id="snd-toggle"><i class="fa-solid fa-volume-high"></i> 音效/BGM</button>
+  <button class="nav-btn home" onclick="backToHome()"><i class="fa-solid fa-house"></i> 回到主页</button>
+</div>
+
+<canvas id="c"></canvas>
+<div id="ov">
+  <h1 id="t"></h1>
+  <p id="d"></p>
+  <button id="btn"></button>
+</div>
+
+<script>
+// ==================== 返回主页 ====================
+function backToHome() {
+  if (window.parent && window.parent.closeModal) {
+    window.parent.closeModal();
+  } else {
+    location.href = '../../index.html';
+  }
+}
+
+// ==================== Web Audio 赛博音效与 Synthwave 音乐 ====================
+let AC = null, soundOn = true, bgmTimer = null, bgmStep = 0;
+function initAC() {
+  if (!AC) {
+    try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+  }
+  if (AC && AC.state === 'suspended') AC.resume();
+}
+
+function sfx(type, pitch = 1) {
+  if (!soundOn) return;
+  initAC();
+  if (!AC) return;
+  const now = AC.currentTime;
+
+  if (type === 'hit') {
+    // 弹射音
+    const osc = AC.createOscillator(), g = AC.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(440 * pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(160, now + 0.08);
+    g.gain.setValueAtTime(0.12, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(g); g.connect(AC.destination);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'brick') {
+    // 击碎砖块音阶
+    const osc = AC.createOscillator(), g = AC.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 1.5, now + 0.12);
+    g.gain.setValueAtTime(0.15, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    osc.connect(g); g.connect(AC.destination);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'powerup') {
+    // 吃到道具
+    [587.33, 739.99, 880, 1174.66].forEach((f, idx) => {
+      const osc = AC.createOscillator(), g = AC.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, now + idx * 0.04);
+      g.gain.setValueAtTime(0.1, now + idx * 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.15);
+      osc.connect(g); g.connect(AC.destination);
+      osc.start(now + idx * 0.04); osc.stop(now + idx * 0.04 + 0.16);
+    });
+  } else if (type === 'laser') {
+    // 激光发射
+    const osc = AC.createOscillator(), g = AC.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(980, now);
+    osc.frequency.exponentialRampToValueAtTime(120, now + 0.09);
+    g.gain.setValueAtTime(0.1, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+    osc.connect(g); g.connect(AC.destination);
+    osc.start(now); osc.stop(now + 0.09);
+  } else if (type === 'bomb') {
+    // 爆炸
+    const buf = AC.createBuffer(1, AC.sampleRate * 0.35, AC.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (AC.sampleRate * 0.07));
+    const noise = AC.createBufferSource(); noise.buffer = buf;
+    const filter = AC.createBiquadFilter(); filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(450, now);
+    filter.frequency.exponentialRampToValueAtTime(50, now + 0.35);
+    const g = AC.createGain(); g.gain.setValueAtTime(0.3, now);
+    noise.connect(filter); filter.connect(g); g.connect(AC.destination);
+    noise.start(now);
+  } else if (type === 'lose') {
+    // 丢球低沉
+    const osc = AC.createOscillator(), g = AC.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+    g.gain.setValueAtTime(0.2, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(g); g.connect(AC.destination);
+    osc.start(now); osc.stop(now + 0.3);
+  }
+}
+
+// Synthwave 节奏 BGM
+function startBGM() {
+  if (!soundOn || bgmTimer) return;
+  initAC();
+  if (!AC) return;
+  const bassNotes = [110, 110, 130.81, 146.83, 110, 110, 164.81, 146.83];
+  bgmTimer = setInterval(() => {
+    if (!soundOn || state !== 'play') return;
+    const now = AC.currentTime;
+    const osc = AC.createOscillator(), g = AC.createGain(), flt = AC.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(bassNotes[bgmStep % bassNotes.length], now);
+    flt.type = 'lowpass'; flt.frequency.value = 650;
+    g.gain.setValueAtTime(0.04, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+    osc.connect(flt); flt.connect(g); g.connect(AC.destination);
+    osc.start(now); osc.stop(now + 0.17);
+    bgmStep++;
+  }, 190);
+}
+function stopBGM() {
+  if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; }
+}
+
+const sndBtn = document.getElementById('snd-toggle');
+sndBtn.onclick = () => {
+  soundOn = !soundOn;
+  if (soundOn) {
+    sndBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 音效: 开';
+    startBGM();
+  } else {
+    sndBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> 音效: 关';
+    stopBGM();
+  }
+};
+
+// ==================== 游戏主逻辑 ====================
+const $ = id => document.getElementById(id), cv = $('c'), ctx = cv.getContext('2d');
+const FW = 480, FH = 720, BR = 7, PY = FH - 60, PH = 12, COLS = 8;
+const NEON = ['#ff2bd6', '#00f0ff', '#b26bff', '#ffe600', '#ff7a3d', '#3dff9a'];
+const PENTATONIC = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51];
+
+let W, H, dpr, s, ox, oy, state = 'menu';
+let pad = { x: FW / 2, w: 90, tx: FW / 2 };
+let wide = 0, laserTime = 0, shield = false;
+let balls = [], bricks = [], drops = [], parts = [], lasers = [];
+let score = 0, lives = 3, level = 1, combo = 0, maxCombo = 0, high = 0, newRec = false, stuck = true;
+let shake = 0, lvlFlash = 0, keys = {}, last = 0, t = 0;
+
+try { high = +localStorage.getItem('neonBreakoutHigh') || 0; } catch(e){}
+const rnd = (a, b) => a + Math.random() * (b - a);
+const mult = () => Math.min(8, 1 + Math.floor(combo / 4));
+const speed = () => Math.min(740, 340 + (level - 1) * 35);
+
+function resize() {
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  s = Math.min(W / FW, H / FH);
+  ox = (W - FW * s) / 2; oy = (H - FH * s) / 2;
+}
+addEventListener('resize', resize); resize();
+
+function build() {
+  bricks = [];
+  const rows = Math.min(10, 4 + level), g = 4, bw = (FW - 40 - g * (COLS - 1)) / COLS, bh = 20;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const hp = Math.random() < Math.min(0.55, (level - 1) * 0.14) ? 2 : 1;
+      bricks.push({ x: 20 + c * (bw + g), y: 85 + r * (bh + g), w: bw, h: bh, hp, col: NEON[r % NEON.length], flash: 0 });
+    }
+  }
+}
+
+function serve() {
+  balls = [{ x: pad.x, y: PY - BR - 2, vx: 0, vy: 0, tr: [], bomb: false }];
+  stuck = true;
+}
+
+function start() {
+  initAC();
+  score = 0; lives = 3; level = 1; combo = 0; maxCombo = 0; newRec = false;
+  wide = 0; laserTime = 0; shield = false; pad.w = 90;
+  drops = []; parts = []; lasers = [];
+  build(); serve(); state = 'play';
+  $('ov').classList.add('hide');
+  startBGM();
+}
+
+function show(t, d, b) {
+  $('t').textContent = t; $('d').innerHTML = d; $('btn').textContent = b;
+  $('ov').classList.remove('hide');
+}
+
+function over() {
+  state = 'over'; stopBGM();
+  if (score > high) { high = score; newRec = true; try { localStorage.setItem('neonBreakoutHigh', String(high)); } catch(e){} }
+  show('GAME OVER', `最终得分 <b>${score}</b> · 抵达关卡 <b>${level}</b> · 最高连击 <b>${maxCombo}</b><br>历史纪录 <b>${high}</b>${newRec ? ' 🎉 刷新个人最高纪录！' : ''}`, '再来一局');
+}
+
+function menu() {
+  show('NEON BREAKOUT', `
+    滑动鼠标 / 触控手指控制<b>霓虹能量挡板</b>。<br>
+    点击屏幕或按<b>空格</b>发射能量弹球，连续击碎砖块堆叠 <b>COMBO 高额倍率</b>！<br>
+    <div class="item-grid">
+      <div class="item-badge" style="color:var(--c)"><b>[W]</b> 加长挡板</div>
+      <div class="item-badge" style="color:var(--m)"><b>[M]</b> 分裂多球</div>
+      <div class="item-badge" style="color:var(--g)"><b>[L]</b> 贯穿激光</div>
+      <div class="item-badge" style="color:var(--y)"><b>[B]</b> 爆炸核弹</div>
+      <div class="item-badge" style="color:#a855f7"><b>[S]</b> 激光底护盾</div>
+    </div>
+    历史最高纪录：<b>${high}</b>
+  `, '开始战斗');
+}
+
+$('btn').onclick = () => {
+  if (state === 'pause') { state = 'play'; $('ov').classList.add('hide'); startBGM(); }
+  else start();
+};
+
+function setX(cx) { pad.tx = Math.max(0, Math.min(FW, (cx - ox) / s)); }
+cv.addEventListener('pointermove', e => setX(e.clientX));
+cv.addEventListener('pointerdown', e => { setX(e.clientX); launch(); fireLasers(); });
+
+function launch() {
+  if (state !== 'play' || !stuck) return;
+  stuck = false;
+  const b = balls[0], a = rnd(-0.35, 0.35), sp = speed();
+  b.vx = Math.sin(a) * sp; b.vy = -Math.cos(a) * sp;
+  sfx('hit', 1.2);
+}
+
+function fireLasers() {
+  if (state !== 'play' || laserTime <= 0) return;
+  lasers.push({ x: pad.x - pad.w / 2 + 6, y: PY - 4, vy: -900 });
+  lasers.push({ x: pad.x + pad.w / 2 - 6, y: PY - 4, vy: -900 });
+  sfx('laser');
+}
+
+addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+    if (state === 'play') { state = 'pause'; stopBGM(); show('PAUSED', '游戏已暂停，按 Esc 或点击继续', '继续游戏'); }
+    else if (state === 'pause') { state = 'play'; $('ov').classList.add('hide'); startBGM(); }
+    return;
+  }
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    if (state === 'menu' || state === 'over') start();
+    else { launch(); fireLasers(); }
+  }
+});
+addEventListener('keyup', e => keys[e.key] = false);
+
+function burst(x, y, c, n = 16) {
+  for (let i = 0; i < n; i++) {
+    const a = rnd(0, 6.283), v = rnd(50, 240);
+    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rnd(0.3, 0.75), max: 0.75, c });
+  }
+}
+
+function loseBall() {
+  lives--; combo = 0; shake = 0.45;
+  sfx('lose');
+  if (lives <= 0) over();
+  else { wide = 0; laserTime = 0; shield = false; pad.w = 90; serve(); }
+}
+
+function spawnDrop(x, y) {
+  const pool = ['W', 'M', 'L', 'B', 'S'];
+  const weights = [0.28, 0.25, 0.2, 0.15, 0.12];
+  const r = Math.random();
+  let acc = 0, selected = 'W';
+  for (let i = 0; i < pool.length; i++) {
+    acc += weights[i];
+    if (r <= acc) { selected = pool[i]; break; }
+  }
+  drops.push({ x, y, k: selected });
+}
+
+function explodeBrick(cx, cy) {
+  shake = 0.5; sfx('bomb');
+  burst(cx, cy, '#ffe600', 30);
+  for (let j = bricks.length - 1; j >= 0; j--) {
+    const r = bricks[j];
+    if (Math.hypot(r.x + r.w / 2 - cx, r.y + r.h / 2 - cy) < 65) {
+      score += 10 * mult();
+      burst(r.x + r.w / 2, r.y + r.h / 2, r.col, 10);
+      bricks.splice(j, 1);
+    }
+  }
+}
+
+function update(dt) {
+  t += dt;
+  if (keys.ArrowLeft || keys.a || keys.A) pad.tx -= 550 * dt;
+  if (keys.ArrowRight || keys.d || keys.D) pad.tx += 550 * dt;
+  pad.tx = Math.max(0, Math.min(FW, pad.tx));
+  pad.x += (pad.tx - pad.x) * (1 - Math.exp(-22 * dt));
+  pad.w += ((wide > 0 ? 140 : 90) - pad.w) * (1 - Math.exp(-12 * dt));
+  if (wide > 0) wide = Math.max(0, wide - dt);
+  if (laserTime > 0) {
+    laserTime = Math.max(0, laserTime - dt);
+    if (Math.random() < dt * 6) fireLasers();
+  }
+
+  // 激光推进
+  for (let i = lasers.length - 1; i >= 0; i--) {
+    const l = lasers[i];
+    l.y += l.vy * dt;
+    for (let j = bricks.length - 1; j >= 0; j--) {
+      const r = bricks[j];
+      if (l.x >= r.x && l.x <= r.x + r.w && l.y >= r.y && l.y <= r.y + r.h) {
+        r.hp--;
+        burst(l.x, l.y, '#00ff88', 8);
+        if (r.hp <= 0) {
+          score += 10 * mult();
+          if (Math.random() < 0.2) spawnDrop(r.x + r.w / 2, r.y);
+          bricks.splice(j, 1);
+        }
+        lasers.splice(i, 1);
+        break;
+      }
+    }
+    if (l.y < 0) lasers.splice(i, 1);
+  }
+
+  // 球推进
+  for (let i = balls.length - 1; i >= 0; i--) {
+    const b = balls[i];
+    if (stuck) { b.x = pad.x; b.y = PY - BR - 2; continue; }
+    b.x += b.vx * dt; b.y += b.vy * dt;
+
+    if (b.x < BR) { b.x = BR; b.vx = Math.abs(b.vx); sfx('hit', 0.8); }
+    if (b.x > FW - BR) { b.x = FW - BR; b.vx = -Math.abs(b.vx); sfx('hit', 0.8); }
+    if (b.y < BR) { b.y = BR; b.vy = Math.abs(b.vy); sfx('hit', 0.8); }
+
+    // 激光底护盾救球
+    if (shield && b.y >= FH - 16 && b.vy > 0) {
+      b.y = FH - 16; b.vy = -Math.abs(b.vy);
+      shield = false; shake = 0.3;
+      sfx('hit', 1.6); burst(b.x, FH - 16, '#a855f7', 22);
+    }
+
+    // 挡板碰撞
+    if (b.vy > 0 && b.y + BR >= PY && b.y - BR <= PY + PH) {
+      const offset = (b.x - pad.x) / (pad.w / 2);
+      if (Math.abs(offset) <= 1.05) {
+        b.y = PY - BR;
+        const sp = speed();
+        const ang = Math.max(-1.15, Math.min(1.15, offset * 1.15));
+        b.vx = Math.sin(ang) * sp;
+        b.vy = -Math.cos(ang) * sp;
+        sfx('hit', 1.0 + Math.abs(offset) * 0.5);
+        shake = 0.12; burst(b.x, PY, '#00f0ff', 8);
+      }
+    }
+
+    // 砖块碰撞
+    for (let j = bricks.length - 1; j >= 0; j--) {
+      const r = bricks[j];
+      if (b.x + BR > r.x && b.x - BR < r.x + r.w && b.y + BR > r.y && b.y - BR < r.y + r.h) {
+        if (b.bomb) {
+          explodeBrick(r.x + r.w / 2, r.y + r.h / 2);
+          b.bomb = false;
+        } else {
+          r.hp--; r.flash = 0.12;
+          combo++; maxCombo = Math.max(maxCombo, combo);
+          const notePitch = PENTATONIC[(combo - 1) % PENTATONIC.length];
+          sfx('brick', notePitch);
+          burst(b.x, b.y, r.col, 12);
+          if (r.hp <= 0) {
+            score += 10 * mult();
+            if (Math.random() < 0.28) spawnDrop(r.x + r.w / 2, r.y);
+            bricks.splice(j, 1);
+          } else score += 2 * mult();
+
+          // 反弹方向判定
+          const oL = Math.abs(b.x + BR - r.x), oR = Math.abs(r.x + r.w - (b.x - BR));
+          const oT = Math.abs(b.y + BR - r.y), oB = Math.abs(r.y + r.h - (b.y - BR));
+          const m = Math.min(oL, oR, oT, oB);
+          if (m === oL || m === oR) b.vx = -b.vx; else b.vy = -b.vy;
+        }
+        break;
+      }
+    }
+
+    b.tr.push([b.x, b.y]); if (b.tr.length > 12) b.tr.shift();
+    if (b.y > FH + 20) balls.splice(i, 1);
+  }
+
+  if (!stuck && balls.length === 0) loseBall();
+
+  // 道具下落与吃取
+  for (let i = drops.length - 1; i >= 0; i--) {
+    const d = drops[i];
+    d.y += 165 * dt;
+    if (d.y > PY - 8 && d.y < PY + PH + 8 && Math.abs(d.x - pad.x) < pad.w / 2 + 12) {
+      sfx('powerup');
+      burst(d.x, PY, '#ffe600', 16);
+      if (d.k === 'W') wide = 12;
+      else if (d.k === 'M') {
+        const src = balls[0];
+        if (src && !stuck) {
+          for (const a of [-0.45, 0.45]) {
+            const v = Math.hypot(src.vx, src.vy) || speed(), ang = Math.atan2(src.vx, -src.vy) + a;
+            balls.push({ x: src.x, y: src.y, vx: Math.sin(ang) * v, vy: -Math.cos(ang) * v, tr: [], bomb: src.bomb });
+          }
+        }
+      } else if (d.k === 'L') {
+        laserTime = 8;
+      } else if (d.k === 'B') {
+        balls.forEach(b => b.bomb = true);
+      } else if (d.k === 'S') {
+        shield = true;
+      }
+      drops.splice(i, 1);
+    } else if (d.y > FH + 20) drops.splice(i, 1);
+  }
+
+  bricks.forEach(r => r.flash = Math.max(0, r.flash - dt));
+  parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.97; p.vy *= 0.97; p.life -= dt; });
+  parts = parts.filter(p => p.life > 0);
+  shake = Math.max(0, shake - dt); lvlFlash = Math.max(0, lvlFlash - dt);
+
+  // 通关升级
+  if (state === 'play' && bricks.length === 0) {
+    level++; lvlFlash = 1.6; shake = 0.2;
+    build(); drops = []; serve();
+  }
+}
+
+const glow = (c, b = 14) => { ctx.shadowColor = c; ctx.shadowBlur = b; };
+
+function draw() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#04010a'); bgGrad.addColorStop(1, '#1a0633');
+  ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+
+  ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
+  if (shake > 0) ctx.translate(rnd(-1, 1) * shake * 12, rnd(-1, 1) * shake * 12);
+
+  // 网格与边框
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,240,255,.06)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let x = 0; x <= FW; x += 40) { ctx.moveTo(x, 0); ctx.lineTo(x, FH); }
+  for (let y = 0; y <= FH; y += 40) { ctx.moveTo(0, y); ctx.lineTo(FW, y); }
+  ctx.stroke();
+
+  glow('#ff2bd6', 16); ctx.strokeStyle = '#ff2bd6'; ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, FW - 2, FH - 2);
+  ctx.restore();
+
+  // 底线护盾
+  if (shield) {
+    ctx.save();
+    glow('#a855f7', 20); ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(4, FH - 14); ctx.lineTo(FW - 4, FH - 14); ctx.stroke();
+    ctx.restore();
+  }
+
+  // 砖块
+  for (const r of bricks) {
+    ctx.save();
+    glow(r.col, r.flash > 0 ? 25 : 12);
+    ctx.fillStyle = r.flash > 0 ? '#ffffff' : (r.hp > 1 ? r.col : 'rgba(10,3,28,.9)');
+    ctx.strokeStyle = r.col; ctx.lineWidth = 2;
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+    if (r.hp > 1) {
+      ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(5,1,15,.65)';
+      ctx.fillRect(r.x + 5, r.y + 5, r.w - 10, r.h - 10);
+    }
+    ctx.restore();
+  }
+
+  // 激光炮射击轨迹
+  for (const l of lasers) {
+    ctx.save(); glow('#00ff88', 16);
+    ctx.fillStyle = '#7dffb0'; ctx.fillRect(l.x - 2, l.y, 4, 18);
+    ctx.restore();
+  }
+
+  // 挡板
+  ctx.save();
+  glow('#00f0ff', 22);
+  ctx.fillStyle = laserTime > 0 ? '#1b4d3e' : '#071a2a';
+  ctx.strokeStyle = laserTime > 0 ? '#00ff88' : '#00f0ff';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.roundRect(pad.x - pad.w / 2, PY, pad.w, PH, 6);
+  ctx.fill(); ctx.stroke();
+
+  if (laserTime > 0) {
+    ctx.fillStyle = '#00ff88';
+    ctx.fillRect(pad.x - pad.w / 2 + 4, PY - 4, 4, 4);
+    ctx.fillRect(pad.x + pad.w / 2 - 8, PY - 4, 4, 4);
+  }
+  ctx.restore();
+
+  // 弹球与残影拖尾
+  for (const b of balls) {
+    ctx.save();
+    const ballCol = b.bomb ? '#ff3344' : '#ffe600';
+    glow(ballCol, 22);
+    b.tr.forEach((p, i) => {
+      ctx.globalAlpha = (i / b.tr.length) * 0.45;
+      ctx.fillStyle = ballCol; ctx.beginPath();
+      ctx.arc(p[0], p[1], BR * (i / b.tr.length), 0, 6.283); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = b.bomb ? '#ff7788' : '#fffbe0';
+    ctx.beginPath(); ctx.arc(b.x, b.y, BR * (b.bomb ? 1.3 : 1), 0, 6.283); ctx.fill();
+    ctx.restore();
+  }
+
+  // 掉落道具
+  ctx.font = 'bold 13px ui-monospace,monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const d of drops) {
+    const colMap = { W: '#00f0ff', M: '#ff2bd6', L: '#00ff88', B: '#ffe600', S: '#c084fc' };
+    const c = colMap[d.k] || '#fff';
+    ctx.save(); glow(c, 16); ctx.strokeStyle = c; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(d.x, d.y, 11, 0, 6.283); ctx.stroke();
+    ctx.fillStyle = c; ctx.fillText(d.k, d.x, d.y + 1); ctx.restore();
+  }
+
+  // 粒子
+  for (const p of parts) {
+    ctx.save(); glow(p.c, 8);
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 3, 3);
+    ctx.restore();
+  }
+
+  // HUD 状态栏
+  ctx.textBaseline = 'top'; ctx.font = 'bold 16px ui-monospace,monospace';
+  ctx.save();
+  glow('#00f0ff', 10); ctx.fillStyle = '#00f0ff'; ctx.textAlign = 'left';
+  ctx.fillText('SCORE ' + score, 16, 16);
+
+  glow('#ff2bd6', 10); ctx.fillStyle = '#ff2bd6'; ctx.textAlign = 'center';
+  ctx.fillText('STAGE ' + level, FW / 2, 16);
+
+  glow('#ffe600', 10); ctx.fillStyle = '#ffe600'; ctx.textAlign = 'right';
+  ctx.fillText('BEST ' + Math.max(high, score), FW - 16, 16);
+
+  glow('#ff3b6b', 10); ctx.fillStyle = '#ff3b6b'; ctx.textAlign = 'left';
+  ctx.fillText('♥ '.repeat(Math.max(0, lives)), 16, 42);
+
+  if (combo > 1) {
+    glow('#ffe600', 16); ctx.fillStyle = '#ffe600'; ctx.textAlign = 'center';
+    ctx.font = 'bold 20px ui-monospace,monospace';
+    ctx.fillText(`COMBO ${combo}  ×${mult()}`, FW / 2, 42);
+  }
+
+  // 特殊状态角标
+  let statusText = '';
+  if (wide > 0) statusText += `[加宽 ${Math.ceil(wide)}s] `;
+  if (laserTime > 0) statusText += `[激光 ${Math.ceil(laserTime)}s] `;
+  if (shield) statusText += `[底盾保护] `;
+  if (statusText) {
+    glow('#00ff88', 10); ctx.fillStyle = '#7dffb0'; ctx.textAlign = 'right';
+    ctx.font = 'bold 12px ui-monospace,monospace';
+    ctx.fillText(statusText, FW - 16, 44);
+  }
+  ctx.restore();
+
+  if (stuck && state === 'play') {
+    ctx.save(); glow('#fff', 12); ctx.fillStyle = '#fff';
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5);
+    ctx.textAlign = 'center'; ctx.font = 'bold 15px ui-monospace,monospace';
+    ctx.fillText('轻触屏幕 / 空格键 发射能量球', FW / 2, PY - 50);
+    ctx.restore();
+  }
+
+  if (lvlFlash > 0) {
+    ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    glow('#ff2bd6', 30); ctx.fillStyle = '#ff9cf0';
+    ctx.globalAlpha = Math.min(1, lvlFlash);
+    ctx.font = 'bold 42px ui-monospace,monospace';
+    ctx.fillText('STAGE ' + level + ' ▲', FW / 2, FH * 0.55);
+    ctx.restore();
+  }
+}
+
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(0.033, (now - last) / 1000 || 0);
+  last = now;
+  if (state === 'play') update(dt);
+  draw();
+}
+build(); serve(); menu(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
+

@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>量子黑洞台球 · 霓虹引力弹珠 | Quantum Grav-Pinball</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(13, 20, 36, 0.88);
+  --border: rgba(56, 189, 248, 0.28);
+  --cyan: #38bdf8;
+  --purple: #a855f7;
+  --pink: #f43f5e;
+  --amber: #f59e0b;
+  --emerald: #10b981;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden; background: var(--bg);
+  color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif;
+}
+
+canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
+
+/* 顶栏 */
+header {
+  position: fixed; top: 0; left: 0; right: 0; height: 58px;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 20px; background: rgba(8, 12, 22, 0.85);
+  border-bottom: 1px solid var(--border); backdrop-filter: blur(14px); z-index: 50;
+}
+
+.logo-area { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 9px; background: rgba(56, 189, 248, 0.15);
+  border: 1px solid var(--cyan); display: flex; align-items: center; justify-content: center;
+  color: var(--cyan); font-size: 18px; box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+}
+.logo-text h1 { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+.logo-text p { font-size: 10.5px; color: var(--muted); letter-spacing: 0.08em; }
+
+.top-btns { display: flex; gap: 8px; align-items: center; }
+.btn {
+  padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; backdrop-filter: blur(8px);
+  border: 1px solid var(--border); background: rgba(15, 23, 42, 0.65); color: var(--cyan);
+}
+.btn:hover { background: rgba(56, 189, 248, 0.22); color: #fff; border-color: var(--cyan); box-shadow: 0 0 14px rgba(56, 189, 248, 0.35); }
+.btn.home { background: rgba(244, 63, 94, 0.16); border-color: rgba(244, 63, 94, 0.4); color: #ff9aa8; }
+.btn.home:hover { background: #f43f5e; color: #fff; box-shadow: 0 0 18px rgba(244, 63, 94, 0.55); }
+
+/* 左侧引力控制与关卡台 */
+.deck {
+  position: fixed; left: 18px; top: 74px; width: 295px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+  padding: 15px; backdrop-filter: blur(16px); z-index: 40;
+  display: flex; flex-direction: column; gap: 11px; box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+}
+
+.score-box {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 8px 6px; text-align: center;
+}
+.score-item { display: flex; flex-direction: column; }
+.score-val { font-size: 18px; font-weight: 900; color: var(--amber); font-family: monospace; }
+.score-val.cyan { color: var(--cyan); }
+.score-val.emerald { color: var(--emerald); }
+.score-lbl { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+
+.deck-title {
+  font-size: 12px; font-weight: 700; color: var(--cyan); display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 2px; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.ctrl-row { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.ctrl-row label { display: flex; justify-content: space-between; color: var(--muted); font-size: 11.5px; }
+.ctrl-row label b { color: var(--cyan); font-family: monospace; font-size: 12px; }
+input[type=range] { accent-color: var(--cyan); width: 100%; height: 6px; border-radius: 3px; cursor: pointer; }
+
+/* 模式与桌面选择按钮 */
+.mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mode-btn {
+  padding: 7px 6px; border-radius: 8px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09); color: var(--text); font-size: 11.5px;
+  font-weight: 600; cursor: pointer; text-align: center; transition: 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.mode-btn:hover { background: rgba(56, 189, 248, 0.15); border-color: var(--cyan); color: #fff; }
+.mode-btn.active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(168, 85, 247, 0.3));
+  border-color: var(--cyan); color: #fff; box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+}
+
+.action-row { display: flex; gap: 6px; margin-top: 2px; }
+.act-btn {
+  flex: 1; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12); color: var(--text); font-size: 11.5px;
+  font-weight: 600; cursor: pointer; text-align: center; transition: 0.15s;
+}
+.act-btn:hover { background: rgba(56, 189, 248, 0.22); border-color: var(--cyan); color: #fff; }
+
+/* 底部操作提示 (开始后自动淡出隐藏) */
+.hint-bar {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  background: rgba(10, 16, 30, 0.9); border: 1px solid var(--border); border-radius: 999px;
+  padding: 8px 22px; font-size: 12px; color: var(--muted); backdrop-filter: blur(12px);
+  z-index: 40; display: flex; gap: 14px; align-items: center;
+  opacity: 1; transition: opacity 0.5s ease, transform 0.5s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.hint-bar.hidden {
+  opacity: 0; transform: translateX(-50%) translateY(25px); pointer-events: none;
+}
+.hint-bar span b { color: var(--cyan); font-weight: 600; }
+
+/* 连击浮动动画 */
+.combo-banner {
+  position: fixed; right: 28px; top: 80px; z-index: 45;
+  font-family: monospace; font-size: 26px; font-weight: 900;
+  color: #ffdd00; text-shadow: 0 0 15px rgba(255, 221, 0, 0.8);
+  pointer-events: none; opacity: 0; transform: scale(0.6);
+  transition: opacity 0.25s, transform 0.25s;
+}
+.combo-banner.show { opacity: 1; transform: scale(1.1); }
+
+/* 过关奖励全屏模态弹窗 */
+#bannerModal {
+  position: fixed; inset: 0; background: rgba(3, 7, 18, 0.78);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+#bannerModal.show { opacity: 1; pointer-events: auto; }
+.banner-card {
+  background: rgba(13, 20, 36, 0.95); border: 2px solid var(--amber); border-radius: 22px;
+  padding: 30px 42px; text-align: center; box-shadow: 0 0 50px rgba(245, 158, 11, 0.4);
+  transform: scale(0.88); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 440px; width: 90%;
+}
+#bannerModal.show .banner-card { transform: scale(1); }
+.banner-stars { font-size: 28px; color: #facc15; margin-bottom: 8px; text-shadow: 0 0 15px rgba(250, 204, 21, 0.6); }
+.banner-title { font-size: 28px; font-weight: 900; color: var(--amber); text-shadow: 0 0 18px var(--amber); margin-bottom: 8px; }
+.banner-sub { font-size: 13.5px; color: #cbd5e1; margin-bottom: 22px; line-height: 1.7; }
+.banner-sub b { color: var(--cyan); }
+.banner-btn {
+  padding: 12px 34px; border-radius: 999px; background: linear-gradient(135deg, #f59e0b, #ef4444);
+  border: none; color: #fff; font-size: 15px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.6); transition: 0.2s;
+}
+.banner-btn:hover { transform: scale(1.06); box-shadow: 0 0 30px rgba(245, 158, 11, 0.85); }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<header>
+  <div class="logo-area">
+    <div class="logo-icon"><i class="fa-solid fa-circle-dot"></i></div>
+    <div class="logo-text">
+      <h1>量子黑洞台球 · 霓虹引力弹珠 <span style="font-size:11px;color:var(--cyan);font-weight:600;padding:2px 6px;border-radius:4px;background:rgba(56,189,248,0.15)">STAGE 1</span></h1>
+      <p>QUANTUM GRAVITATIONAL BILLIARDS & PINBALL</p>
+    </div>
+  </div>
+
+  <div class="top-btns">
+    <button class="btn" id="helpToggleBtn" onclick="toggleHintBar()"><i class="fa-solid fa-circle-question"></i> 操作指引</button>
+    <button class="btn" id="sndBtn"><i class="fa-solid fa-volume-high"></i> 音效: 开</button>
+    <button class="btn home" onclick="backToHome()"><i class="fa-solid fa-house"></i> 回到主页</button>
+  </div>
+</header>
+
+<div class="combo-banner" id="comboEl">COMBO x2!</div>
+
+<div class="deck">
+  <!-- 关卡与积分状态面板 -->
+  <div class="score-box">
+    <div class="score-item">
+      <div class="score-val cyan" id="stageVal">第 1 关</div>
+      <div class="score-lbl">当前关卡</div>
+    </div>
+    <div class="score-item">
+      <div class="score-val" id="scoreVal">0</div>
+      <div class="score-lbl">当前积分</div>
+    </div>
+    <div class="score-item">
+      <div class="score-val emerald" id="remainVal">9</div>
+      <div class="score-lbl">剩余彩球</div>
+    </div>
+  </div>
+
+  <!-- 量子引力模式 (第一关引力默认 0.0x 经典零重力) -->
+  <div class="deck-title">
+    <span><i class="fa-solid fa-magnet"></i> 量子引力模式</span>
+    <span id="gravStatus" style="color:var(--emerald);font-size:11px">零引力平直时空</span>
+  </div>
+
+  <div class="mode-grid">
+    <button class="mode-btn active" id="m-zero" onclick="setMode('zero')">🪐 经典零重力</button>
+    <button class="mode-btn" id="m-hole" onclick="setMode('hole')">🕳️ 中心黑洞</button>
+    <button class="mode-btn" id="m-binary" onclick="setMode('binary')">✨ 双子引力源</button>
+    <button class="mode-btn" id="m-repel" onclick="setMode('repel')">⚡ 反重力脉冲</button>
+  </div>
+
+  <!-- 引力井强度微调滑块 (随过关一点一点递增) -->
+  <div class="ctrl-row">
+    <label><span>引力强度 (过关循序递增)</span><b id="gTxt">0.0x</b></label>
+    <input type="range" id="gRng" min="0" max="30" value="0">
+  </div>
+
+  <!-- 桌面皮肤选择 -->
+  <div class="deck-title">
+    <span><i class="fa-solid fa-palette"></i> 球台赛博皮肤</span>
+  </div>
+
+  <div class="mode-grid">
+    <button class="mode-btn active" id="th-blue" onclick="setTheme('blue')">💠 赛博深蓝</button>
+    <button class="mode-btn" id="th-green" onclick="setTheme('green')">🧪 极客矩阵绿</button>
+    <button class="mode-btn" id="th-purple" onclick="setTheme('purple')">🔮 虚空紫晶</button>
+    <button class="mode-btn" id="th-red" onclick="setTheme('red')">🌋 烈焰日冕</button>
+  </div>
+
+  <!-- 实用快捷按钮 -->
+  <div class="action-row">
+    <button class="act-btn" onclick="resetRack()"><i class="fa-solid fa-rotate-left"></i> 重摆球台</button>
+    <button class="act-btn" onclick="boostImpulse()"><i class="fa-solid fa-bolt"></i> 量子激涌</button>
+  </div>
+</div>
+
+<!-- 底部操作提示：击球开始后自动淡出隐藏 -->
+<div class="hint-bar" id="hintBar">
+  <span>🖱️ <b>从白色母球向后拖拽</b>：蓄力瞄准</span>
+  <span>🎯 <b>松开鼠标左键</b>：击发母球</span>
+  <span>✨ <b>虚线预测</b>：实时受引力弯曲弹道</span>
+</div>
+
+<!-- 过关奖励全屏模态弹窗 -->
+<div id="bannerModal">
+  <div class="banner-card">
+    <div class="banner-stars">⭐⭐⭐</div>
+    <div class="banner-title">🎉 STAGE CLEARED!</div>
+    <div class="banner-sub" id="bannerDesc">
+      恭喜完美清空第 <b>1</b> 关！获得清台奖励 <b>+300 分</b>！<br>
+      引力井增强 <b>+0.25x</b>，准备迎接曲率挑战！
+    </div>
+    <button class="banner-btn" onclick="nextStage()">挑战下一关卡 ➔</button>
+  </div>
+</div>
+
+<script>
+// ==================== 返回主页 ====================
+function backToHome() {
+  if (window.parent && window.parent.closeModal) window.parent.closeModal();
+  else location.href = '../../index.html';
+}
+
+// ==================== 音效引擎 ====================
+let AC = null, soundOn = true;
+function initAudio() {
+  if (!AC) try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+  if (AC && AC.state === 'suspended') AC.resume();
+}
+
+function playBallHit(vol = 0.2, pitch = 1) {
+  if (!soundOn) return;
+  initAudio(); if (!AC) return;
+  const now = AC.currentTime;
+  const osc = AC.createOscillator(), g = AC.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(540 * pitch, now);
+  osc.frequency.exponentialRampToValueAtTime(130, now + 0.05);
+  g.gain.setValueAtTime(vol * 0.35, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+  osc.connect(g); g.connect(AC.destination);
+  osc.start(now); osc.stop(now + 0.06);
+}
+
+function playCueStrike(power = 1) {
+  if (!soundOn) return;
+  initAudio(); if (!AC) return;
+  const now = AC.currentTime;
+  const osc = AC.createOscillator(), g = AC.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(280 * power, now);
+  osc.frequency.exponentialRampToValueAtTime(70, now + 0.09);
+  g.gain.setValueAtTime(0.25 * power, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  osc.connect(g); g.connect(AC.destination);
+  osc.start(now); osc.stop(now + 0.1);
+}
+
+function playPocketSound(combo = 1) {
+  if (!soundOn) return;
+  initAudio(); if (!AC) return;
+  const now = AC.currentTime;
+  const baseFreqs = [523.25, 659.25, 783.99, 1046.5];
+  const mult = 1 + (combo - 1) * 0.15;
+  baseFreqs.forEach((f, idx) => {
+    const osc = AC.createOscillator(), g = AC.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(f * mult, now + idx * 0.04);
+    g.gain.setValueAtTime(0.14, now + idx * 0.04);
+    g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.18);
+    osc.connect(g); g.connect(AC.destination);
+    osc.start(now + idx * 0.04); osc.stop(now + idx * 0.04 + 0.2);
+  });
+}
+
+function playLevelWinSound() {
+  if (!soundOn) return;
+  initAudio(); if (!AC) return;
+  const now = AC.currentTime;
+  [523, 659, 784, 1046, 1318, 1568].forEach((f, idx) => {
+    const osc = AC.createOscillator(), g = AC.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(f, now + idx * 0.06);
+    g.gain.setValueAtTime(0.2, now + idx * 0.06);
+    g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
+    osc.connect(g); g.connect(AC.destination);
+    osc.start(now + idx * 0.06); osc.stop(now + idx * 0.06 + 0.4);
+  });
+}
+
+document.getElementById('sndBtn').onclick = () => {
+  soundOn = !soundOn;
+  document.getElementById('sndBtn').innerHTML = soundOn ? '<i class="fa-solid fa-volume-high"></i> 音效: 开' : '<i class="fa-solid fa-volume-xmark"></i> 音效: 关';
+};
+
+// ==================== 台球物理与量子黑洞系统 ====================
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W, H, dpr;
+let table = { x: 0, y: 0, w: 840, h: 480 };
+const BALL_R = 12.5;
+
+// 彩色目标球配色清单 (绝不包含白色！全部为高饱和纯彩球)
+const TARGET_COLORS = [
+  '#f59e0b', // 1号 黄金琥珀
+  '#3b82f6', // 2号 深海蔚蓝
+  '#ef4444', // 3号 烈焰朱红
+  '#a855f7', // 4号 皇家魅紫
+  '#f97316', // 5号 耀眼赤橙
+  '#10b981', // 6号 矩阵翡翠
+  '#e11d48', // 7号 霓虹玫红
+  '#06b6d4', // 8号 极客青蓝
+  '#84cc16'  // 9号 荧光青柠
+];
+
+let balls = [];
+let cueBall = null; // 唯一白色母球严格单例
+let gravityMode = 'zero';
+let gravStrength = 0.0; // 初始引力设置为 0.0
+let currentStage = 1;
+let score = 0;
+let combo = 0;
+let comboTimer = null;
+let dragging = false, dragStart = null, currentMouse = null;
+let hintHidden = false;
+
+// 桌面赛博皮肤
+const THEMES = {
+  blue:   { tableA: '#040d1e', tableB: '#06132a', border: '#38bdf8', pocket: '#020617', glow: 'rgba(56, 189, 248, 0.45)' },
+  green:  { tableA: '#041710', tableB: '#062217', border: '#10b981', pocket: '#010c08', glow: 'rgba(16, 185, 129, 0.45)' },
+  purple: { tableA: '#11071f', tableB: '#1a0b30', border: '#c084fc', pocket: '#080310', glow: 'rgba(192, 132, 252, 0.45)' },
+  red:    { tableA: '#1a0709', tableB: '#280c10', border: '#f43f5e', pocket: '#0d0204', glow: 'rgba(244, 63, 94, 0.45)' }
+};
+let currentTheme = THEMES.blue;
+
+function resize() {
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const availW = W - 340, availH = H - 120;
+  let tw = Math.min(availW, 900);
+  let th = tw / 1.78;
+  if (th > availH) { th = availH; tw = th * 1.78; }
+  table.w = tw; table.h = th;
+  table.x = (W - 305 - tw) / 2 + 305;
+  table.y = (H - 58 - th) / 2 + 58;
+}
+window.addEventListener('resize', resize);
+resize();
+
+function getPockets() {
+  const { x, y, w, h } = table;
+  return [
+    { x: x, y: y }, { x: x + w / 2, y: y }, { x: x + w, y: y },
+    { x: x, y: y + h }, { x: x + w / 2, y: y + h }, { x: x + w, y: y + h }
+  ];
+}
+
+// 摆球逻辑：严格仅生成 1 粒白色母球，其余全是鲜艳彩色球
+function resetRack() {
+  balls = [];
+  const { x, y, w, h } = table;
+
+  // 1. 唯一白色母球
+  cueBall = {
+    x: x + w * 0.22,
+    y: y + h * 0.5,
+    vx: 0,
+    vy: 0,
+    r: BALL_R,
+    col: '#ffffff',
+    isCue: true
+  };
+  balls.push(cueBall);
+
+  // 2. 9粒标准彩色目标球 (三角阵型，确保没有任何一颗白球)
+  const startX = x + w * 0.72;
+  const startY = y + h * 0.5;
+  const rows = [1, 2, 3, 2, 1]; // 钻石九球摆法，经典美观
+  let colIdx = 0;
+
+  let currentColX = startX;
+  rows.forEach((count, colIndex) => {
+    const colYStart = startY - ((count - 1) * BALL_R * 1.15);
+    for (let r = 0; r < count; r++) {
+      const by = colYStart + r * (BALL_R * 2.3);
+      const color = TARGET_COLORS[colIdx % TARGET_COLORS.length];
+      const isBonus = (colIdx === 4); // 5号作为核心星核球
+      balls.push({
+        x: currentColX,
+        y: by,
+        vx: 0,
+        vy: 0,
+        r: BALL_R,
+        col: color,
+        isCue: false,
+        number: colIdx + 1,
+        isBonus: isBonus
+      });
+      colIdx++;
+    }
+    currentColX += BALL_R * 1.95;
+  });
+
+  updateRemainCount();
+}
+
+function updateRemainCount() {
+  const targetCount = balls.filter(b => !b.isCue).length;
+  document.getElementById('remainVal').textContent = targetCount;
+}
+
+resetRack();
+
+// 引力模式切换
+function setMode(m) {
+  gravityMode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    if (b.id && b.id.startsWith('m-')) b.classList.remove('active');
+  });
+  document.getElementById('m-' + m).classList.add('active');
+
+  const statusEl = document.getElementById('gravStatus');
+  if (m === 'zero') {
+    statusEl.textContent = '零引力平直时空';
+    statusEl.style.color = 'var(--emerald)';
+    setGravValue(0.0);
+  } else {
+    statusEl.textContent = '引力曲率激活';
+    statusEl.style.color = 'var(--cyan)';
+    if (gravStrength === 0) setGravValue(0.4);
+  }
+}
+
+function setGravValue(val) {
+  gravStrength = Math.max(0, val);
+  document.getElementById('gRng').value = Math.round(gravStrength * 10);
+  document.getElementById('gTxt').textContent = gravStrength.toFixed(1) + 'x';
+}
+
+document.getElementById('gRng').oninput = e => {
+  gravStrength = e.target.value / 10;
+  document.getElementById('gTxt').textContent = gravStrength.toFixed(1) + 'x';
+  if (gravStrength > 0 && gravityMode === 'zero') {
+    setMode('hole');
+  } else if (gravStrength === 0) {
+    setMode('zero');
+  }
+};
+
+// 桌面皮肤切换
+function setTheme(name) {
+  currentTheme = THEMES[name] || THEMES.blue;
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    if (b.id && b.id.startsWith('th-')) b.classList.remove('active');
+  });
+  document.getElementById('th-' + name).classList.add('active');
+}
+
+// 量子激涌冲击波
+function boostImpulse() {
+  balls.forEach(b => {
+    b.vx += (Math.random() - 0.5) * 12;
+    b.vy += (Math.random() - 0.5) * 12;
+  });
+  playCueStrike(1.3);
+}
+
+// 隐藏/显示操作指引
+function hideHintBar() {
+  if (!hintHidden) {
+    hintHidden = true;
+    document.getElementById('hintBar').classList.add('hidden');
+  }
+}
+function toggleHintBar() {
+  hintHidden = !hintHidden;
+  const bar = document.getElementById('hintBar');
+  if (hintHidden) bar.classList.add('hidden');
+  else bar.classList.remove('hidden');
+}
+
+// 连击提示
+function triggerCombo() {
+  combo++;
+  clearTimeout(comboTimer);
+  const el = document.getElementById('comboEl');
+  el.textContent = `COMBO x${combo}! +${50 * combo}分`;
+  el.classList.add('show');
+  comboTimer = setTimeout(() => {
+    el.classList.remove('show');
+    combo = 0;
+  }, 3200);
+}
+
+// ==================== 鼠标蓄力瞄准与击球 ====================
+cv.addEventListener('mousedown', e => {
+  const mx = e.clientX, my = e.clientY;
+  if (cueBall && Math.hypot(mx - cueBall.x, my - cueBall.y) < BALL_R * 3.2) {
+    dragging = true;
+    dragStart = { x: cueBall.x, y: cueBall.y };
+    currentMouse = { x: mx, y: my };
+    hideHintBar(); // 开始瞄准后自动隐藏底部提示
+  }
+});
+
+window.addEventListener('mousemove', e => {
+  if (dragging) currentMouse = { x: e.clientX, y: e.clientY };
+});
+
+window.addEventListener('mouseup', e => {
+  if (dragging && cueBall) {
+    const dx = dragStart.x - currentMouse.x;
+    const dy = dragStart.y - currentMouse.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 6) {
+      const power = Math.min(dist * 0.17, 24);
+      const angle = Math.atan2(dy, dx);
+      cueBall.vx = Math.cos(angle) * power;
+      cueBall.vy = Math.sin(angle) * power;
+      playCueStrike(Math.min(1.5, power / 12));
+      hideHintBar();
+    }
+    dragging = false;
+  }
+});
+
+// ==================== 物理与引力运动系统 ====================
+let particles = []; // 进球爆炸粒子
+
+function updatePhysics() {
+  const { x, y, w, h } = table;
+  const cx = x + w / 2, cy = y + h / 2;
+  const pockets = getPockets();
+
+  for (let i = balls.length - 1; i >= 0; i--) {
+    const b = balls[i];
+
+    // 引力场计算 (仅在有引力且非经典零重力时生效)
+    if (gravStrength > 0 && gravityMode !== 'zero') {
+      if (gravityMode === 'hole') {
+        const dx = cx - b.x, dy = cy - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d > 10) {
+          const f = (gravStrength * 75) / Math.max(45, d);
+          b.vx += (dx / d) * f * 0.05;
+          b.vy += (dy / d) * f * 0.05;
+        }
+      } else if (gravityMode === 'binary') {
+        const src1 = { x: cx - w * 0.2, y: cy };
+        const src2 = { x: cx + w * 0.2, y: cy };
+        [src1, src2].forEach(src => {
+          const dx = src.x - b.x, dy = src.y - b.y;
+          const d = Math.hypot(dx, dy);
+          if (d > 10) {
+            const f = (gravStrength * 50) / Math.max(35, d);
+            b.vx += (dx / d) * f * 0.05;
+            b.vy += (dy / d) * f * 0.05;
+          }
+        });
+      } else if (gravityMode === 'repel') {
+        const dx = b.x - cx, dy = b.y - cy;
+        const d = Math.hypot(dx, dy);
+        if (d < 180 && d > 5) {
+          const f = (gravStrength * 110) / Math.max(30, d);
+          b.vx += (dx / d) * f * 0.05;
+          b.vy += (dy / d) * f * 0.05;
+        }
+      }
+    }
+
+    // 速度推进与台泥摩擦
+    b.x += b.vx;
+    b.y += b.vy;
+    b.vx *= 0.988;
+    b.vy *= 0.988;
+
+    // 桌面边界反弹
+    if (b.x < x + b.r) { b.x = x + b.r; b.vx = Math.abs(b.vx) * 0.88; playBallHit(0.08); }
+    if (b.x > x + w - b.r) { b.x = x + w - b.r; b.vx = -Math.abs(b.vx) * 0.88; playBallHit(0.08); }
+    if (b.y < y + b.r) { b.y = y + b.r; b.vy = Math.abs(b.vy) * 0.88; playBallHit(0.08); }
+    if (b.y > y + h - b.r) { b.y = y + h - b.r; b.vy = -Math.abs(b.vy) * 0.88; playBallHit(0.08); }
+
+    // 落袋判定
+    for (const p of pockets) {
+      if (Math.hypot(b.x - p.x, b.y - p.y) < 22) {
+        if (b.isCue) {
+          // 母球落袋：安全复位在发球线，扣分，决不重复添加球！
+          b.x = x + w * 0.22;
+          b.y = y + h * 0.5;
+          b.vx = 0;
+          b.vy = 0;
+          score = Math.max(0, score - 20);
+          combo = 0;
+        } else {
+          // 彩球落袋
+          triggerCombo();
+          const earned = b.isBonus ? (100 * combo) : (50 * combo);
+          score += earned;
+          playPocketSound(combo);
+
+          // 喷射炫彩爆炸粒子
+          for (let k = 0; k < 18; k++) {
+            const angle = Math.random() * Math.PI * 2;
+            const spd = 2 + Math.random() * 5;
+            particles.push({
+              x: p.x, y: p.y,
+              vx: Math.cos(angle) * spd, vy: Math.sin(angle) * spd,
+              color: b.col, life: 1, decay: 0.03 + Math.random() * 0.02
+            });
+          }
+
+          balls.splice(i, 1);
+          updateRemainCount();
+        }
+        document.getElementById('scoreVal').textContent = score;
+        break;
+      }
+    }
+  }
+
+  // 检查是否清空所有彩球 (过关判定)
+  const remainingTargets = balls.filter(b => !b.isCue).length;
+  if (remainingTargets === 0 && balls.length === 1) {
+    triggerStageClear();
+  }
+
+  // 台球之间刚体弹性碰撞
+  for (let i = 0; i < balls.length; i++) {
+    for (let j = i + 1; j < balls.length; j++) {
+      const b1 = balls[i], b2 = balls[j];
+      const dx = b2.x - b1.x, dy = b2.y - b1.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < b1.r + b2.r && dist > 0) {
+        const overlap = 0.5 * (b1.r + b2.r - dist);
+        b1.x -= (dx / dist) * overlap; b1.y -= (dy / dist) * overlap;
+        b2.x += (dx / dist) * overlap; b2.y += (dy / dist) * overlap;
+
+        const nx = dx / dist, ny = dy / dist;
+        const kx = b1.vx - b2.vx, ky = b1.vy - b2.vy;
+        const p = (nx * kx + ny * ky);
+        b1.vx -= p * nx * 0.96; b1.vy -= p * ny * 0.96;
+        b2.vx += p * nx * 0.96; b2.vy += p * ny * 0.96;
+
+        const impact = Math.hypot(p * nx, p * ny);
+        if (impact > 0.4) playBallHit(Math.min(0.4, impact * 0.1));
+      }
+    }
+  }
+
+  // 粒子更新
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pt = particles[i];
+    pt.x += pt.vx; pt.y += pt.vy;
+    pt.vx *= 0.96; pt.vy *= 0.96;
+    pt.life -= pt.decay;
+    if (pt.life <= 0) particles.splice(i, 1);
+  }
+}
+
+// ==================== 关卡过关奖励与结算 ====================
+let isClearing = false;
+function triggerStageClear() {
+  if (isClearing) return;
+  isClearing = true;
+  playLevelWinSound();
+  const clearBonus = 300 + currentStage * 50;
+  score += clearBonus;
+  document.getElementById('scoreVal').textContent = score;
+
+  // 下一关引力增强步长 (+0.2x 到 +0.3x)
+  const nextG = Number((gravStrength + 0.3).toFixed(1));
+  document.getElementById('bannerDesc').innerHTML = `
+    恭喜完美清空第 <b>${currentStage}</b> 关！获得通关奖励 <b>+${clearBonus} 分</b>！<br>
+    下一关黑洞引力将微幅增强至 <b>${nextG}x</b>，准备迎接更强曲率！
+  `;
+  document.getElementById('bannerModal').classList.add('show');
+}
+
+function nextStage() {
+  document.getElementById('bannerModal').classList.remove('show');
+  currentStage++;
+  document.getElementById('stageVal').textContent = '第 ' + currentStage + ' 关';
+  document.querySelector('.logo-text span').textContent = 'STAGE ' + currentStage;
+
+  // 引力一点一点循序渐进增强
+  const nextG = Number(((currentStage - 1) * 0.3).toFixed(1));
+  setGravValue(nextG);
+  if (nextG > 0 && gravityMode === 'zero') setMode('hole');
+
+  resetRack();
+  isClearing = false;
+}
+
+// ==================== 炫彩渲染流水线 ====================
+let cueAngleGlow = 0;
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const { x, y, w, h } = table;
+  const cx = x + w / 2, cy = y + h / 2;
+  cueAngleGlow += 0.04;
+
+  // 1. 球台桌面渐变背景
+  ctx.save();
+  const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+  grad.addColorStop(0, currentTheme.tableA);
+  grad.addColorStop(1, currentTheme.tableB);
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y, w, h);
+
+  // 科技网格纹理底
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 1;
+  const gridSize = 36;
+  for (let gx = x; gx <= x + w; gx += gridSize) {
+    ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke();
+  }
+  for (let gy = y; gy <= y + h; gy += gridSize) {
+    ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke();
+  }
+
+  // 球台霓虹外框
+  ctx.strokeStyle = currentTheme.border;
+  ctx.lineWidth = 4;
+  ctx.shadowColor = currentTheme.border;
+  ctx.shadowBlur = 18;
+  ctx.strokeRect(x, y, w, h);
+  ctx.restore();
+
+  // 2. 引力井特效 (仅在有引力且开启黑洞模式时显示)
+  if (gravStrength > 0 && gravityMode !== 'zero') {
+    if (gravityMode === 'hole') {
+      ctx.save();
+      const rSize = 55 + gravStrength * 22;
+      const g = ctx.createRadialGradient(cx, cy, 6, cx, cy, rSize);
+      g.addColorStop(0, '#000000');
+      g.addColorStop(0.38, currentTheme.glow);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(cx, cy, rSize, 0, Math.PI * 2); ctx.fill();
+
+      // 视界绝对纯黑事件核心
+      ctx.fillStyle = '#000';
+      ctx.shadowColor = currentTheme.border; ctx.shadowBlur = 16;
+      ctx.beginPath(); ctx.arc(cx, cy, 14 + gravStrength * 3, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    } else if (gravityMode === 'binary') {
+      [cx - w * 0.2, cx + w * 0.2].forEach(bx => {
+        ctx.save();
+        const g = ctx.createRadialGradient(bx, cy, 5, bx, cy, 60);
+        g.addColorStop(0, '#000');
+        g.addColorStop(0.4, currentTheme.glow);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(bx, cy, 60, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      });
+    } else if (gravityMode === 'repel') {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(244, 63, 94, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 40 + (Date.now() % 1200) / 12, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // 3. 六个球袋
+  const pockets = getPockets();
+  pockets.forEach(p => {
+    ctx.save();
+    ctx.fillStyle = currentTheme.pocket;
+    ctx.strokeStyle = currentTheme.border;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 20, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  });
+
+  // 4. 台球绘制 (唯一白色母球 vs 鲜艳彩色目标球，立体高光)
+  balls.forEach(b => {
+    ctx.save();
+    if (b.isCue) {
+      // ===== 唯一白色母球 =====
+      // 1) 旋转全息定位准星环
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(cueAngleGlow);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.arc(0, 0, b.r + 5, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+
+      // 2) 3D 球体渐变 (母球专属纯白镜面质感)
+      const gradCue = ctx.createRadialGradient(b.x - b.r * 0.35, b.y - b.r * 0.35, 1, b.x, b.y, b.r);
+      gradCue.addColorStop(0, '#ffffff');
+      gradCue.addColorStop(0.7, '#e2e8f0');
+      gradCue.addColorStop(1, '#94a3b8');
+      ctx.fillStyle = gradCue;
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // 3) 母球小角标悬浮提示
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 8.5px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('CUE', b.x, b.y - b.r - 8);
+    } else {
+      // ===== 鲜艳彩色目标球 (绝无任何白色) =====
+      // 1) 3D 立体渐变球体
+      const gradTarget = ctx.createRadialGradient(b.x - b.r * 0.35, b.y - b.r * 0.35, 1, b.x, b.y, b.r);
+      gradTarget.addColorStop(0, '#ffffff');
+      gradTarget.addColorStop(0.25, b.col);
+      gradTarget.addColorStop(1, '#000000');
+
+      ctx.shadowColor = b.col;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = gradTarget;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // 2) 赛博编号徽标
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.48, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 8.5px monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(b.number || '', b.x, b.y);
+
+      // 3) 若为星核加分球，附加金光星辰
+      if (b.isBonus) {
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 3, 0, Math.PI * 2); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  });
+
+  // 5. 爆炸粒子渲染
+  particles.forEach(pt => {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, pt.life);
+    ctx.fillStyle = pt.color;
+    ctx.shadowColor = pt.color;
+    ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
+
+  // 6. 瞄准虚线与蓄力球杆
+  if (dragging && cueBall) {
+    const dx = dragStart.x - currentMouse.x;
+    const dy = dragStart.y - currentMouse.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 5) {
+      const power = Math.min(dist * 0.17, 24);
+      const angle = Math.atan2(dy, dx);
+
+      // 受力弯曲引力弹道预测虚线
+      ctx.save();
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(cueBall.x, cueBall.y);
+
+      let simX = cueBall.x, simY = cueBall.y;
+      let simVx = Math.cos(angle) * power, simVy = Math.sin(angle) * power;
+      for (let s = 0; s < 30; s++) {
+        if (gravStrength > 0 && gravityMode === 'hole') {
+          const ddx = cx - simX, ddy = cy - simY;
+          const d = Math.hypot(ddx, ddy);
+          if (d > 10) {
+            const f = (gravStrength * 75) / Math.max(45, d);
+            simVx += (ddx / d) * f * 0.05;
+            simVy += (ddy / d) * f * 0.05;
+          }
+        }
+        simX += simVx; simY += simVy;
+        ctx.lineTo(simX, simY);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // 蓄力球杆与拉力指示线
+      ctx.save();
+      const pct = Math.min(1, dist / 140);
+      ctx.strokeStyle = `hsl(${190 - pct * 140}, 100%, 65%)`;
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(cueBall.x, cueBall.y);
+      ctx.lineTo(currentMouse.x, currentMouse.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  updatePhysics();
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

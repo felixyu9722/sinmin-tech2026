@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>日地月：自转、公转、日月食与引力轨道模拟</title>
+<style>
+:root{color-scheme:dark;--bg:#04060b;--panel:#0c1019;--line:#1f2736;--text:#e2e8f4;--dim:#7f8ba3;--accent:#ffb347;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+body{display:flex}
+#stage{flex:1;position:relative;min-width:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#hint{position:absolute;left:12px;bottom:12px;color:var(--dim);font-size:12px;pointer-events:none;max-width:75%}
+aside{width:330px;background:var(--panel);border-left:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+h1{margin:0;font-size:16px;color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td{padding:3px 0;border-bottom:1px solid #151b28;color:var(--dim)}
+td+td{text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+.sec{color:var(--dim);font-size:12px}
+label{display:flex;justify-content:space-between;color:var(--dim);font-size:12px;gap:8px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+button,select{flex:1;background:#18202f;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 9px;cursor:pointer;font:inherit;font-size:13px}
+button:hover{border-color:var(--accent)}
+button.on{border-color:var(--accent);background:#2a2216}
+#reset{background:#3a1519;border-color:#6b2830}
+#log{font-size:12px;color:var(--text);display:flex;flex-direction:column;gap:2px}
+@media(max-width:760px){body{flex-direction:column}aside{width:100%;height:48%;border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas><div id="hint"></div></div>
+<aside>
+  <h1>☀ 🌍 🌙 日地月引力轨道模拟</h1>
+  <table id="tb"></table>
+  <div class="sec">比例模式（切换会重置宇宙）</div>
+  <div class="btns"><button id="bSk">示意比例</button><button id="bRe">真实比例</button></div>
+  <div class="sec">拖拽模式（在画面空白处按下并拖拽）</div>
+  <div class="btns"><button id="mLaunch" class="on">发射小行星</button><button id="mPan">平移视角</button></div>
+  <div>
+    <label><span>小行星质量</span><span id="mv"></span></label>
+    <input id="mass" type="range" min="-12" max="2.5" step="0.1" value="-4">
+  </div>
+  <div>
+    <label><span>时间流速</span><span id="sv"></span></label>
+    <input id="speed" type="range" min="0.5" max="60" step="0.5" value="5">
+  </div>
+  <div>
+    <label><span>缩放（也可用滚轮）</span><span id="zv"></span></label>
+    <input id="zoom" type="range" min="0" max="100" step="0.25" value="22">
+  </div>
+  <div class="btns"><button id="bMoon">聚焦地月</button><button id="bAll">全景</button></div>
+  <div class="btns"><select id="center"><option value="sun">视角中心：太阳</option><option value="earth">视角中心：地球</option><option value="com">视角中心：质心</option></select></div>
+  <label style="justify-content:flex-start;align-items:center"><input type="checkbox" id="shadow" checked>显示地球与月球的影锥</label>
+  <div class="btns"><button id="jump">⏭ 跳到下一次日食／月食</button></div>
+  <div class="btns"><button id="pause">暂停</button><button id="clrT">清除轨迹</button><button id="reset">重置</button></div>
+  <div class="sec">日月食记录</div>
+  <div id="log"></div>
+  <div class="sec">说明：月球轨道倾斜于黄道面，日月食由三维几何判定。示意比例的天体大小、距离经过夸张，日月食会比现实频繁；真实比例使用真实质量比、尺寸与距离（画面中天体按最小像素放大显示，撞击判定放大 30 倍），需大幅放大才能看到地月系统。地球自转显示已限速。</div>
+</aside>
+<script>
+const TAU=Math.PI*2,$=id=>document.getElementById(id);
+const TILT=23.44*Math.PI/180,PHI0=Math.PI/2;
+const SC={
+  sketch:{G:1,A:320,MS:40000,ME:800,MM:40,REM:24,RS:22,RE:8,RM:2.6,INC:14,DT:.01,zr:40,inf:1},
+  real:{G:2.959122083e-4,A:1,MS:1,ME:3.003e-6,MM:3.694e-8,REM:.00257,RS:.00465,RE:4.26e-5,RM:1.16e-5,INC:5.145,DT:.02,zr:7500,inf:30}
+};
+let real=false,C,G,A,MS,ME,MM,REM,RS,RE,RM,YEAR,DAYU,VB,VK,EPS2;
+const cv=$('c'),ctx=cv.getContext('2d');
+let W,H,dpr,s0=1,bodies,t,spin,paused=false,mode='launch',pan,drag=null;
+let status='',ev=null,log=[],cnt={S:0,L:0},impacts=[],msg=null;
+const ENAME={ST:'日全食',SA:'日环食',SP:'日偏食',LT:'月全食',LP:'月偏食',LN:'半影月食'},RANK={ST:3,SA:3,SP:2,LT:3,LP:2,LN:1};
+
+function mk(n,m,p,v,r,col,small){return{n,m,x:p[0],y:p[1],z:p[2],vx:v[0],vy:v[1],vz:v[2],ax:0,ay:0,az:0,r,col,small:!!small,trail:[],tk:0};}
+function setScale(r){
+  real=r;C=SC[r?'real':'sketch'];({G,A,MS,ME,MM,REM,RS,RE,RM}=C);
+  YEAR=TAU*Math.sqrt(A**3/(G*(MS+ME+MM)));DAYU=r?1:YEAR/365.25;
+  VB=Math.sqrt(G*(MS+ME+MM)/A);VK=VB/(.39*A);EPS2=(RM*.1)**2;
+  $('bSk').classList.toggle('on',!r);$('bRe').classList.toggle('on',r);
+  log=[];cnt={S:0,L:0};ev=null;status='';impacts=[];msg=null;
+  init();$('speed').value=5;$('center').value='sun';setZoom(1);
+}
+function init(){
+  const mu=ME+MM,vb=Math.sqrt(G*(MS+mu)/A),vr=Math.sqrt(G*mu/REM),ph=3.8,inc=C.INC*Math.PI/180,fe=MM/mu,fm=ME/mu;
+  const cr=Math.cos(ph),sr=Math.sin(ph),rv=[vr*Math.cos(inc)*sr,-vr*Math.cos(inc)*cr,vr*Math.sin(inc)];
+  bodies=[mk('太阳',MS,[0,0,0],[0,0,0],RS,'#ffd36b'),
+    mk('地球',ME,[A-fe*REM*cr,-fe*REM*sr,0],[-fe*rv[0],-vb-fe*rv[1],-fe*rv[2]],RE,'#4f9bff'),
+    mk('月球',MM,[A+fm*REM*cr,fm*REM*sr,0],[fm*rv[0],-vb+fm*rv[1],fm*rv[2]],RM,'#c8ccd6')];
+  let m=0,p=[0,0,0],q=[0,0,0];
+  for(const b of bodies){m+=b.m;p[0]+=b.m*b.x;p[1]+=b.m*b.y;p[2]+=b.m*b.z;q[0]+=b.m*b.vx;q[1]+=b.m*b.vy;q[2]+=b.m*b.vz;}
+  for(const b of bodies){b.x-=p[0]/m;b.y-=p[1]/m;b.z-=p[2]/m;b.vx-=q[0]/m;b.vy-=q[1]/m;b.vz-=q[2]/m;}
+  t=0;spin=0;pan={x:0,y:0};accel();
+}
+function accel(){
+  for(const b of bodies){b.ax=b.ay=b.az=0;}
+  for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++){
+    const a=bodies[i],b=bodies[j],dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z,d2=dx*dx+dy*dy+dz*dz+EPS2,f=G/(d2*Math.sqrt(d2));
+    a.ax+=dx*f*b.m;a.ay+=dy*f*b.m;a.az+=dz*f*b.m;b.ax-=dx*f*a.m;b.ay-=dy*f*a.m;b.az-=dz*f*a.m;
+  }
+}
+function step(dt){ // 速度 Verlet：x += v·dt + ½a·dt²，a' = ΣGm/r²，v += ½(a+a')·dt
+  for(const b of bodies){b.x+=b.vx*dt+.5*b.ax*dt*dt;b.y+=b.vy*dt+.5*b.ay*dt*dt;b.z+=b.vz*dt+.5*b.az*dt*dt;b.oa=[b.ax,b.ay,b.az];}
+  accel();
+  for(const b of bodies){b.vx+=.5*(b.oa[0]+b.ax)*dt;b.vy+=.5*(b.oa[1]+b.ay)*dt;b.vz+=.5*(b.oa[2]+b.az)*dt;}
+  t+=dt;if(bodies.length>3)hits();
+}
+function hits(){
+  for(let i=bodies.length-1;i>2;i--){const b=bodies[i];let kill=Math.hypot(b.x-bodies[0].x,b.y-bodies[0].y)>A*8;
+    for(let k=0;k<3&&!kill;k++){const o=bodies[k];
+      if(Math.hypot(b.x-o.x,b.y-o.y,b.z-o.z)<(o.r+b.r)*(k?C.inf:1)*.8){kill=true;const M=o.m+b.m;
+        o.vx=(o.m*o.vx+b.m*b.vx)/M;o.vy=(o.m*o.vy+b.m*b.vy)/M;o.vz=(o.m*o.vz+b.m*b.vz)/M;o.m=M;
+        impacts.push({k,age:0});msg={txt:`☄ 小行星撞击${o.n}（${(b.m/ME).toExponential(1)} 地球质量）`,until:performance.now()+3500};}}
+    if(kill)bodies.splice(i,1);}
+}
+// 日月食（三维几何）
+function classify(){
+  const [su,ea,mo]=bodies,sx=su.x-ea.x,sy=su.y-ea.y,sz=su.z-ea.z,mx=mo.x-ea.x,my=mo.y-ea.y,mz=mo.z-ea.z;
+  const ds=Math.hypot(sx,sy,sz),dm=Math.hypot(mx,my,mz),cs=(sx*mx+sy*my+sz*mz)/(ds*dm);
+  if(cs>0){const th=Math.acos(Math.min(1,cs)),rs=Math.asin(RS/ds),rm=Math.asin(RM/dm),par=RE/dm;
+    if(th<rs+rm+par)return th-par<Math.abs(rm-rs)?(rm>=rs?'ST':'SA'):'SP';}
+  else{const x=-cs*dm,dp=dm*Math.sqrt(Math.max(0,1-cs*cs)),k=(RS-RE)/ds,ru=RE-x*k,rp=RE+x*k;
+    if(dp+RM<ru)return 'LT';if(dp-RM<ru)return 'LP';if(dp-RM<rp)return 'LN';}
+  return '';
+}
+function endEv(){if(ev){log.unshift({d:ev.t0/DAYU,n:ENAME[ev.best]});if(log.length>8)log.length=8;cnt[ev.g]++;ev=null;}}
+function track(){const s=classify();status=s;
+  if(s){if(!ev||ev.g!==s[0]){endEv();ev={g:s[0],best:s,t0:t};}else if(RANK[s]>RANK[ev.best])ev.best=s;}else endEv();}
+function stepDays(d){step(d*DAYU);track();spin+=TAU*d;}
+function jump(){
+  let n=0;const max=75000;
+  while(status&&n++<max)stepDays(.02);
+  while(!status&&n++<max)stepDays(.02);
+  bodies.forEach(b=>b.trail=[]);$('speed').value=1;
+  msg={txt:status?`已跳到：${ENAME[status]}开始`:'1500 天内未找到日月食',until:performance.now()+3500};
+}
+// 视角
+const zoomOf=()=>.4*Math.pow(C.zr,$('zoom').value/100);
+function setZoom(z){$('zoom').value=Math.max(0,Math.min(100,100*Math.log(z/.4)/Math.log(C.zr)));}
+const S=()=>s0*zoomOf();
+function centerOf(){const m=$('center').value;return m==='sun'?bodies[0]:m==='earth'?bodies[1]:{x:0,y:0,vx:0,vy:0};}
+function resize(){const r=cv.getBoundingClientRect();dpr=devicePixelRatio||1;W=r.width;H=r.height;cv.width=W*dpr;cv.height=H*dpr;s0=Math.min(W,H)/(2*A*1.35);}
+addEventListener('resize',()=>{resize();});
+cv.addEventListener('wheel',e=>{e.preventDefault();const z=$('zoom');z.value=Math.max(0,Math.min(100,+z.value-Math.sign(e.deltaY)*3));},{passive:false});
+$('center').onchange=()=>bodies.forEach(b=>b.trail=[]);
+function toWorld(px,py){const c=centerOf(),s=S();return{x:(px-W/2-pan.x)/s+c.x,y:(py-H/2-pan.y)/s+c.y};}
+const astRatio=()=>Math.pow(10,+$('mass').value);
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;drag={sx:x,sy:y,cx:x,cy:y,lx:x,ly:y};});
+cv.addEventListener('pointermove',e=>{if(!drag)return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  if(mode==='pan'){pan.x+=x-drag.lx;pan.y+=y-drag.ly;}drag.lx=x;drag.ly=y;drag.cx=x;drag.cy=y;});
+cv.addEventListener('pointerup',()=>{
+  if(drag&&mode==='launch'&&bodies.length<40){const c=centerOf(),w=toWorld(drag.sx,drag.sy),s=S(),q=astRatio();
+    bodies.push(mk('小行星',ME*q,[w.x,w.y,0],[(drag.cx-drag.sx)/s*VK+c.vx,(drag.cy-drag.sy)/s*VK+c.vy,0],RE*Math.cbrt(q),'#ff8a5c',true));accel();}
+  drag=null;
+});
+cv.addEventListener('pointercancel',()=>drag=null);
+function setMode(m){mode=m;$('mLaunch').classList.toggle('on',m==='launch');$('mPan').classList.toggle('on',m==='pan');cv.style.cursor=m==='launch'?'crosshair':'grab';
+  $('hint').textContent=m==='launch'?'按下并拖拽：方向 = 初速度方向，长度 = 速度大小（相对视角中心）。滚轮缩放。':'按下并拖拽：平移视角。滚轮缩放。';}
+$('mLaunch').onclick=()=>setMode('launch');$('mPan').onclick=()=>setMode('pan');
+$('bSk').onclick=()=>setScale(false);$('bRe').onclick=()=>setScale(true);
+$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'继续':'暂停';};
+$('clrT').onclick=()=>bodies.forEach(b=>b.trail=[]);
+$('reset').onclick=()=>setScale(real);
+$('jump').onclick=jump;
+$('bMoon').onclick=()=>{$('center').value='earth';bodies.forEach(b=>b.trail=[]);pan={x:0,y:0};setZoom(Math.min(W,H)*.3/(REM*s0));};
+$('bAll').onclick=()=>{$('center').value='sun';bodies.forEach(b=>b.trail=[]);pan={x:0,y:0};setZoom(1);};
+
+// 绘制
+function cone(x,y,dx,dy,r0,L,a){const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;const px=-dy,py=dx,g=ctx.createLinearGradient(x,y,x+dx*L,y+dy*L);
+  g.addColorStop(0,`rgba(170,185,215,${a})`);g.addColorStop(1,'rgba(170,185,215,0)');ctx.fillStyle=g;
+  ctx.beginPath();ctx.moveTo(x+px*r0,y+py*r0);ctx.lineTo(x-px*r0,y-py*r0);ctx.lineTo(x+dx*L,y+dy*L);ctx.fill();}
+function draw(){
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#04060b';ctx.fillRect(0,0,W,H);
+  const s=S(),c=centerOf(),ox=W/2+pan.x,oy=H/2+pan.y,P=b=>[ox+(b.x-c.x)*s,oy+(b.y-c.y)*s];
+  for(const b of bodies){const tr=b.trail,n=tr.length;if(n<2)continue;
+    for(let k=0;k<4;k++){ctx.beginPath();const a=Math.floor(n*k/4),e=Math.min(n,Math.floor(n*(k+1)/4)+1);
+      ctx.moveTo(ox+tr[a].x*s,oy+tr[a].y*s);for(let i=a+1;i<e;i++)ctx.lineTo(ox+tr[i].x*s,oy+tr[i].y*s);
+      ctx.strokeStyle=b.col;ctx.globalAlpha=.07+k*.09;ctx.lineWidth=1.2;ctx.stroke();}
+    ctx.globalAlpha=1;}
+  const [su,ea,mo]=bodies,[sx,sy]=P(su),[ex,ey]=P(ea),[mx,my]=P(mo);
+  const rs=Math.max(RS*s,6),re=Math.max(RE*s,4.5),rm=Math.max(RM*s,2.4);
+  if($('shadow').checked){
+    cone(ex,ey,ex-sx,ey-sy,re,Math.hypot(ea.x-su.x,ea.y-su.y)*RE/(RS-RE)*s,.16);
+    cone(mx,my,mx-sx,my-sy,rm,Math.hypot(mo.x-su.x,mo.y-su.y)*RM/(RS-RM)*s,.3);}
+  const g=ctx.createRadialGradient(sx,sy,0,sx,sy,rs*3.4);
+  g.addColorStop(0,'rgba(255,240,170,1)');g.addColorStop(.3,'rgba(255,170,60,.85)');g.addColorStop(1,'rgba(255,120,0,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,rs*3.4,0,TAU);ctx.fill();
+  ctx.fillStyle='#fff1b8';ctx.beginPath();ctx.arc(sx,sy,rs,0,TAU);ctx.fill();
+  // 地球（北极上方俯视）
+  ctx.save();ctx.translate(ex,ey);ctx.beginPath();ctx.arc(0,0,re,0,TAU);ctx.clip();
+  ctx.fillStyle='#2a6fd6';ctx.fillRect(-re,-re,2*re,2*re);
+  ctx.save();ctx.rotate(-spin);ctx.fillStyle='#3fa35a';
+  [[.55,0,.32],[.5,2.2,.28],[.6,4.1,.26],[.2,1,.2]].forEach(([d,a,r])=>{ctx.beginPath();ctx.arc(Math.cos(a)*d*re,Math.sin(a)*d*re,r*re,0,TAU);ctx.fill();});
+  ctx.fillStyle='#f2f6ff';ctx.beginPath();ctx.arc(0,0,re*.16,0,TAU);ctx.fill();ctx.restore();
+  ctx.rotate(Math.atan2(sy-ey,sx-ex));ctx.fillStyle='rgba(0,0,22,.68)';ctx.fillRect(-re*1.1,-re*1.1,re*1.1,2.2*re);ctx.restore();
+  ctx.strokeStyle='rgba(120,180,255,.55)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(ex,ey,re,0,TAU);ctx.stroke();
+  ctx.strokeStyle='#ffb347';ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex+Math.cos(PHI0)*re*1.8,ey+Math.sin(PHI0)*re*1.8);ctx.stroke();
+  // 月球
+  const mc=status==='LT'?'#b5482f':status==='LP'?'#c98d78':'#d4d8e2';
+  ctx.save();ctx.translate(mx,my);ctx.beginPath();ctx.arc(0,0,rm,0,TAU);ctx.clip();
+  ctx.fillStyle=mc;ctx.fillRect(-rm,-rm,2*rm,2*rm);ctx.rotate(Math.atan2(sy-my,sx-mx));ctx.fillStyle='rgba(0,0,0,.78)';ctx.fillRect(-rm*1.1,-rm*1.1,rm*1.1,2.2*rm);ctx.restore();
+  for(let i=3;i<bodies.length;i++){const b=bodies[i],[x,y]=P(b);ctx.fillStyle=b.col;ctx.beginPath();ctx.arc(x,y,Math.max(2,b.r*s),0,TAU);ctx.fill();}
+  ctx.font='12px system-ui';ctx.fillStyle='rgba(226,232,244,.75)';
+  ctx.fillText('太阳',sx+rs+4,sy-rs);ctx.fillText('地球',ex+re+6,ey+14);ctx.fillText('月球',mx+rm+5,my-6);
+  for(let i=impacts.length-1;i>=0;i--){const im=impacts[i],[x,y]=P(bodies[im.k]);im.age+=.016;
+    ctx.strokeStyle=`rgba(255,160,60,${Math.max(0,1-im.age/1.2)})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,Math.max(RE*s,6)+im.age*70,0,TAU);ctx.stroke();if(im.age>1.2)impacts.splice(i,1);}
+  if(drag&&mode==='launch'){
+    ctx.strokeStyle='rgba(255,255,255,.75)';ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(drag.sx,drag.sy);ctx.lineTo(drag.cx,drag.cy);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#ff8a5c';ctx.beginPath();ctx.arc(drag.sx,drag.sy,Math.max(3,RE*Math.cbrt(astRatio())*s),0,TAU);ctx.fill();
+    ctx.fillStyle='#fff';ctx.fillText('v = '+(Math.hypot(drag.cx-drag.sx,drag.cy-drag.sy)/s*VK).toPrecision(3),drag.cx+8,drag.cy-8);}
+  ctx.textAlign='center';let y=34;
+  if(status){ctx.font='bold 24px system-ui';ctx.fillStyle=status[0]==='S'?'#ffd36b':'#ff8a6b';ctx.fillText((status[0]==='S'?'🌑 ':'🌕 ')+ENAME[status]+'进行中',W/2,y);y+=30;}
+  if(msg&&performance.now()<msg.until){ctx.font='bold 15px system-ui';ctx.fillStyle='#ffb347';ctx.fillText(msg.txt,W/2,y);}
+  ctx.textAlign='left';
+}
+// 数据面板
+const REFS=[[-9.8,'恐龙灭绝级撞击体'],[-3.8,'谷神星'],[-1.9,'月球'],[0,'地球'],[2.5,'木星']];
+function ui(){
+  const [su,ea,mo]=bodies,d=t/DAYU,dEs=Math.hypot(su.x-ea.x,su.y-ea.y,su.z-ea.z),dEm=Math.hypot(mo.x-ea.x,mo.y-ea.y,mo.z-ea.z);
+  const FC=real?3.986e31:1,AC=real?20.04:1,fu=real?' N':'',au=real?' m/s²':'';
+  const fS=G*su.m*ea.m/(dEs*dEs)*FC,fM=G*mo.m*ea.m/(dEm*dEm)*FC,aE=Math.hypot(ea.ax,ea.ay,ea.az)*AC;
+  const vE=Math.hypot(ea.vx-su.vx,ea.vy-su.vy,ea.vz-su.vz),vM=Math.hypot(mo.vx-ea.vx,mo.vy-ea.vy,mo.vz-ea.vz);
+  const psi=Math.atan2(su.y-ea.y,su.x-ea.x),dec=Math.asin(Math.sin(TILT)*Math.cos(psi-PHI0));
+  const gam=((-(psi-PHI0))%TAU+TAU)%TAU,season=gam>=1.5*Math.PI?'春':gam<Math.PI/2?'夏':gam<Math.PI?'秋':'冬';
+  const dl=((psi-Math.atan2(mo.y-ea.y,mo.x-ea.x))%TAU+TAU)%TAU;
+  const nm=['新月','蛾眉月（盈）','上弦月','盈凸月','满月','亏凸月','下弦月','残月（亏）'],ph=nm[Math.floor((dl/TAU*8+.5)%8)];
+  const f=x=>x.toExponential(3);
+  const rows=[['模拟时间',`第 ${Math.floor(d/365.25)} 年 第 ${(d%365.25).toFixed(0)} 天`],
+    ['日地距离',`${(dEs/A).toFixed(3)} AU`],['地球公转速度',`${(vE/VB*29.78).toFixed(1)} km/s`],
+    ['太阳→地球引力 F',(real?f(fS):fS.toFixed(2))+fu],['月球→地球引力 F',(real?f(fM):fM.toFixed(3))+fu],['地球合加速度 a',(real?f(aE):aE.toFixed(4))+au],
+    ['月地距离',`${(dEm/REM*384400).toFixed(0)} km`],['月球绕地速度',(vM/Math.sqrt(G*(ea.m+mo.m)/REM)*1.022).toFixed(3)+' km/s'],
+    ['月球黄纬 β',(Math.asin((mo.z-ea.z)/dEm)*180/Math.PI).toFixed(2)+'°'],
+    ['月相',`${ph}（亮面 ${((1-Math.cos(dl))/2*100).toFixed(0)}%）`],['北半球季节',`${season}（赤纬 ${(dec*180/Math.PI).toFixed(1)}°）`],
+    ['日月食',status?ENAME[status]+'中':'无'],['日食／月食次数',`${cnt.S} ／ ${cnt.L}`],['小行星数量',bodies.length-3]];
+  $('tb').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  const e=+$('mass').value,q=Math.pow(10,e),near=REFS.find(r=>Math.abs(r[0]-e)<.6);
+  $('mv').textContent=`${q.toExponential(1)} 地球质量 ≈ ${(q*5.972e24).toExponential(1)} kg${near?'（≈'+near[1]+'）':''}`;
+  $('sv').textContent=$('speed').value+' 天/秒';$('zv').textContent=zoomOf().toFixed(zoomOf()<10?2:0)+'×';
+  $('log').innerHTML=log.map(l=>`<div>第 ${Math.floor(l.d/365.25)} 年 第 ${(l.d%365.25).toFixed(0)} 天 · ${l.n}</div>`).join('')||'<div style="color:var(--dim)">暂无，可点「跳到下一次日食／月食」</div>';
+}
+let last=performance.now(),uiT=0;
+function loop(now){
+  const fr=Math.min(.05,(now-last)/1000);last=now;
+  if(!paused){
+    const dps=+$('speed').value,units=fr*dps*DAYU,n=Math.min(400,Math.ceil(units/C.DT)),dt=units/n;
+    for(let i=0;i<n;i++){step(dt);track();}
+    spin+=TAU*fr*dps*Math.min(1,.8/dps);
+    const c=centerOf();
+    for(const b of bodies){if(++b.tk%2)continue;b.trail.push({x:b.x-c.x,y:b.y-c.y});if(b.trail.length>(b.small?500:1500))b.trail.shift();}
+  }
+  draw();if(now-uiT>120){ui();uiT=now;}
+  requestAnimationFrame(loop);
+}
+setScale(false);resize();setMode('launch');requestAnimationFrame(loop);
+</script>
+</body>
+</html>

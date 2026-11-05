@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>二战 3D 联合作战 · 钢铁风暴</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{--bg:#121714;--fg:#f0ece1;--acc:#d4af37;--red:#e74c3c;--blue:#3498db;--panel:rgba(18,24,20,0.85);--border:rgba(212,175,55,0.35);color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;font-family:"Noto Serif SC","Songti SC",system-ui,sans-serif;color:var(--fg)}
+canvas#gameCanvas{display:block;width:100%;height:100%;position:fixed;inset:0}
+
+/* HUD 现代战术界面 */
+#hud{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:12px 16px;box-sizing:border-box;z-index:10}
+.hud-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:auto}
+
+.stat-panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 14px;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,0.5);display:flex;align-items:center;gap:14px}
+.veh-badge{font-size:16px;font-weight:900;color:var(--acc);display:flex;align-items:center;gap:6px;min-width:76px;letter-spacing:1px}
+.hp-wrap{display:flex;flex-direction:column;gap:3px}
+.hp-label{font-size:11px;color:#a8b2a0;display:flex;justify-content:space-between}
+.hp-bar-bg{width:160px;height:10px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.2);border-radius:5px;overflow:hidden}
+#hp{height:100%;background:linear-gradient(90deg,#2ecc71,#f1c40f);width:100%;transition:width 0.15s ease}
+
+.top-metrics{display:flex;gap:14px;font-size:13.5px;color:#d5decb;align-items:center}
+.top-metrics span b{color:var(--acc);font-size:15px}
+
+.hud-actions{display:flex;gap:8px}
+.hud-btn{background:var(--panel);border:1px solid var(--border);color:var(--fg);padding:7px 12px;border-radius:8px;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:0.18s;backdrop-filter:blur(8px)}
+.hud-btn:hover{background:rgba(212,175,55,0.25);border-color:var(--acc);color:#fff}
+.hud-btn.home-btn{background:rgba(231,76,60,0.2);border-color:rgba(231,76,60,0.5);color:#ff988c}
+.hud-btn.home-btn:hover{background:#e74c3c;color:#fff}
+
+/* 准星 */
+#xh{position:fixed;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border:2px solid rgba(240,236,225,0.75);border-radius:50%;pointer-events:none;transition:0.1s}
+#xh::before{content:"";position:absolute;left:50%;top:-6px;bottom:-6px;width:1px;background:rgba(240,236,225,0.8);transform:translateX(-50%)}
+#xh::after{content:"";position:absolute;top:50%;left:-6px;right:-6px;height:1px;background:rgba(240,236,225,0.8);transform:translateY(-50%)}
+#xh.lock{border-color:var(--red);transform:scale(1.2)}
+
+/* 战术小地图 (雷达) */
+#radar-wrap{position:fixed;right:14px;bottom:14px;width:140px;height:140px;background:rgba(15,20,16,0.85);border:2px solid var(--border);border-radius:50%;overflow:hidden;box-shadow:0 0 20px rgba(0,0,0,0.8);pointer-events:none;z-index:10}
+#radar{width:100%;height:100%}
+
+/* 战术操作指南与载具快捷栏 */
+.bottom-deck{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;pointer-events:auto}
+#help{font-size:12.5px;line-height:1.6;background:var(--panel);padding:10px 14px;border-radius:10px;border-left:3px solid var(--acc);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);max-width:540px;color:#ccd5c2}
+#help b{color:var(--acc)}
+.keys-tag{display:inline-block;padding:1px 5px;background:rgba(255,255,255,0.1);border-radius:4px;font-family:monospace;font-size:11px;color:#fff;margin:0 2px}
+
+/* 移动端触屏按键 */
+#mobile-controls{display:none;position:fixed;inset:0;pointer-events:none;z-index:20}
+.stick-zone{position:absolute;left:20px;bottom:20px;width:120px;height:120px;background:rgba(255,255,255,0.06);border:2px dashed rgba(255,255,255,0.25);border-radius:50%;pointer-events:auto}
+.stick-knob{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;background:var(--acc);border-radius:50%;opacity:0.75}
+.action-btns{position:absolute;right:20px;bottom:20px;display:flex;flex-direction:column;gap:12px;pointer-events:auto}
+.m-btn{width:56px;height:56px;border-radius:50%;background:var(--panel);border:2px solid var(--acc);color:var(--acc);font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.6)}
+.m-btn:active{transform:scale(0.92);background:var(--acc);color:#000}
+.m-btn.fire-btn{width:70px;height:70px;border-color:var(--red);color:var(--red)}
+.m-btn.fire-btn:active{background:var(--red);color:#fff}
+
+/* 广播横幅 */
+#msg{position:fixed;top:38%;width:100%;text-align:center;font-size:clamp(22px,4vw,36px);font-weight:900;text-shadow:0 3px 12px #000;color:#fff;pointer-events:none;z-index:15;transition:0.3s;opacity:0;transform:translateY(-10px)}
+#msg.show{opacity:1;transform:translateY(0)}
+
+/* 战损受创红屏闪烁 */
+#hit-overlay{position:fixed;inset:0;background:radial-gradient(circle,transparent 60%,rgba(231,76,60,0.4) 100%);pointer-events:none;opacity:0;transition:opacity 0.1s ease;z-index:5}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="hit-overlay"></div>
+
+<div id="hud">
+  <div class="hud-top">
+    <div class="stat-panel">
+      <div class="veh-badge"><i class="fa-solid fa-shield"></i> <span id="veh">步兵</span></div>
+      <div class="hp-wrap">
+        <div class="hp-label"><span>装甲/生命值</span><span id="hp-val">100/100</span></div>
+        <div class="hp-bar-bg"><div id="hp"></div></div>
+      </div>
+      <div class="top-metrics">
+        <span>战绩 <b><span id="sc">0</span></b></span>
+        <span>战役 <b><span id="wv">第 1 波</span></b></span>
+        <span style="color:#7fb5ff"><i class="fa-solid fa-users"></i> 友军 <b id="tm-ally">0</b></span>
+        <span style="color:#ff7f7f"><i class="fa-solid fa-skull"></i> 敌军 <b id="tm-foe">0</b></span>
+      </div>
+    </div>
+
+    <div class="hud-actions">
+      <button class="hud-btn" id="btn-sound"><i class="fa-solid fa-volume-high"></i> 音效/战歌</button>
+      <button class="hud-btn" id="btn-event"><i class="fa-solid fa-jet-fighter"></i> 呼叫空袭 (Z)</button>
+      <button class="hud-btn" id="btn-bomb"><i class="fa-solid fa-bomb"></i> 战术核爆 (F)</button>
+      <button class="hud-btn home-btn" onclick="backToHome()"><i class="fa-solid fa-house"></i> 回到主页</button>
+    </div>
+  </div>
+
+  <div class="bottom-deck">
+    <div id="help">
+      <b>[载具指令]</b> <span class="keys-tag">1</span>步兵 · <span class="keys-tag">2</span>坦克 · <span class="keys-tag">3</span>战舰 · <span class="keys-tag">4</span>战机 · <span class="keys-tag">5</span>火箭筒 · <span class="keys-tag">6</span>吉普 · <span class="keys-tag">7</span>火炮 · <span class="keys-tag">8</span>轰炸机 · <span class="keys-tag">9</span>武装直升机 · <span class="keys-tag">0</span>重机甲<br>
+      <b>[操控指令]</b> 鼠标移动瞄准 · 左键/空格开火 · <span class="keys-tag">W/S/A/D</span>机动平移 · <span class="keys-tag">C</span>全军集结 · <span class="keys-tag">V</span>全军自由进攻 · <span class="keys-tag">T</span>更换战场场景<br>
+      <b>[战术战果]</b> 敌方残骸掉落 <span style="color:#ff5577">♥ 急救回血</span> 与 <span style="color:#ffd633">★ 高能极速连发</span>；战场动态爆发诺曼底登陆与重炮齐射！
+    </div>
+  </div>
+</div>
+
+<div id="radar-wrap"><canvas id="radar" width="140" height="140"></canvas></div>
+<div id="xh"></div>
+<div id="msg"></div>
+
+<!-- 移动端虚拟按键 -->
+<div id="mobile-controls">
+  <div class="stick-zone" id="v-stick"><div class="stick-knob" id="v-knob"></div></div>
+  <div class="action-btns">
+    <button class="m-btn fire-btn" id="m-fire"><i class="fa-solid fa-crosshairs"></i></button>
+    <button class="m-btn" id="m-bomb"><i class="fa-solid fa-bomb"></i></button>
+    <button class="m-btn" id="m-call"><i class="fa-solid fa-plane"></i></button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ==================== 回到主页逻辑 ====================
+function backToHome() {
+  if (window.parent && window.parent.closeModal) {
+    window.parent.closeModal();
+  } else {
+    location.href = '../../index.html';
+  }
+}
+
+// ==================== 音效与二战军旅 BGM (Web Audio API) ====================
+let AC = null, soundEnabled = true, bgmPlaying = false;
+let bgmOsc = null, bgmGain = null, bgmTimer = null;
+
+function initAudio() {
+  if (!AC) {
+    try {
+      AC = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e){}
+  }
+  if (AC && AC.state === 'suspended') {
+    AC.resume();
+  }
+}
+
+// 播放战场枪炮音效
+function playSound(type, pitch = 1) {
+  if (!soundEnabled) return;
+  initAudio();
+  if (!AC) return;
+  const now = AC.currentTime;
+
+  if (type === 'gun') {
+    // 机枪点射
+    const osc = AC.createOscillator(), g = AC.createGain(), filter = AC.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(320 * pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.08);
+    filter.type = 'lowpass'; filter.frequency.value = 1600;
+    g.gain.setValueAtTime(0.12, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(filter); filter.connect(g); g.connect(AC.destination);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'cannon') {
+    // 重炮/坦克重轰
+    const bufSize = AC.sampleRate * 0.4;
+    const buf = AC.createBuffer(1, bufSize, AC.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (AC.sampleRate * 0.08));
+    const noise = AC.createBufferSource(); noise.buffer = buf;
+    const filter = AC.createBiquadFilter(); filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(380, now);
+    filter.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+    const g = AC.createGain();
+    g.gain.setValueAtTime(0.35, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    noise.connect(filter); filter.connect(g); g.connect(AC.destination);
+    noise.start(now);
+  } else if (type === 'hit') {
+    // 击中爆响
+    const osc = AC.createOscillator(), g = AC.createGain();
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+    g.gain.setValueAtTime(0.18, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(g); g.connect(AC.destination); osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'pickup') {
+    // 拾取补给升调和弦
+    [523, 659, 784, 1046].forEach((f, idx) => {
+      const osc = AC.createOscillator(), g = AC.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(f, now + idx * 0.04);
+      g.gain.setValueAtTime(0.08, now + idx * 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.15);
+      osc.connect(g); g.connect(AC.destination);
+      osc.start(now + idx * 0.04); osc.stop(now + idx * 0.04 + 0.16);
+    });
+  } else if (type === 'siren') {
+    // 空袭警报
+    const osc = AC.createOscillator(), g = AC.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(450, now);
+    osc.frequency.linearRampToValueAtTime(750, now + 0.5);
+    osc.frequency.linearRampToValueAtTime(450, now + 1.0);
+    g.gain.setValueAtTime(0.1, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+    osc.connect(g); g.connect(AC.destination);
+    osc.start(now); osc.stop(now + 1.2);
+  }
+}
+
+// 激昂军鼓与战役配乐循环合成
+function startBGM() {
+  if (!soundEnabled || bgmPlaying) return;
+  initAudio();
+  if (!AC) return;
+  bgmPlaying = true;
+  let step = 0;
+  // 经典小调进行曲音符序列
+  const notes = [130.81, 146.83, 155.56, 174.61, 196.00, 220.00, 261.63];
+  bgmTimer = setInterval(() => {
+    if (!soundEnabled || !bgmPlaying) return;
+    const now = AC.currentTime;
+    // 战鼓军鼓重音 (每 4 拍重踏)
+    if (step % 2 === 0) {
+      const buf = AC.createBuffer(1, AC.sampleRate * 0.08, AC.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i=0; i<d.length; i++) d[i] = (Math.random()*2 - 1) * Math.exp(-i / (AC.sampleRate * 0.015));
+      const s = AC.createBufferSource(); s.buffer = buf;
+      const g = AC.createGain(); g.gain.setValueAtTime(step % 4 === 0 ? 0.12 : 0.06, now);
+      s.connect(g); g.connect(AC.destination); s.start(now);
+    }
+    // 铜管小调和弦低音
+    if (step % 4 === 0) {
+      const osc = AC.createOscillator(), g = AC.createGain();
+      const note = notes[(step / 4) % notes.length];
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(note, now);
+      const filter = AC.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 500;
+      g.gain.setValueAtTime(0.04, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(filter); filter.connect(g); g.connect(AC.destination);
+      osc.start(now); osc.stop(now + 0.36);
+    }
+    step++;
+  }, 180);
+}
+
+function stopBGM() {
+  bgmPlaying = false;
+  if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; }
+}
+
+const soundBtn = document.getElementById('btn-sound');
+soundBtn.onclick = () => {
+  soundEnabled = !soundEnabled;
+  if (soundEnabled) {
+    soundBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i> 音效: 开启';
+    startBGM();
+  } else {
+    soundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> 音效: 静音';
+    stopBGM();
+  }
+};
+
+// ==================== THREE.JS 3D 战场初始化 ====================
+const $ = id => document.getElementById(id);
+const cv = $('gameCanvas');
+const scene = new THREE.Scene();
+
+// 天空与迷雾
+{
+  const c = document.createElement('canvas'); c.width = 2; c.height = 256;
+  const x = c.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256);
+  g.addColorStop(0, '#36536b'); g.addColorStop(0.55, '#8da0aa'); g.addColorStop(1, '#b7b4a2');
+  x.fillStyle = g; x.fillRect(0, 0, 2, 256);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+  scene.background = t;
+}
+scene.fog = new THREE.Fog(0x9fa99e, 90, 360);
+
+const cam = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.5, 650);
+const ren = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+ren.setPixelRatio(Math.min(devicePixelRatio, 2));
+ren.setSize(innerWidth, innerHeight);
+ren.shadowMap.enabled = true;
+ren.shadowMap.type = THREE.PCFSoftShadowMap;
+ren.outputEncoding = THREE.sRGBEncoding;
+ren.toneMapping = THREE.ACESFilmicToneMapping;
+ren.toneMappingExposure = 1.25;
+
+window.addEventListener('resize', () => {
+  cam.aspect = innerWidth / innerHeight;
+  cam.updateProjectionMatrix();
+  ren.setSize(innerWidth, innerHeight);
+});
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0x445533, 0.95); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfffae0, 1.2);
+sun.position.set(70, 110, 50); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+const sc_ = sun.shadow.camera; sc_.left = sc_.bottom = -90; sc_.right = sc_.top = 90; sc_.far = 320;
+sun.shadow.bias = -0.0006; scene.add(sun, sun.target);
+
+// 真实起伏地形与植被
+const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, metalness: 0.1 });
+const gc = document.createElement('canvas'); gc.width = gc.height = 128;
+const gx = gc.getContext('2d'); gx.fillStyle = '#556b3e'; gx.fillRect(0, 0, 128, 128);
+for (let i = 0; i < 900; i++) {
+  gx.fillStyle = 'hsl(' + (85 + Math.random() * 30) + ',' + (30 + Math.random() * 20) + '%,' + (25 + Math.random() * 18) + '%)';
+  gx.fillRect(Math.random() * 128, Math.random() * 128, 2, 2);
+}
+const gt = new THREE.CanvasTexture(gc); gt.wrapS = gt.wrapT = THREE.RepeatWrapping;
+gt.repeat.set(70, 45); gt.encoding = THREE.sRGBEncoding;
+
+const land = new THREE.Mesh(new THREE.PlaneGeometry(420, 270, 105, 68), new THREE.MeshLambertMaterial({ map: gt, vertexColors: true }));
+land.rotation.x = -Math.PI / 2; land.position.set(0, 0, 75); land.receiveShadow = true; scene.add(land);
+
+const beach = new THREE.Mesh(new THREE.PlaneGeometry(420, 14), M(0xcdb98a));
+beach.rotation.x = -Math.PI / 2; beach.position.set(0, 0.03, -57); beach.receiveShadow = true; scene.add(beach);
+
+const sea = new THREE.Mesh(new THREE.PlaneGeometry(420, 150, 70, 25), new THREE.MeshPhongMaterial({ color: 0x1f5f80, shininess: 110, specular: 0x99bbdd }));
+sea.rotation.x = -Math.PI / 2; sea.position.set(0, 0, -135); sea.receiveShadow = true; scene.add(sea);
+
+const pos = land.geometry.attributes.position;
+const cols = new Float32Array(pos.count * 3);
+function ter(x, z) {
+  if (z < -60) return 0;
+  const d = Math.max(0, z + 60);
+  return Math.sin(x * 0.04) * 2.2 + Math.cos(z * 0.03) * 2.8 + Math.sin(x * 0.09 + z * 0.07) * 1.5 + (d > 70 ? Math.sin(x * 0.03) * 5 + (d - 70) * 0.08 : 0);
+}
+for (let i = 0; i < pos.count; i++) {
+  const x = pos.getX(i), y_ = pos.getY(i), z = 75 - y_;
+  const h = ter(x, z); pos.setZ(i, h);
+  const c = new THREE.Color(z < -50 ? 0xc4b486 : h > 7 ? 0x6e7860 : 0x4f6b38);
+  cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
+}
+land.geometry.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+land.geometry.computeVertexNormals();
+
+// 树木散布
+for (let i = 0; i < 110; i++) {
+  const g = new THREE.Group(), h = 0.8 + Math.random() * 0.8;
+  const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 2.5 * h, 5), M(0x4a321a)); tr.position.y = 1.25 * h;
+  const fo = new THREE.Mesh(new THREE.ConeGeometry(2.2 * h, 4.5 * h, 6), M(0x234a1e)); fo.position.y = 4 * h;
+  g.add(tr, fo);
+  const tx = -180 + Math.random() * 360, tz = -40 + Math.random() * 220;
+  g.position.set(tx, ter(tx, tz), tz); g.castShadow = true; scene.add(g);
+}
+
+// 太阳光盘
+const sunDisc = new THREE.Mesh(new THREE.CircleGeometry(18, 20), new THREE.MeshBasicMaterial({ color: 0xfff6cf, fog: false }));
+scene.add(sunDisc);
+
+// 弹坑系统
+const craters = [];
+function crater(x, z, r = 4) {
+  const m = new THREE.Mesh(new THREE.RingGeometry(0.3, r, 12), new THREE.MeshBasicMaterial({ color: 0x1a1a12, side: THREE.DoubleSide }));
+  m.rotation.x = -Math.PI / 2; m.position.set(x, ter(x, z) + 0.08, z); scene.add(m);
+  craters.push(m); if (craters.length > 35) scene.remove(craters.shift());
+}
+function hAt(x, z) {
+  let extra = 0;
+  for (const c of craters) {
+    const d = Math.hypot(x - c.position.x, z - c.position.z);
+    if (d < 3) extra -= (3 - d) * 0.3;
+  }
+  return extra;
+}
+
+// ==================== 10大载具参数库 (SPEC) ====================
+const SPEC = {
+  soldier: { name: '步兵', hp: 55, sp: 14, tr: 3.2, cd: 0.16, rng: 55, dmg: 7, r: 1.2, dom: 'land', al: 0 },
+  tank:    { name: '中型坦克', hp: 260, sp: 12, tr: 1.6, cd: 0.7, rng: 110, dmg: 45, r: 3.2, dom: 'land', al: 0, splash: 7 },
+  ship:    { name: '驱逐战舰', hp: 600, sp: 9, tr: 0.9, cd: 1.2, rng: 180, dmg: 90, r: 6.5, dom: 'sea', al: 0, splash: 14 },
+  plane:   { name: '战斗机', hp: 85, sp: 40, tr: 2.4, cd: 0.1, rng: 90, dmg: 6, r: 2.8, dom: 'air', al: 18 },
+  rpg:     { name: '火箭筒兵', hp: 70, sp: 11, tr: 2.8, cd: 1.3, rng: 80, dmg: 55, r: 1.4, dom: 'land', al: 0, splash: 8 },
+  jeep:    { name: '武装吉普', hp: 110, sp: 28, tr: 2.5, cd: 0.16, rng: 65, dmg: 6, r: 2.2, dom: 'land', al: 0 },
+  arty:    { name: '自行火炮', hp: 140, sp: 5, tr: 1.0, cd: 2.6, rng: 190, dmg: 95, r: 3.4, dom: 'land', al: 0, splash: 13 },
+  bomber:  { name: '重型轰炸机', hp: 240, sp: 32, tr: 1.1, cd: 1.1, rng: 70, dmg: 85, r: 5.5, dom: 'air', al: 25, splash: 12 },
+  heli:    { name: '直升机', hp: 140, sp: 22, tr: 2.2, cd: 0.12, rng: 75, dmg: 7, r: 3.6, dom: 'air', al: 15 },
+  mech:    { name: '重装机甲', hp: 350, sp: 8, tr: 1.5, cd: 0.85, rng: 85, dmg: 38, r: 3.5, dom: 'land', al: 0, splash: 7 }
+};
+
+// 载具 3D 模型生成器
+function makeModel(type, team) {
+  const g = new THREE.Group();
+  const cBody = team ? 0x3d648f : 0x7a3a2d;
+  const cDark = team ? 0x223a59 : 0x4a221b;
+  const cMeta = 0x262a26;
+  const matBody = M(cBody), matDark = M(cDark), matMeta = M(cMeta);
+
+  if (type === 'soldier' || type === 'rpg') {
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.6, 6), matBody); body.position.y = 1.0;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 6, 6), matDark); head.position.y = 2.0;
+    const gun = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, type === 'rpg' ? 1.5 : 1.0), matMeta); gun.position.set(0.3, 1.2, 0.4);
+    g.add(body, head, gun); g.userData.top = 2.4;
+  } else if (type === 'tank') {
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.2, 5.2), matBody); hull.position.y = 0.9;
+    const turr = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 0.9, 8), matDark); turr.position.set(0, 1.8, 0.2);
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 3.2, 6), matMeta); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 1.8, 2.2);
+    g.add(hull, turr, barrel); g.userData.top = 2.6;
+  } else if (type === 'ship') {
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(5.5, 2.6, 16), matBody); hull.position.y = 0.6;
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(3.2, 3.2, 4.5), matDark); bridge.position.set(0, 2.8, -1.5);
+    const gun1 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 4, 6), matMeta); gun1.rotation.x = Math.PI / 2; gun1.position.set(0, 2.2, 5.5);
+    g.add(hull, bridge, gun1); g.userData.top = 4.8;
+  } else if (type === 'plane' || type === 'bomber') {
+    const isB = type === 'bomber';
+    const body = new THREE.Mesh(new THREE.ConeGeometry(isB ? 1.4 : 0.8, isB ? 8 : 5.5, 7), matBody); body.rotation.x = -Math.PI / 2;
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(isB ? 14 : 8.5, 0.15, isB ? 2.5 : 1.6), matDark); wing.position.set(0, 0, 0);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(isB ? 4.5 : 2.8, 0.12, 1.2), matDark); tail.position.set(0, 0.2, isB ? -3.4 : -2.2);
+    const prop = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.4, 0.1), matMeta); prop.position.set(0, 0, isB ? 4.2 : 2.9);
+    g.add(body, wing, tail, prop); g.userData.prop = prop; g.userData.top = 2.0;
+  } else if (type === 'jeep') {
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 4.2), matBody); hull.position.y = 0.9;
+    const gun = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.8, 6), matMeta); gun.rotation.x = Math.PI / 2; gun.position.set(0, 1.8, 0.6);
+    g.add(hull, gun); g.userData.top = 2.2;
+  } else if (type === 'arty') {
+    const base = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.2, 4.5), matBody); base.position.y = 0.8;
+    const canon = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 4.2, 6), matMeta); canon.rotation.x = Math.PI / 2.8; canon.position.set(0, 2.2, 1.5);
+    g.add(base, canon); g.userData.top = 3.2;
+  } else if (type === 'heli') {
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1.4, 8, 8), matBody); body.scale.set(1, 1, 2.2);
+    const rotor = new THREE.Mesh(new THREE.BoxGeometry(8, 0.08, 0.4), matMeta); rotor.position.y = 1.6;
+    g.add(body, rotor); g.userData.rotor = rotor; g.userData.top = 2.2;
+  } else if (type === 'mech') {
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 1.8), matBody); torso.position.y = 2.6;
+    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.7, 2.0, 0.9), matDark); legL.position.set(-1.0, 1.0, 0);
+    const legR = new THREE.Mesh(new THREE.BoxGeometry(0.7, 2.0, 0.9), matDark); legR.position.set(1.0, 1.0, 0);
+    const gun = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 2.4), matMeta); gun.position.set(1.5, 2.4, 0.8);
+    g.add(torso, legL, legR, gun); g.userData.top = 4.0;
+  }
+
+  // 队伍标识光标
+  const mk = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.5, 4), new THREE.MeshBasicMaterial({ color: team ? 0x38bdf8 : 0xf43f5e, fog: false }));
+  mk.rotation.x = Math.PI; mk.position.y = (g.userData.top || 2.0) + 1.2; g.add(mk);
+  return g;
+}
+
+// 实体与物理容器
+const units = [], bullets = [], fx = [], strikes = [], pickups = [];
+let player = null, score = 0, wave = 0, over = false, mode = 'free';
+let callCd = 0, bombCd = 0, rapid = 0, shake = 0, combo = 0, comboT = 0, evT = 12, joinT = 6;
+
+const CAM_OFFSET = {
+  soldier: [12, 5], tank: [18, 8], ship: [32, 15], plane: [24, 10], rpg: [12, 5],
+  jeep: [14, 6], arty: [16, 8], bomber: [28, 12], heli: [18, 8], mech: [20, 10]
+};
+
+function spawn(type, team, x, z) {
+  const s = SPEC[type];
+  const m = makeModel(type, team);
+  m.position.set(x, s.al, z);
+  scene.add(m);
+  const u = { type, team, m, hp: s.hp * (team ? 1.6 : 0.9), max: s.hp * (team ? 1.6 : 0.9), cd: Math.random() * 0.5, s, yaw: team ? Math.PI : 0 };
+  units.push(u);
+  return u;
+}
+
+function clampU(u) {
+  const p = u.m.position, s = u.s;
+  p.x = Math.max(-195, Math.min(195, p.x));
+  if (s.dom === 'land') p.z = Math.max(-52, Math.min(195, p.z));
+  else if (s.dom === 'sea') p.z = Math.max(-190, Math.min(-68, p.z));
+  else p.z = Math.max(-190, Math.min(195, p.z));
+}
+
+function showMsg(text, dur = 2000) {
+  const m = $('msg');
+  m.innerHTML = text; m.classList.add('show');
+  setTimeout(() => m.classList.remove('show'), dur);
+}
+
+function pop(p, t) {
+  const v = p.clone(); v.y += 4; v.project(cam);
+  if (v.z > 1) return;
+  const d = document.createElement('div');
+  d.textContent = t;
+  d.style.cssText = 'position:fixed;pointer-events:none;font-size:24px;font-weight:900;color:#ffe066;text-shadow:0 2px 4px #000;transition:all 0.9s ease-out;left:' + ((v.x * 0.5 + 0.5) * innerWidth) + 'px;top:' + ((-v.y * 0.5 + 0.5) * innerHeight) + 'px;z-index:30';
+  document.body.appendChild(d);
+  requestAnimationFrame(() => { d.style.transform = 'translateY(-65px) scale(1.3)'; d.style.opacity = '0'; });
+  setTimeout(() => d.remove(), 950);
+}
+
+function dropPickup(p) {
+  const heart = Math.random() < 0.5;
+  const m = new THREE.Mesh(heart ? new THREE.SphereGeometry(1.2, 10, 8) : new THREE.OctahedronGeometry(1.4), new THREE.MeshBasicMaterial({ color: heart ? 0xff4772 : 0xffd000 }));
+  m.position.set(p.x, 2.5, p.z); scene.add(m);
+  pickups.push({ m, heart });
+}
+
+function fire(u) {
+  const s = u.s;
+  if (u.cd > 0) return;
+  u.cd = s.cd * (u === player && rapid > 0 ? 0.35 : (u.team ? 1 : 1.25));
+  if (u === player) {
+    shake = Math.max(shake, u.type === 'soldier' ? 0.12 : 0.4);
+    playSound(s.splash || u.type === 'tank' || u.type === 'ship' ? 'cannon' : 'gun');
+  }
+  const isHeavy = s.splash || u.type === 'tank' || u.type === 'ship';
+  const b = new THREE.Mesh(new THREE.SphereGeometry(isHeavy ? 0.6 : 0.26, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffe680 }));
+  const dir = new THREE.Vector3(Math.sin(u.yaw), 0, Math.cos(u.yaw));
+  b.position.copy(u.m.position).addScaledVector(dir, 3.2);
+  b.position.y += s.dom === 'air' ? -1.0 : 1.8;
+  b.scale.z = u.type === 'soldier' || u.type === 'plane' ? 7 : 4.5;
+  b.rotation.y = u.yaw;
+  scene.add(b);
+  bullets.push({ m: b, dir, team: u.team, dmg: s.dmg * (u.team ? 1 : 0.8), splash: s.splash, life: s.rng / 95, v: 95 });
+}
+
+function boom(p, sz) {
+  if (sz >= 4 && p.y < 8) crater(p.x, p.z, sz * 1.3);
+  playSound('hit', Math.max(0.6, 1.4 - sz * 0.1));
+  const mk = (c, o, d, rise) => {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 8), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o }));
+    m.position.copy(p); scene.add(m);
+    fx.push({ m, t: 0, sz: sz * (d > 1 ? 1.3 : 1), o, d, rise });
+  };
+  mk([0xffaa33, 0xff4772, 0xffee44, 0x38bdf8][Math.floor(Math.random() * 4)], 0.9, 0.6, 0);
+  if (sz > 1.5) mk(0x222222, 0.65, 1.8, 4.5);
+}
+
+function splashDamage(b) {
+  const p = b.m.position;
+  boom(new THREE.Vector3(p.x, 1, p.z), b.splash * 0.55);
+  shake = Math.max(shake, 0.7);
+  units.slice().forEach(u => {
+    if (u.team !== b.team && Math.hypot(u.m.position.x - p.x, u.m.position.z - p.z) < b.splash) {
+      u.hp -= b.dmg;
+      if (u.hp <= 0) killUnit(u);
+    }
+  });
+}
+
+function killUnit(u) {
+  boom(u.m.position, u.type === 'ship' ? 9 : u.type === 'soldier' ? 2 : 5);
+  shake = Math.max(shake, u.type === 'soldier' ? 0.3 : 1.1);
+  if (!u.team) {
+    pop(u.m.position, ['击破！', '精准命中！', '目标摧毁！', '漂亮的炮击！'][Math.floor(Math.random() * 4)]);
+    if (Math.random() < 0.35) dropPickup(u.m.position);
+    combo = comboT > 0 ? combo + 1 : 1; comboT = 3.5;
+    score += (u.type === 'soldier' ? 15 : u.type === 'tank' ? 50 : u.type === 'ship' ? 120 : 60) + combo * 5;
+    if (combo >= 3) pop(u.m.position.clone().add(new THREE.Vector3(0, 5, 0)), '⚡ ' + combo + ' 连杀暴击！');
+  }
+  scene.remove(u.m);
+  units.splice(units.indexOf(u), 1);
+
+  if (u === player) {
+    const nextAlly = units.filter(x => x.team).sort((a, b) => a.m.position.distanceTo(u.m.position) - b.m.position.distanceTo(u.m.position))[0];
+    player = nextAlly || null;
+    if (player) {
+      showMsg('原座驾受损！已火速转乘友军【' + player.s.name + '】！', 2500);
+    }
+  }
+}
+
+// 呼叫地毯式空袭
+function callAirStrike() {
+  if (callCd > 0) return;
+  callCd = 22;
+  playSound('siren');
+  showMsg('⚡ 盟军呼叫地毯式空军俯冲轰炸！', 2200);
+  const px = player ? player.m.position.x : 0, pz = player ? player.m.position.z + 40 : 0;
+  for (let i = 0; i < 7; i++) {
+    setTimeout(() => {
+      const rx = px + (Math.random() - 0.5) * 80, rz = pz + (Math.random() - 0.5) * 80;
+      boom(new THREE.Vector3(rx, 2, rz), 7);
+      units.slice().forEach(u => {
+        if (!u.team && Math.hypot(u.m.position.x - rx, u.m.position.z - rz) < 18) {
+          u.hp -= 120; if (u.hp <= 0) killUnit(u);
+        }
+      });
+    }, i * 260);
+  }
+}
+
+// 战术核爆大招
+function callTacticalBomb() {
+  if (bombCd > 0) return;
+  bombCd = 18;
+  shake = 1.8;
+  playSound('cannon');
+  showMsg('💥 战术能量过载大招引爆！全图震撼！', 2000);
+  const px = player ? player.m.position.x : 0, pz = player ? player.m.position.z : 0;
+  boom(new THREE.Vector3(px, 3, pz), 14);
+  units.slice().forEach(u => {
+    if (!u.team && Math.hypot(u.m.position.x - px, u.m.position.z - pz) < 65) {
+      u.hp -= 200; if (u.hp <= 0) killUnit(u);
+    }
+  });
+}
+
+$('btn-event').onclick = callAirStrike;
+$('btn-bomb').onclick = callTacticalBomb;
+
+// 波次推进
+function nextWave() {
+  wave++;
+  showMsg('第 ' + wave + ' 阶段战役开始！敌方增援来袭！', 2200);
+  const foeTypes = ['soldier', 'soldier', 'rpg', 'tank', 'jeep', 'arty', 'plane', 'bomber', 'heli', 'mech', 'ship'];
+  const count = 7 + wave * 3;
+  for (let i = 0; i < count; i++) {
+    const ty = foeTypes[Math.floor(Math.random() * foeTypes.length)];
+    if (ty === 'ship') spawn(ty, 0, -120 + Math.random() * 240, -140);
+    else spawn(ty, 0, -160 + Math.random() * 320, 80 + Math.random() * 100);
+  }
+}
+
+// 切换载具
+function switchVehicle(idx) {
+  const types = ['mech', 'soldier', 'tank', 'ship', 'plane', 'rpg', 'jeep', 'arty', 'bomber', 'heli'];
+  const targetType = types[idx];
+  if (!targetType) return;
+  const match = units.find(u => u.team && u.type === targetType && u !== player);
+  if (match) {
+    player = match;
+    showMsg('指挥权已切换至【' + match.s.name + '】！', 1600);
+  } else {
+    // 战场空投一辆给玩家
+    const px = player ? player.m.position.x : 0, pz = player ? player.m.position.z : 0;
+    const newU = targetType === 'ship' ? spawn(targetType, 1, px, -110) : spawn(targetType, 1, px + 5, pz + 5);
+    player = newU;
+    showMsg('空投全新【' + newU.s.name + '】就绪！', 1600);
+  }
+}
+
+// 键盘控制
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.key >= '0' && e.key <= '9') switchVehicle(parseInt(e.key));
+  if (e.code === 'KeyZ') callAirStrike();
+  if (e.code === 'KeyF') callTacticalBomb();
+  if (e.code === 'KeyC') { mode = 'follow'; showMsg('已下达指令：全军集结跟随！', 1400); }
+  if (e.code === 'KeyV') { mode = 'free'; showMsg('已下达指令：全军自由进攻！', 1400); }
+  if (e.code === 'KeyT') {
+    scene.fog.color.setHex([0x9fa99e, 0x5a6370, 0xb89d84, 0x485848][Math.floor(Math.random() * 4)]);
+    showMsg('战场天候与环境已切换！', 1400);
+  }
+});
+window.addEventListener('keyup', e => keys[e.code] = false);
+
+window.addEventListener('mousedown', e => { if (e.button === 0) keys.Click = 1; });
+window.addEventListener('mouseup', () => keys.Click = 0);
+ren.domElement.addEventListener('click', () => {
+  initAudio();
+  if (!document.pointerLockElement) ren.domElement.requestPointerLock();
+});
+window.addEventListener('mousemove', e => {
+  if (document.pointerLockElement && player && !over) {
+    player.yaw -= e.movementX * 0.003;
+  }
+});
+
+// 敌我 AI 寻敌逻辑
+function aiUpdate(u, dt) {
+  const foeList = units.filter(x => x.team !== u.team);
+  if (!foeList.length) return;
+  // 寻最近敌军
+  let near = null, minD = 999999;
+  for (const f of foeList) {
+    const d = u.m.position.distanceTo(f.m.position);
+    if (d < minD) { minD = d; near = f; }
+  }
+  if (!near) return;
+  const p = u.m.position, tp = near.m.position;
+  const targetYaw = Math.atan2(tp.x - p.x, tp.z - p.z);
+  let dyaw = targetYaw - u.yaw;
+  while (dyaw > Math.PI) dyaw -= Math.PI * 2;
+  while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+  u.yaw += Math.sign(dyaw) * Math.min(Math.abs(dyaw), u.s.tr * dt);
+
+  // 射程内开火
+  if (minD < u.s.rng && Math.abs(dyaw) < 0.35) {
+    fire(u);
+  }
+  // 移动趋近
+  if (minD > (u.s.splash ? 25 : 12)) {
+    const sp = u.s.sp * dt * (u.team ? 1 : 0.85);
+    p.x += Math.sin(u.yaw) * sp;
+    p.z += Math.cos(u.yaw) * sp;
+    clampU(u);
+  }
+}
+
+// 绘制战术小地图
+const radarCanvas = $('radar'), rCtx = radarCanvas.getContext('2d');
+function drawRadar() {
+  const rw = 140, rh = 140, cx = 70, cy = 70, scale = 0.32;
+  rCtx.clearRect(0, 0, rw, rh);
+  // 扫描雷达网格
+  rCtx.strokeStyle = 'rgba(212,175,55,0.3)'; rCtx.lineWidth = 1;
+  rCtx.beginPath(); rCtx.arc(cx, cy, 65, 0, Math.PI * 2); rCtx.stroke();
+  rCtx.beginPath(); rCtx.arc(cx, cy, 35, 0, Math.PI * 2); rCtx.stroke();
+  rCtx.beginPath(); rCtx.moveTo(cx, 5); rCtx.lineTo(cx, 135); rCtx.moveTo(5, cy); rCtx.lineTo(135, cy); rCtx.stroke();
+
+  // 绘制各单位
+  for (const u of units) {
+    const px = cx + (u.m.position.x) * scale;
+    const pz = cy + (u.m.position.z) * scale;
+    if (px < 4 || px > 136 || pz < 4 || pz > 136) continue;
+    rCtx.fillStyle = u === player ? '#ffd700' : (u.team ? '#38bdf8' : '#f43f5e');
+    rCtx.beginPath();
+    rCtx.arc(px, pz, u === player ? 4 : 2.5, 0, Math.PI * 2);
+    rCtx.fill();
+  }
+}
+
+// 初始化开局部队
+spawn('soldier', 1, 0, 10);
+spawn('tank', 1, -12, 12);
+spawn('ship', 1, 20, -110);
+spawn('plane', 1, 0, 0);
+player = units[0];
+nextWave();
+
+// 主循环
+const clock = new THREE.Clock();
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  callCd -= dt; bombCd -= dt; rapid -= dt; comboT -= dt; shake *= 0.92;
+
+  // 玩家机动控制
+  if (player && !over) {
+    const u = player, s = u.s;
+    const sx = (keys.KeyA ? 1 : 0) - (keys.KeyD ? 1 : 0);
+    if (sx) {
+      u.m.position.x += Math.cos(u.yaw) * sx * s.sp * 0.85 * dt;
+      u.m.position.z -= Math.sin(u.yaw) * sx * s.sp * 0.85 * dt;
+      clampU(u);
+    }
+    const f = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
+    if (f !== 0 || s.dom === 'air') {
+      const speed = s.dom === 'air' ? s.sp * (1 + f * 0.4) : s.sp * f;
+      u.m.position.x += Math.sin(u.yaw) * speed * dt;
+      u.m.position.z += Math.cos(u.yaw) * speed * dt;
+      clampU(u);
+    }
+    if (keys.Space || keys.Click) fire(u);
+
+    // 更新 HUD
+    $('hp').style.width = Math.max(0, (u.hp / u.max) * 100) + '%';
+    $('hp-val').textContent = Math.ceil(u.hp) + '/' + Math.ceil(u.max);
+    $('veh').textContent = u.s.name;
+  }
+
+  // AI 行为与位置更新
+  for (const u of units) {
+    u.cd -= dt;
+    if (u !== player) aiUpdate(u, dt);
+    u.m.rotation.y = u.yaw;
+    if (u.m.userData.prop) u.m.userData.prop.rotation.z += dt * 45;
+    if (u.m.userData.rotor) u.m.userData.rotor.rotation.y += dt * 35;
+    if (u.s.dom === 'land') {
+      u.m.position.y = ter(u.m.position.x, u.m.position.z) + hAt(u.m.position.x, u.m.position.z);
+    }
+  }
+
+  // 子弹推进与判定
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.m.position.addScaledVector(b.dir, b.v * dt);
+    b.life -= dt;
+    let hit = false;
+    for (const u of units) {
+      if (u.team === b.team) continue;
+      const dist2 = Math.hypot(u.m.position.x - b.m.position.x, u.m.position.z - b.m.position.z);
+      if (dist2 < (u.s.r + 1.2)) {
+        hit = true;
+        if (b.splash) splashDamage(b);
+        else {
+          u.hp -= b.dmg; boom(b.m.position, 1.2);
+          if (u.hp <= 0) killUnit(u);
+        }
+        break;
+      }
+    }
+    if (!hit && b.life <= 0 && b.splash) splashDamage(b);
+    if (hit || b.life <= 0) {
+      scene.remove(b.m);
+      bullets.splice(i, 1);
+    }
+  }
+
+  // 爆炸与粒子特效
+  for (let i = fx.length - 1; i >= 0; i--) {
+    const e = fx[i]; e.t += dt; const k = e.t / e.d;
+    e.m.scale.setScalar(e.sz * (0.3 + k));
+    e.m.position.y += e.rise * dt;
+    e.m.material.opacity = Math.max(0, e.o * (1 - k));
+    if (k >= 1) { scene.remove(e.m); fx.splice(i, 1); }
+  }
+
+  // 补给拾取
+  for (let i = pickups.length - 1; i >= 0; i--) {
+    const k = pickups[i];
+    k.m.rotation.y += dt * 3;
+    if (player && Math.hypot(k.m.position.x - player.m.position.x, k.m.position.z - player.m.position.z) < 6) {
+      if (k.heart) {
+        player.hp = Math.min(player.max, player.hp + 65);
+        pop(player.m.position, '急救修复 ♥ +65');
+      } else {
+        rapid = 7.5;
+        pop(player.m.position, '急速暴风射击 ★');
+      }
+      playSound('pickup');
+      scene.remove(k.m);
+      pickups.splice(i, 1);
+    }
+  }
+
+  // 相机跟随平滑与震动
+  if (player) {
+    const u = player, p = u.m.position;
+    const offset = CAM_OFFSET[u.type] || [16, 7];
+    const back = offset[0], h = offset[1];
+    const tp = new THREE.Vector3(p.x - Math.sin(u.yaw) * back, p.y + h, p.z - Math.cos(u.yaw) * back);
+    cam.position.lerp(tp, Math.min(1, dt * 6));
+    cam.position.x += (Math.random() - 0.5) * shake * 1.5;
+    cam.position.y += (Math.random() - 0.5) * shake * 1.5;
+    cam.lookAt(p.x + Math.sin(u.yaw) * 12, p.y + 2, p.z + Math.cos(u.yaw) * 12);
+  }
+
+  // 统计数据
+  const allyCount = units.filter(u => u.team).length;
+  const foeCount = units.filter(u => !u.team).length;
+  $('sc').textContent = score;
+  $('wv').textContent = '第 ' + wave + ' 波';
+  $('tm-ally').textContent = allyCount;
+  $('tm-foe').textContent = foeCount;
+
+  if (foeCount === 0 && !over) nextWave();
+
+  // 绘制雷达与渲染 3D 场景
+  drawRadar();
+  ren.render(scene, cam);
+}
+loop();
+</script>
+</body>
+</html>
+

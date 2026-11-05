@@ -1,0 +1,500 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>丝绸之路 · 互动时间轴</title>
+<style>
+:root{color-scheme:light;--ink:#3b2a1a;--ink2:#6b4f33;--paper:#f3e4bf;--paper2:#e8d2a0;--red:#a8412a;--gold:#b98a2e;--sea:#cbd9d0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:"Noto Serif SC","Songti SC",SimSun,serif;line-height:1.7;
+background:radial-gradient(ellipse at 20% 10%,#f8ecd0,transparent 60%),radial-gradient(ellipse at 90% 90%,#dcc28a,transparent 55%),var(--paper);min-height:100vh}
+header{text-align:center;padding:22px 16px 6px}
+h1{margin:0;font-size:clamp(24px,4vw,36px);letter-spacing:.15em;color:var(--red)}
+header p{margin:4px 0 0;color:var(--ink2);font-size:15px}
+.tl-wrap{position:relative;margin:10px auto 0;max-width:1100px;padding:0 8px}
+.tl{display:flex;overflow-x:auto;padding:34px 24px 18px;gap:0;scroll-behavior:smooth;scrollbar-color:var(--gold) transparent}
+.tl::before{content:"";position:absolute;left:8px;right:8px;top:58px;height:3px;background:repeating-linear-gradient(90deg,var(--ink2) 0 10px,transparent 10px 16px)}
+.node{flex:0 0 150px;position:relative;background:none;border:0;font:inherit;color:inherit;cursor:pointer;text-align:center;padding:0 6px}
+.dot{display:block;width:22px;height:22px;margin:0 auto 10px;border-radius:50%;background:var(--paper);border:3px solid var(--ink2);position:relative;z-index:1;transition:.25s}
+.node:hover .dot{border-color:var(--red)}
+.node.on .dot{background:var(--red);border-color:var(--red);box-shadow:0 0 0 6px rgba(168,65,42,.22);transform:scale(1.2)}
+.yr{display:block;font-weight:700;font-size:16px;color:var(--red)}
+.nm{display:block;font-size:14px;color:var(--ink2)}
+.node.on .nm{color:var(--ink);font-weight:700}
+.arrow{position:absolute;top:44px;z-index:2;width:34px;height:34px;border-radius:50%;border:2px solid var(--ink2);background:var(--paper);color:var(--ink);font-size:18px;cursor:pointer}
+.arrow:hover{background:var(--paper2)}
+#prev{left:-6px}#next{right:-6px}
+main{max-width:1100px;margin:6px auto 30px;padding:0 14px;display:grid;grid-template-columns:minmax(260px,1fr) 1.7fr;gap:16px}
+@media(max-width:800px){main{grid-template-columns:1fr}}
+.card{background:linear-gradient(#f7ebcc,#efdcae);border:2px solid var(--ink2);border-radius:6px;padding:16px 18px;box-shadow:0 3px 0 rgba(107,79,51,.35),inset 0 0 30px rgba(185,138,46,.18)}
+.card h2{margin:0 0 2px;font-size:22px}
+.meta{color:var(--red);font-weight:700;font-size:15px;margin-bottom:8px}
+.tag{display:inline-block;background:var(--ink2);color:#fbf1d6;border-radius:3px;padding:0 8px;font-size:13px;margin-right:6px}
+.card p{margin:6px 0}
+.impact{border-top:1px dashed var(--ink2);margin-top:10px;padding-top:8px}
+.goods{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--ink2);border-radius:20px;padding:2px 10px;font-size:13px;background:#fbf1d6}
+svg{width:100%;height:auto;display:block}
+.land{fill:#efdcae;stroke:#a88a55;stroke-width:.8}
+.reg path{stroke:#6b4f33;stroke-width:1;stroke-opacity:.6}
+.reg text{font-size:11px;fill:#3b2a1a;text-anchor:middle;paint-order:stroke;stroke:#f3e4bf;stroke-width:3px;pointer-events:none;font-weight:700}
+.reg tspan.en{font-size:9px;font-weight:400}
+.lang{display:flex;gap:6px;justify-content:flex-end;margin-bottom:8px}.lang button{font:inherit;font-size:13px;border:1.5px solid var(--ink2);background:#fbf1d6;color:var(--ink);border-radius:14px;padding:1px 10px;cursor:pointer}.lang button.on{background:var(--red);color:#fff;border-color:var(--red)}
+.sea{fill:var(--sea)}
+.rt{fill:none;stroke:#a88a55;stroke-width:2.5;stroke-dasharray:6 5;opacity:.7}
+.rt.sea-rt{stroke:#5a7f8a}
+.rt.hl{stroke:var(--red);stroke-width:4;opacity:1}
+.city circle{fill:var(--paper);stroke:var(--ink2);stroke-width:1.5;transition:.25s}
+.city text{font-size:12px;fill:var(--ink2);font-family:inherit;display:none;paint-order:stroke;stroke:#f3e4bf;stroke-width:3px}
+.city.hl circle{fill:var(--red);stroke:var(--red);r:6}
+.city.hl text{display:block;fill:var(--red);font-weight:700;font-size:13px}
+.pulse{fill:none;stroke:var(--red);stroke-width:2}
+.flow{font-size:22px}
+.legend{font-size:12px;fill:var(--ink2)}
+.ext{max-width:1072px;margin:0 auto 24px}.ext h3{margin:4px 0 8px}.opt{display:block;width:100%;text-align:left;margin:6px 0;padding:8px 12px;font:inherit;border:1.5px solid var(--ink2);border-radius:6px;background:#fbf1d6;color:var(--ink);cursor:pointer}.opt:hover{background:var(--paper2)}.opt.ok{background:#cfe3b5}.opt.bad{background:#f0c3b6}.btn{font:inherit;border:1.5px solid var(--red);background:var(--red);color:#fff;border-radius:16px;padding:3px 16px;cursor:pointer;margin:6px 6px 0 0}.btn.alt{background:none;color:var(--red)}.gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.gc{border:1.5px solid var(--ink2);border-radius:6px;padding:8px 12px;background:#fbf1d6}.gc b{color:var(--red)}.mg{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}.mg .opt{width:auto;margin:0}.sel{outline:3px solid var(--gold)}.cmp{width:100%;border-collapse:collapse}.cmp td,.cmp th{border:1.5px solid var(--ink2);padding:6px 10px;vertical-align:top;text-align:left}.cmp th{background:var(--paper2)}
+.mu{margin-top:8px;font:inherit;font-size:14px;border:1.5px solid var(--ink2);background:#fbf1d6;color:var(--ink);border-radius:16px;padding:3px 14px;cursor:pointer}.mu.on{background:var(--red);color:#fff;border-color:var(--red)}
+footer{text-align:center;color:var(--ink2);font-size:13px;padding:0 14px 24px}
+</style>
+</head>
+<body>
+<div class="silk-topbar" style="max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; padding:12px 14px 2px;">
+  <button onclick="backToHome()" style="font:inherit; font-size:13px; border:1.5px solid var(--red); background:#fbf1d6; color:var(--red); border-radius:14px; padding:3px 14px; cursor:pointer; font-weight:bold; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+    🏠 回到主页
+  </button>
+  
+  <div style="display:flex; align-items:center; gap:8px;">
+    <!-- 丝路驼铃古风背景音乐播放器 -->
+    <div id="bgm-widget" style="display:inline-flex; align-items:center; gap:8px; background:#fbf1d6; border:1.5px solid var(--ink2); border-radius:18px; padding:3px 12px; font-size:13px; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+      <span id="bgm-icon" style="cursor:pointer;" title="点击播放/暂停">🎵</span>
+      <span id="bgm-title" style="cursor:pointer; font-weight:bold; color:var(--red);" title="点击切换曲目">丝路驼铃 (曲目一)</span>
+      <button id="bgm-toggle-btn" style="border:none; background:none; cursor:pointer; color:var(--ink); font-size:12.5px; padding:0 3px; font-weight:600;">❚❚ 暂停</button>
+      <button id="bgm-next-btn" style="border:none; background:none; cursor:pointer; color:var(--ink2); font-size:13px; padding:0 3px;" title="切换下一首曲目">⏭</button>
+    </div>
+  </div>
+</div>
+<header>
+<h1>丝绸之路 · 千年时间轴</h1>
+<p>左右滑动时间轴，点一点圆点，看看地图上发生了什么</p>
+<button id="ap" class="mu">▶ 自动讲解（语音）</button>
+</header>
+
+<div class="tl-wrap">
+<button class="arrow" id="prev" aria-label="上一个">◀</button>
+<button class="arrow" id="next" aria-label="下一个">▶</button>
+<div class="tl" id="tl"></div>
+</div>
+
+<main>
+<section class="card" id="info"></section>
+<section class="card">
+<div class="lang" id="lang"><button data-l="zh">中文</button><button data-l="en">English</button><button data-l="both" class="on">中 + EN</button></div>
+<svg viewBox="0 0 900 450" id="map" role="img" aria-label="丝绸之路历史地图（示意）">
+<rect class="sea" width="900" height="450" rx="6"/>
+<path class="land" d="M159 179L160 182L159 184L157 184L143 176L145 174L151 175L161 173L159 179ZM126 166L123 166L123 168L120 168L119 167L120 162L118 155L120 155L124 152L126 154L128 158L126 166ZM35 55L37 57L36 59L38 59L37 59L37 61L33 63L35 71L32 75L33 75L29 75L23 78L21 78L21 79L16 81L13 81L14 79L11 80L14 78L10 78L12 76L10 76L13 75L12 74L14 73L19 72L12 73L18 69L11 67L11 66L13 66L12 65L14 64L12 64L13 62L11 61L20 61L20 61L23 59L19 58L22 55L25 54L26 56L27 53L29 54L28 56L32 54L35 55ZM48 36L46 38L59 38L60 39L56 45L51 46L55 47L51 49L48 48L52 49L55 49L61 52L63 58L70 62L69 63L71 66L69 65L66 65L72 68L72 69L70 71L76 70L80 72L80 76L75 79L75 80L73 81L78 81L78 83L71 86L62 85L58 87L53 86L50 87L49 89L46 88L40 91L37 90L46 83L52 83L56 79L51 81L45 79L42 80L39 78L46 75L47 73L46 71L43 71L45 69L52 68L52 67L53 68L54 68L52 66L53 62L52 62L49 59L52 56L42 57L41 58L40 56L43 52L42 50L43 49L42 48L40 50L40 48L39 49L38 53L37 54L38 50L37 49L40 44L37 45L34 44L37 43L36 43L38 40L36 39L38 38L37 37L37 36L40 36L39 35L39 33L41 33L41 31L52 31L51 33L47 35L48 36ZM643 407L645 412L654 419L658 426L660 427L660 425L661 425L664 429L667 431L669 435L673 437L670 439L675 437L676 438L677 441L675 442L675 445L679 448L657 448L653 441L650 439L647 428L642 424L641 421L637 416L634 414L629 408L627 404L627 402L630 402L635 404L641 404L643 407ZM542 375L549 389L549 394L546 398L540 399L537 393L537 384L537 385L539 374L541 375L538 372L540 372L542 375ZM179 26L170 30L165 31L169 32L168 32L168 34L167 36L167 42L163 48L156 48L153 50L154 52L153 53L146 53L146 51L143 47L145 47L144 46L146 45L143 43L137 33L136 32L135 28L137 28L134 27L132 23L130 28L126 27L127 28L118 34L110 35L109 34L109 33L103 31L103 28L106 29L107 28L105 27L108 24L100 27L101 24L107 22L104 22L107 19L109 18L108 20L111 17L106 19L100 24L101 20L103 20L101 20L100 18L103 16L100 17L100 14L110 13L111 14L111 13L115 13L113 12L114 11L113 11L113 13L109 12L108 13L101 13L99 11L101 11L99 8L99 8L105 8L110 8L100 7L104 4L107 5L109 4L106 4L107 3L114 3L115 3L114 2L118 2L110 2L113 0L121 1L119 0L178 0L176 1L175 1L176 3L175 3L172 3L173 5L172 8L172 9L171 9L170 10L171 16L175 17L181 21L181 23L175 25L179 26ZM901 28L894 33L892 36L881 42L876 48L861 57L861 58L865 59L870 59L870 65L873 64L872 62L876 61L874 62L877 63L873 66L877 66L881 63L879 66L880 66L881 65L882 61L888 61L897 68L896 70L894 69L897 71L896 74L898 76L895 80L892 85L893 90L890 102L881 112L876 120L865 130L863 134L854 140L849 142L844 141L844 138L842 139L842 138L841 138L837 143L835 142L835 145L832 146L829 149L829 155L816 163L815 167L821 170L827 182L827 189L828 189L826 195L822 195L822 197L817 196L817 198L816 197L815 200L814 199L815 198L813 200L812 199L810 201L809 198L811 197L810 197L809 195L812 190L810 184L808 184L810 182L812 183L813 182L811 177L809 176L808 177L806 175L804 177L801 175L803 174L800 174L802 171L805 170L802 169L804 164L800 163L799 164L798 161L789 164L779 170L779 169L782 167L783 165L780 165L780 164L785 157L783 154L779 155L775 159L769 163L766 167L759 167L758 170L758 172L761 174L766 175L767 177L766 180L768 181L771 181L774 177L777 176L782 179L788 179L786 183L784 182L777 185L777 186L776 186L776 188L773 188L774 189L769 194L767 197L774 201L777 210L777 212L783 218L783 219L775 216L772 217L776 217L783 223L783 225L777 229L775 228L773 229L775 229L776 230L780 229L784 232L781 235L784 234L783 237L781 237L782 238L781 241L782 243L779 243L777 245L776 249L773 254L770 254L772 257L769 259L767 258L768 259L770 259L770 263L767 263L768 264L766 265L766 266L764 267L764 269L761 269L760 270L761 271L757 276L754 275L752 280L746 282L744 281L742 283L741 282L740 283L739 283L739 285L737 284L737 283L734 279L733 281L734 285L732 286L732 286L731 288L729 289L728 287L727 289L725 288L723 290L720 290L717 293L716 292L715 294L717 297L716 299L713 299L712 295L713 291L711 289L711 290L708 291L708 290L707 290L705 288L705 290L701 291L699 292L697 294L694 294L695 296L693 299L690 301L688 308L693 315L692 317L701 327L702 327L707 333L710 344L710 353L710 352L709 352L709 357L708 362L698 368L696 366L696 368L695 367L694 368L695 369L693 369L695 370L694 372L691 369L694 374L693 374L689 371L691 375L687 377L685 381L683 381L685 371L680 367L676 367L677 365L676 363L674 365L673 361L670 356L665 352L660 352L661 347L659 346L655 348L655 356L650 369L651 376L654 376L655 381L657 383L658 390L657 387L656 388L658 391L661 393L664 393L674 404L675 408L675 420L678 423L680 431L678 430L679 431L677 431L676 432L663 421L663 420L663 418L659 413L656 396L653 393L653 390L651 389L648 383L645 383L645 380L648 370L647 371L646 366L649 359L647 359L647 349L645 343L644 345L644 338L642 337L641 329L642 325L640 325L639 321L637 319L636 324L634 325L633 324L634 326L630 328L628 331L628 328L627 330L626 330L625 328L624 330L624 325L621 329L624 318L620 306L620 309L617 305L619 306L620 306L620 305L618 303L618 302L616 301L615 302L615 298L613 300L613 297L613 299L610 295L609 293L608 285L605 281L602 283L601 280L600 276L600 277L598 277L600 278L599 282L600 284L598 288L597 288L598 286L596 286L597 284L594 289L594 285L593 289L591 286L591 289L590 289L589 290L589 286L588 289L586 290L586 286L585 284L586 286L585 288L578 292L579 296L578 299L575 302L569 303L569 304L570 304L562 313L552 321L551 325L546 327L544 331L542 330L540 331L539 335L540 347L539 345L539 346L540 347L536 362L537 363L537 369L534 369L532 374L532 376L535 377L529 377L527 382L524 384L518 379L517 372L513 361L509 353L505 340L499 326L497 311L497 308L496 307L496 306L497 306L496 305L495 302L497 296L495 291L498 289L495 289L495 287L494 287L495 286L496 285L492 285L493 286L492 288L493 290L491 293L484 296L480 293L474 285L474 284L475 285L481 283L483 279L478 282L473 280L470 276L473 274L469 276L469 274L465 274L463 268L460 267L460 264L459 262L457 263L458 262L459 263L448 265L445 263L442 265L429 265L424 263L424 264L416 263L406 260L404 253L402 251L398 251L391 255L384 254L377 248L372 246L363 230L360 231L357 229L358 228L358 227L356 228L356 231L351 231L352 234L349 235L351 236L356 247L364 254L363 254L364 257L363 259L367 267L367 263L369 259L370 258L372 260L372 266L370 269L371 269L370 271L372 271L373 273L375 273L378 272L385 273L387 272L388 271L390 267L400 257L400 266L402 270L405 274L414 276L418 282L420 283L420 285L412 298L411 298L410 297L409 299L408 303L408 308L403 310L400 315L395 316L392 322L386 322L378 326L376 328L376 331L372 334L359 339L355 343L351 343L344 347L337 348L334 351L328 353L325 352L323 348L323 345L321 336L320 334L321 334L321 326L318 319L314 315L309 303L303 298L300 294L298 288L299 283L295 275L290 271L288 267L288 264L276 245L273 245L275 234L270 247L265 241L261 231L260 234L263 241L266 246L269 254L276 270L280 273L278 275L279 280L286 286L288 293L288 300L289 309L296 314L301 332L303 335L303 333L305 336L311 339L314 343L317 346L318 349L322 351L324 354L324 357L319 360L323 360L329 368L333 368L338 365L343 366L348 363L363 360L367 357L370 358L369 368L370 367L371 368L368 369L368 375L351 410L340 424L330 431L316 448L122 448L121 445L123 446L125 443L125 439L128 441L129 440L126 439L125 437L126 437L126 434L125 433L128 428L128 419L126 414L127 414L127 413L125 414L123 412L122 409L121 408L120 409L120 408L118 407L119 409L113 409L112 408L112 409L111 410L110 408L110 410L109 410L106 411L102 407L102 404L103 403L101 402L102 402L100 402L96 397L90 396L92 395L90 396L78 398L76 400L72 401L58 408L51 405L53 405L52 404L51 405L47 404L45 404L43 404L47 404L39 405L41 405L36 406L26 411L17 406L10 398L0 391L0 244L9 238L13 232L14 229L12 226L13 221L16 216L16 213L20 208L30 203L36 190L39 190L39 192L43 195L50 195L53 193L54 195L59 195L78 185L92 183L98 183L101 184L108 181L111 183L114 182L116 183L127 180L128 181L130 181L131 184L134 182L135 183L132 187L135 194L129 202L130 205L133 205L133 206L134 206L136 208L142 211L148 211L159 214L162 221L175 225L181 229L185 228L187 225L188 223L187 218L188 215L191 213L197 210L205 213L206 216L216 217L218 220L227 221L240 225L252 220L257 220L258 222L257 221L256 222L258 223L259 222L261 224L267 223L272 220L279 201L281 199L280 187L282 183L281 183L277 185L273 183L267 188L262 189L253 183L249 183L248 187L244 188L241 187L240 184L231 184L235 182L230 182L231 181L229 177L230 175L224 173L225 171L226 173L229 172L227 170L228 169L226 166L228 164L223 165L223 161L227 158L240 158L239 157L245 156L241 154L241 152L253 153L259 149L265 147L275 147L277 149L281 149L283 152L285 151L295 155L301 153L306 154L314 149L315 147L313 142L303 137L297 131L284 125L286 124L285 123L286 123L288 124L290 123L292 119L295 118L291 115L295 114L295 113L300 112L299 110L280 115L276 118L275 118L277 117L276 116L274 118L275 121L278 124L284 123L283 126L278 125L269 130L266 129L266 125L260 123L267 119L267 118L260 118L256 117L257 116L255 115L260 116L261 115L258 115L257 112L256 111L257 114L255 114L250 115L247 120L244 121L244 124L243 127L240 128L240 126L239 126L237 136L235 137L233 142L231 144L234 147L235 150L240 152L240 154L231 154L223 160L224 159L227 157L223 157L221 155L217 154L213 154L209 156L210 158L212 159L213 160L209 159L210 161L207 159L208 162L204 158L204 157L203 158L202 161L207 167L206 167L206 166L204 166L205 168L202 169L210 173L211 177L210 177L208 175L205 176L208 179L206 180L203 178L206 186L203 183L202 186L199 182L198 184L197 183L196 181L197 179L194 176L198 173L204 175L206 174L201 172L194 172L192 169L194 168L192 168L189 166L186 161L183 158L184 158L183 156L185 148L179 144L170 140L174 141L169 137L164 136L159 132L161 131L158 129L157 125L155 124L154 124L151 127L149 123L151 122L147 121L142 123L142 124L143 126L142 128L143 131L150 136L152 142L155 145L159 147L165 148L163 150L175 156L178 159L178 162L175 159L169 158L167 163L170 165L171 168L167 169L167 172L164 175L162 175L165 168L162 161L158 159L157 156L154 157L155 156L152 155L151 152L147 152L138 145L135 144L136 143L132 140L130 133L121 130L117 134L113 135L106 139L94 136L89 139L88 141L90 145L89 146L89 147L82 152L76 154L74 155L75 156L74 157L68 164L69 168L71 170L67 173L65 177L66 178L61 179L58 184L45 184L40 186L37 189L35 188L33 185L34 183L33 183L30 180L24 182L18 182L19 179L18 172L19 172L19 171L16 172L16 170L17 170L19 167L17 170L15 169L19 156L18 149L18 146L19 145L19 143L17 143L18 141L16 140L17 139L25 135L29 136L36 135L44 137L49 136L59 138L62 136L64 128L63 128L64 122L65 123L66 125L67 126L66 123L63 121L64 121L63 117L60 115L58 113L58 110L60 110L56 110L56 109L54 108L45 106L43 105L45 104L43 103L45 103L43 102L43 101L51 99L54 101L62 100L59 93L63 93L64 95L69 96L73 95L71 94L71 93L78 90L81 84L90 81L95 81L90 80L95 81L94 80L95 80L93 78L94 78L96 75L98 70L103 68L110 67L112 68L111 67L112 65L115 65L117 65L118 67L119 66L120 67L121 64L124 64L126 66L127 66L125 64L123 64L122 61L121 61L123 59L121 57L121 53L118 52L118 45L121 46L122 44L124 44L124 42L123 42L122 44L119 44L121 41L125 41L128 38L132 37L130 45L134 46L133 47L131 48L130 50L128 50L129 51L126 53L127 54L126 56L129 58L128 60L135 60L134 63L137 63L144 60L146 60L149 62L150 62L152 64L156 66L155 64L152 64L151 62L154 64L176 57L180 58L178 58L180 60L184 60L186 59L187 57L191 55L194 52L191 56L194 56L193 45L197 38L202 37L209 42L213 40L212 37L214 33L209 32L208 30L209 29L207 29L208 27L219 24L233 25L234 23L236 23L241 21L247 22L244 20L238 18L237 16L225 18L226 17L221 19L205 22L206 21L204 19L202 21L202 18L195 17L197 10L195 7L195 5L194 3L196 0L901 0L901 28ZM359 115L355 118L355 120L349 122L348 121L347 124L343 129L347 132L348 136L349 134L348 140L349 142L360 155L365 159L362 159L360 160L359 166L356 169L357 176L358 178L363 179L369 184L376 185L385 182L386 183L385 168L384 167L381 166L382 164L384 164L383 162L380 161L380 163L379 158L380 154L385 156L388 156L388 155L390 155L390 154L387 150L385 146L380 147L379 153L377 148L378 142L370 139L370 137L368 132L364 130L365 129L372 129L369 127L371 123L381 124L379 122L381 118L381 114L380 112L375 113L370 111L359 115ZM793 439L790 438L775 437L773 440L772 443L775 448L769 448L771 446L771 447L771 442L773 436L774 434L776 435L778 432L789 435L795 435L801 429L802 429L803 431L798 438L793 439ZM755 392L759 397L758 400L761 399L761 400L760 401L763 400L768 404L766 406L762 406L762 407L764 410L758 411L757 412L759 415L755 416L761 425L759 427L766 434L764 435L760 433L760 435L758 439L758 446L756 448L712 448L710 447L710 445L709 444L709 441L708 439L707 435L710 428L712 427L713 429L721 431L720 430L721 424L722 424L723 422L731 419L737 411L737 409L743 406L745 406L746 405L745 403L748 402L753 392L753 395L755 392ZM786 312L785 317L787 322L785 328L782 329L780 334L783 343L785 343L785 342L788 341L789 342L790 345L792 343L795 344L793 345L794 349L796 350L796 353L795 352L795 351L792 350L791 347L787 344L787 344L787 349L783 343L780 345L777 344L776 344L776 342L778 338L776 337L776 340L775 340L773 337L771 327L773 329L774 328L774 318L776 311L779 311L784 313L785 312L786 312ZM720 303L716 310L712 313L706 311L706 306L710 302L717 301L718 300L720 303ZM777 288L773 279L773 275L778 266L782 264L783 266L780 279L778 283L777 288ZM808 381L811 390L808 393L808 397L806 390L805 390L804 394L805 399L803 402L803 399L801 400L796 396L796 392L797 389L794 386L793 386L792 389L790 387L789 388L788 387L785 392L783 391L785 385L789 384L792 380L795 382L794 385L797 383L798 381L800 381L801 378L802 379L803 378L804 378L804 373L808 376L809 379L808 381ZM840 208L842 208L842 211L840 214L839 221L837 221L837 222L835 224L835 219L835 219L834 223L832 222L833 220L832 216L834 213L832 209L832 211L833 212L831 212L829 213L829 210L831 211L828 208L830 208L835 204L838 206L841 206L840 208ZM900 161L900 167L899 168L898 172L896 173L895 175L895 181L893 187L894 191L889 197L888 194L890 192L889 191L887 193L887 195L886 194L884 195L883 199L882 198L883 196L882 195L879 199L872 199L873 198L871 198L871 196L869 198L871 201L868 202L864 207L861 203L861 201L862 199L858 198L849 201L844 201L843 204L841 203L836 203L837 200L839 200L848 192L861 191L862 192L865 192L866 191L866 188L870 184L871 179L874 178L871 181L873 184L881 179L886 174L888 169L890 164L889 162L888 162L889 159L889 157L891 155L891 152L893 153L894 155L896 155L896 153L894 153L894 151L898 151L898 157L900 161ZM901 143L895 145L892 143L891 145L896 148L893 148L891 151L889 151L890 148L888 145L889 142L892 140L891 138L897 138L900 130L899 124L901 122L901 143Z"/>
+<path class="sea" d="M274 443L272 444L270 444L270 445L270 447L270 448L256 448L256 447L257 443L257 442L261 441L261 439L261 440L263 440L265 438L266 439L267 439L268 440L269 440L269 441L271 443L273 442L274 443ZM713 51L711 59L711 63L709 64L709 66L708 66L708 64L708 64L705 66L707 66L707 68L704 69L702 72L697 73L695 75L692 75L691 77L689 79L682 81L677 79L685 78L688 76L703 63L709 55L709 52L711 51L713 51L713 51Z"/>
+<g id="reg"></g>
+<g id="routes"></g>
+<g id="cities"></g>
+<g id="fl"></g>
+<text class="legend" x="12" y="440">海岸线：Natural Earth（今日）· 政权范围为示意，边界并不精确 · 虚线：陆路　蓝线：海路</text>
+</svg>
+</section>
+</main>
+<section class="card ext" id="ext"><div class="lang" id="tabs" style="justify-content:flex-start;flex-wrap:wrap"></div><div id="ext-body"></div></section>
+<footer>资料参考：新华丝路《丝绸之路是指什么？》等 · 教学用途</footer>
+
+<script>
+// 真实经纬度 → 地图坐标（与海岸线同一投影）
+const X=lo=>(lo+12)*5.85,Y=la=>(63-la)*7;
+const C={ // 名称:[中文,English,经度,纬度]
+长安:["长安","Chang’an",108.9,34.3],敦煌:["敦煌","Dunhuang",94.7,40.1],龟兹:["龟兹","Kucha",82.9,41.7],
+乌孙:["乌孙","Wusun",77.5,42.6],大宛:["大宛","Ferghana",71.8,40.4],撒马尔罕:["撒马尔罕","Samarkand",66.97,39.65],
+怛逻斯:["怛逻斯","Talas",71.4,42.5],巴格达:["巴格达","Baghdad",44.4,33.3],波斯湾:["波斯湾（条支）","Persian Gulf",49,29.6],
+君士坦丁堡:["君士坦丁堡","Constantinople",28.98,41.0],罗马:["罗马","Rome",12.5,41.9],天竺:["那烂陀（天竺）","Nalanda, India",85.4,25.1],
+大都:["大都","Khanbaliq (Dadu)",116.4,39.9],泉州:["泉州","Quanzhou",118.6,24.9],马六甲:["马六甲","Malacca",102.25,2.2],
+古里:["古里","Calicut",75.8,11.25],亚丁:["亚丁","Aden",45.0,12.8]};
+const P={};for(const k in C)P[k]=[X(C[k][2]),Y(C[k][3])];
+const LOC=Object.keys(C);
+let lang="both";
+const nm=(k)=>lang==="zh"?C[k][0]:lang==="en"?C[k][1]:C[k][0]+" "+C[k][1];
+
+// 各时期政权（示意多边形，经纬度）
+const R={
+han:["西汉 Western Han","#d9a441",[[95,40],[108,41],[121,41],[122,28],[110,20],[102,23],[98,30],[101,36]]],
+hand:["东汉 Eastern Han","#d9a441",[[95,40],[108,41],[121,41],[122,28],[110,20],[102,23],[98,30],[101,36]]],
+xn:["匈奴 Xiongnu","#9aa86a",[[88,51],[120,53],[120,42],[108,41],[95,40],[90,45]]],
+yz:["大月氏 Yuezhi","#c27c5a",[[64,40],[72,40],[72,34],[64,33]]],
+xy:["西域诸国 Western Regions","#e0b86a",[[72,44],[96,43],[96,37],[78,36],[72,39]]],
+as:["安息 Parthia","#a97ab0",[[44,38],[60,38],[64,33],[62,26],[52,27],[46,31]]],
+rom:["罗马 Rome","#b5483a",[[-9,36],[-2,43],[8,45],[14,47],[27,44],[38,41],[42,37],[35,31],[10,33]]],
+gs:["贵霜 Kushan","#d08a5a",[[62,38],[76,38],[80,30],[72,24],[64,28]]],
+byz:["拜占庭 Byzantium","#8a5ca0",[[-6,36],[8,44],[14,41],[24,42],[28,46],[42,41],[40,36],[34,31],[12,33]]],
+byz2:["拜占庭 Byzantium","#8a5ca0",[[12,38],[24,42],[28,46],[42,41],[40,36],[34,31],[24,34]]],
+byz3:["拜占庭 Byzantium","#8a5ca0",[[22,36],[22,42],[30,42],[30,36]]],
+sas:["萨珊波斯 Sasanian Persia","#4f8f8a",[[40,37],[56,38],[66,38],[67,30],[60,25],[50,26],[44,30]]],
+tk:["突厥 Türk Khaganate","#7fa05a",[[60,55],[120,53],[120,44],[95,42],[75,38],[66,38],[56,44]]],
+tk2:["西突厥 Western Türks","#7fa05a",[[55,46],[70,46],[96,44],[96,40],[75,38],[66,38],[58,40]]],
+bz:["北周·北齐 N. Zhou / Qi","#d9a441",[[100,38],[112,42],[121,40],[119,32],[108,32],[100,34]]],
+tang:["唐 Tang","#e0a030",[[96,40],[110,42],[122,42],[122,22],[108,20],[100,26],[98,34]]],
+tang2:["唐 Tang","#e0a030",[[72,43],[96,44],[110,42],[122,42],[122,22],[108,20],[100,26],[98,34],[78,38]]],
+tb:["吐蕃 Tibetan Empire","#b0825a",[[78,36],[100,36],[100,27],[88,26],[78,30]]],
+hs:["戒日王朝 Harsha","#cf9a50",[[72,24],[86,32],[92,26],[84,18],[76,18]]],
+ab:["阿拔斯 Abbasid Caliphate","#5a9a6a",[[-2,35],[10,34],[34,31],[40,36],[44,40],[56,38],[68,40],[70,34],[66,24],[56,24],[44,14],[34,24],[10,30]]],
+yuan:["元 Yuan","#c0562f",[[78,44],[100,50],[122,50],[124,41],[118,35],[105,34],[98,30],[90,28],[78,36]]],
+song:["南宋 Southern Song","#d9a441",[[105,34],[118,35],[122,30],[116,22],[106,21],[100,26],[102,31]]],
+chg:["察合台汗国 Chagatai","#8f9a5a",[[62,46],[78,44],[78,36],[64,36]]],
+ilk:["伊儿汗国 Ilkhanate","#4f8f8a",[[44,40],[62,40],[66,36],[62,28],[52,26],[44,30],[42,37]]],
+gh:["金帐汗国 Golden Horde","#8a9a4a",[[30,52],[62,56],[62,46],[44,42],[30,46]]],
+mam:["马穆鲁克 Mamluks","#5a9a6a",[[26,31],[36,36],[42,30],[34,25],[26,25]]],
+ming:["明 Ming","#c0562f",[[98,41],[110,42],[122,42],[122,22],[108,20],[100,26],[98,34]]],
+tim:["帖木儿帝国 Timurids","#4f8f8a",[[44,40],[70,44],[76,38],[70,28],[60,27],[48,28],[42,34]]],
+ott:["奥斯曼 Ottomans","#8a5ca0",[[22,38],[28,44],[42,41],[40,36],[28,35]]],
+del:["德里苏丹国 Delhi Sultanate","#cf9a50",[[68,30],[84,30],[88,24],[76,17],[70,22]]],
+ny:["北元 Northern Yuan","#9aa86a",[[88,51],[120,53],[120,43],[98,42],[90,45]]]};
+const ERA={A:["han","xn","yz","as","rom"],A2:["han","xn","yz","as","rom","xy"],B:["hand","xy","gs","as","rom"],
+C:["bz","tk","sas","byz"],D:["tang","tk2","sas","byz2","hs","tb"],E:["tang2","ab","tb","byz3"],
+F:["yuan","song","chg","ilk","gh","mam"],G:["ming","tim","ott","del","ny","mam"]};
+const reg=document.getElementById("reg");
+function drawEra(k){
+ reg.innerHTML="";
+ ERA[k].forEach(id=>{const [t,c,pg]=R[id];
+  const pts=pg.map(([lo,la])=>X(lo).toFixed(0)+","+Y(la).toFixed(0)).join(" ");
+  const cx=pg.reduce((a,p)=>a+X(p[0]),0)/pg.length,cy=pg.reduce((a,p)=>a+Y(p[1]),0)/pg.length;
+  const [zh,...en]=t.split(" ");
+  const lab=lang==="zh"?zh:lang==="en"?en.join(" "):`${zh}<tspan class="en" x="${cx}" dy="11"> ${en.join(" ")}</tspan>`;
+  reg.insertAdjacentHTML("beforeend",`<g class="reg"><polygon points="${pts}" fill="${c}" fill-opacity=".38" stroke="#6b4f33" stroke-width="1" stroke-opacity=".6"/><text x="${cx}" y="${cy}">${lab}</text></g>`);});
+}
+// 路线
+const RT={n:["长安","敦煌","龟兹","大宛","撒马尔罕","巴格达","君士坦丁堡","罗马"],s:["撒马尔罕","天竺"],sea:["泉州","马六甲","古里","亚丁"],bei:["长安","大都"]};
+const rg=document.getElementById("routes");
+for(const k in RT)rg.insertAdjacentHTML("beforeend",`<path class="rt ${k==="sea"?"sea-rt":""}" id="r_${k}" d="M${RT[k].map(n=>P[n].map(v=>v.toFixed(0)).join(" ")).join("L")}"/>`);
+const cs=document.getElementById("cities");
+for(const k of LOC){const [x,y]=P[k];
+ cs.insertAdjacentHTML("beforeend",`<g class="city" id="c_${k}"><title>${C[k][0]} ${C[k][1]}</title><circle cx="${x}" cy="${y}" r="4"/><text x="${x}" y="${y-10}" text-anchor="middle"></text></g>`);}
+function labels(){for(const k of LOC)document.querySelector("#c_"+k+" text").textContent=nm(k)}
+
+const E=[
+{era:"A",y:"前138年",n:"张骞出使西域",pl:"长安 → 大宛 · 大月氏一带",
+ d:"汉武帝派张骞出使西域，想联合大月氏对付匈奴。途中他被匈奴扣留多年，仍坚持完成使命。",
+ i:"第一次让中原了解西域，被后人称为“凿空”，是陆上丝路开通的起点。",
+ pts:["长安","敦煌","龟兹","大宛"],path:["长安","敦煌","龟兹","大宛"],g:["🧵丝绸→","🍇←葡萄"]},
+{era:"A2",y:"前119年",n:"张骞再使乌孙",pl:"长安 → 乌孙",
+ d:"张骞带着大批牛羊、金帛第二次出使，访问乌孙，并派副使到达中亚多国。",
+ i:"西域各国纷纷遣使入汉，商队往来明显增加，丝绸开始大量西运。",
+ pts:["长安","敦煌","乌孙"],path:["长安","敦煌","龟兹","乌孙"],g:["🧵丝绸→","🐎←良马"]},
+{era:"A2",y:"前60年",n:"设西域都护府",pl:"乌垒（今新疆轮台一带）",
+ d:"西汉在西域设置都护，管理这一地区的军政事务，保护往来的商旅。",
+ i:"西域正式纳入汉朝管辖，丝路沿线安全了，商队走得更放心。",
+ pts:["龟兹","敦煌","长安"],path:["长安","敦煌","龟兹"],g:["🧵丝绸→","💎←珠宝"]},
+{era:"B",y:"公元97年",n:"甘英西行大秦",pl:"西域 → 波斯湾一带",
+ d:"班超派甘英出使大秦（罗马帝国）。他到达波斯湾沿岸，据说因听说海路艰险而折返。",
+ i:"中国人对西亚、地中海的认识更远了；罗马贵族则争相购买“赛里斯”的丝绸。",
+ pts:["龟兹","巴格达","波斯湾"],path:["龟兹","大宛","巴格达","波斯湾"],g:["🧵丝绸→","🌿←香料"]},
+{era:"C",y:"公元571年",n:"“丝绸之战”",pl:"拜占庭 · 突厥 · 波斯",
+ d:"波斯控制了丝绸贸易的要道，拜占庭便联合突厥对付波斯，双方前后打了约二十年。",
+ i:"说明丝绸利润极大，足以引发国家之间的争夺，也显示了中亚商人的重要。",
+ pts:["君士坦丁堡","巴格达","撒马尔罕"],path:["撒马尔罕","巴格达","君士坦丁堡"],g:["🧵丝绸→","🌿←香料"]},
+{era:"D",y:"公元627年",n:"玄奘西行取经",pl:"长安 → 天竺（印度）",
+ d:"玄奘从长安出发，历时十七年，游历一百多个国家，带回六百多部佛经并翻译。",
+ i:"促进了中印文化交流，佛教思想与知识在丝路上传播，也留下《大唐西域记》。",
+ pts:["长安","敦煌","龟兹","撒马尔罕","天竺"],path:["长安","敦煌","龟兹","撒马尔罕","天竺"],g:["📜←佛经","🧵丝绸→"]},
+{era:"E",y:"公元751年",n:"怛逻斯之战与造纸术西传",pl:"怛逻斯 → 撒马尔罕",
+ d:"唐军与阿拉伯帝国在怛逻斯交战，一些懂造纸的唐朝士兵被俘，后来在撒马尔罕帮助开办造纸厂。",
+ i:"造纸术经中亚传到巴格达、大马士革，再传入欧洲，改变了世界的书写与知识传播。",
+ pts:["怛逻斯","撒马尔罕","巴格达"],path:["长安","撒马尔罕","巴格达"],g:["📄纸→","🧵丝绸→"]},
+{era:"F",y:"公元1275年",n:"马可·波罗抵达元大都",pl:"意大利 → 大都（今北京）",
+ d:"意大利商人马可·波罗沿丝路来到中国，后来在中国生活了十七年，写下游记。",
+ i:"《马可·波罗游记》让欧洲人对东方充满向往，也推动了后来的远航探索。",
+ pts:["罗马","巴格达","撒马尔罕","长安","大都"],path:["罗马","君士坦丁堡","巴格达","撒马尔罕","龟兹","敦煌","长安","大都"],g:["🧵丝绸→","🌿←香料","📄纸→"]},
+{era:"G",y:"1405–1433年",n:"郑和七下西洋",pl:"泉州 → 马六甲 → 古里 → 亚丁",
+ d:"明朝郑和率领庞大船队七次远航，到达东南亚、南亚、阿拉伯半岛与东非沿岸的三十多个国家和地区。",
+ i:"海上丝路达到顶峰，瓷器、丝绸远销海外，香料等货物也源源运入中国。",
+ pts:["泉州","马六甲","古里","亚丁"],path:["泉州","马六甲","古里","亚丁"],g:["🏺瓷器→","🌿←香料","🧵丝绸→"],sea:1}
+];
+
+// 时间轴
+const tl=document.getElementById("tl");
+E.forEach((e,i)=>tl.insertAdjacentHTML("beforeend",`<button class="node" data-i="${i}"><span class="dot"></span><span class="yr">${e.y}</span><span class="nm">${e.n}</span></button>`));
+tl.addEventListener("click",ev=>{const b=ev.target.closest(".node");if(b)show(+b.dataset.i)});
+
+let cur=-1,raf=0;
+function show(i){
+ cur=i;const e=E[i];
+ document.querySelectorAll(".node").forEach((n,k)=>n.classList.toggle("on",k===i));
+ const nd=tl.children[i];tl.scrollTo({left:nd.offsetLeft-tl.clientWidth/2+nd.offsetWidth/2});
+ document.getElementById("info").innerHTML=
+ `<span class="tag">第 ${i+1} / ${E.length} 站</span><h2>${e.n}</h2><div class="meta">${e.y} · ${e.pl}</div>
+  <p>${e.d}</p><p class="impact"><b>影响：</b>${e.i}</p>
+  <div class="goods">${e.g.map(g=>`<span class="chip">${g}</span>`).join("")}</div>`;
+ document.querySelectorAll(".city").forEach(c=>c.classList.remove("hl"));
+ e.pts.forEach(k=>{const c=document.getElementById("c_"+k);c&&c.classList.add("hl")});
+ document.querySelectorAll(".rt").forEach(r=>r.classList.remove("hl"));
+ const rid=e.sea?"r_sea":(e.path.includes("大都")?"r_bei":"r_n");
+ document.getElementById(rid).classList.add("hl");
+ if(rid==="r_bei")document.getElementById("r_n").classList.add("hl");
+ if(e.path.includes("天竺"))document.getElementById("r_s").classList.add("hl");
+ if(e.path.includes("怛逻斯")){/* 路线示意 */}
+ drawEra(e.era);labels();
+ flow(e);
+}
+
+// 商品流动动画：沿事件路线移动小图标
+function flow(e){
+ cancelAnimationFrame(raf);
+ const fl=document.getElementById("fl");fl.innerHTML="";
+ const ns="http://www.w3.org/2000/svg";
+ const pts=e.path.map(k=>P[k]);
+ // 计算折线长度
+ const seg=[];let L=0;
+ for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);seg.push(d);L+=d}
+ const at=t=>{let s=t*L;for(let i=0;i<seg.length;i++){if(s<=seg[i]){const f=s/seg[i];return[pts[i][0]+(pts[i+1][0]-pts[i][0])*f,pts[i][1]+(pts[i+1][1]-pts[i][1])*f]}s-=seg[i]}return pts[pts.length-1]};
+ // 每个货物：图标 + 方向（→ 向西流，← 向东流）
+ const items=e.g.map((g,k)=>{
+  const west=g.includes("→"), icon=[...g][0];
+  const t=document.createElementNS(ns,"text");t.setAttribute("class","flow");t.textContent=icon;fl.appendChild(t);
+  return{t,west,off:k/e.g.length}});
+ const eastStart=pts[0][0]>pts[pts.length-1][0];
+ const t0=performance.now();
+ (function step(now){
+  const base=((now-t0)/5000)%1;
+  items.forEach(o=>{
+   let p=(base+o.off)%1;
+   // 以长安为东端：“→”代表丝路上由东向西，“←”由西向东（路线终点在西）
+   p=(o.west===eastStart)?p:1-p;
+   const [x,y]=at(p);o.t.setAttribute("x",x-11);o.t.setAttribute("y",y-8);
+   o.t.setAttribute("opacity",Math.sin(Math.PI*p)*0.9+0.1);
+  });
+  raf=requestAnimationFrame(step);
+ })(t0);
+}
+
+document.getElementById("lang").onclick=ev=>{const b=ev.target.closest("button");if(!b)return;lang=b.dataset.l;document.querySelectorAll("#lang button").forEach(x=>x.classList.toggle("on",x===b));labels();drawEra(E[cur].era)};
+const go=d=>show(Math.min(E.length-1,Math.max(0,(cur<0?0:cur)+d)));
+document.getElementById("prev").onclick=()=>go(-1);
+document.getElementById("next").onclick=()=>go(1);
+addEventListener("keydown",e=>{if(e.key==="ArrowRight")go(1);if(e.key==="ArrowLeft")go(-1)});
+// ===== 延伸活动 =====
+const EB=document.getElementById('ext-body'),TB=document.getElementById('tabs');
+const TABS=['小测验','货物配对','货物与技术','旅行者','今昔对照'];
+TABS.forEach((t,i)=>TB.insertAdjacentHTML('beforeend',`<button data-t='${i}'>${t}</button>`));
+TB.onclick=ev=>{const b=ev.target.closest('button');if(b)tab(+b.dataset.t)};
+function tab(k){TB.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===k));[quiz,match,goods,people,compare][k]()}
+const QZ=[['张骞第一次出使西域的主要目的是？','联合大月氏对付匈奴','购买西域的丝绸','传播佛教','寻找海上航线'],
+['设立西域都护府后，最直接的作用是？','管理西域、保护往来商旅','发明造纸术','开通海上丝路','建立罗马帝国'],
+['甘英出使大秦，最远到达哪一带？','波斯湾沿岸','罗马城','印度恒河','日本'],
+['“丝绸之战”说明了什么？','丝绸贸易利润极大，值得争夺','丝绸没有价值','战争发生在中国国内','战争是为了抢茶叶'],
+['玄奘西行取经去的是哪里？','天竺（印度）','罗马','日本','马六甲'],
+['怛逻斯之战后，哪项技术加快了西传？','造纸术','火药','指南针','瓷器烧制'],
+['马可·波罗到达的是哪个朝代的都城？','元朝大都','唐朝长安','宋朝东京','明朝南京'],
+['郑和下西洋主要属于哪条丝路？','海上丝绸之路','陆上沙漠绿洲丝路','草原丝路','南方陆路丝路'],
+['“丝绸之路”这个名称是谁提出的？','李希霍芬（德国地质学家）','张骞','马可·波罗','玄奘']];
+function quiz(){let i=0,sc=0;const ask=()=>{if(i>=QZ.length){EB.innerHTML=`<h3>完成！得分 ${sc} / ${QZ.length}</h3><p>${sc>=8?'太棒了，你是丝路小专家！':sc>=5?'不错，再看看时间轴会更熟。':'没关系，回到时间轴再读一遍，再来挑战！'}</p><button class='btn' id='re'>再来一次</button>`;document.getElementById('re').onclick=()=>quiz();return}
+const [q,...o]=QZ[i],op=o.map((t,k)=>({t,ok:!k})).sort(()=>Math.random()-.5);
+EB.innerHTML=`<h3>第 ${i+1} / ${QZ.length} 题</h3><p>${q}</p>`+op.map((x,k)=>`<button class='opt' data-k='${k}'>${'ABCD'[k]}. ${x.t}</button>`).join('')+`<div id='fb'></div>`;
+EB.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const x=op[+b.dataset.k];EB.querySelectorAll('.opt').forEach((c,k)=>{c.disabled=true;if(op[k].ok)c.classList.add('ok')});if(!x.ok)b.classList.add('bad');else sc++;
+document.getElementById('fb').innerHTML=`<p>${x.ok?'✅ 答对了！':'❌ 再想想，正确答案已标绿。'}</p><button class='btn' id='nx'>${i<QZ.length-1?'下一题':'看成绩'}</button><button class='btn alt' id='rv'>回看：${E[i].n}</button>`;
+document.getElementById('nx').onclick=()=>{i++;ask()};document.getElementById('rv').onclick=()=>{show(i);scrollTo({top:0,behavior:'smooth'})}})};ask()}
+function match(){const MG=[['丝绸','中国'],['茶叶','中国'],['瓷器','中国'],['葡萄','中亚·西域'],['良马','中亚·西域'],['琵琶','波斯·西亚'],['香料','印度·南亚'],['佛教','印度·南亚']];
+const OR=['中国','中亚·西域','波斯·西亚','印度·南亚'];let sel=null,sc=0;const sh=a=>[...a].sort(()=>Math.random()-.5);
+EB.innerHTML=`<h3>货物配对</h3><p>先点一件货物，再点它的“原产地”。（琵琶：由波斯经西域传入中国）</p><div class='mg' id='gi'>${sh(MG).map(m=>`<button class='opt' data-g='${m[0]}'>${m[0]}</button>`).join('')}</div><div class='mg' id='go'>${OR.map(o=>`<button class='opt' data-o='${o}'>📍${o}</button>`).join('')}</div><p id='ms'>已配对：0 / ${MG.length}</p>`;
+EB.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{if(b.disabled)return;EB.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));sel=b;b.classList.add('sel')});
+EB.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{if(!sel)return;const ok=MG.some(m=>m[0]===sel.dataset.g&&m[1]===b.dataset.o);if(ok){sel.classList.remove('sel');sel.classList.add('ok');sel.disabled=true;sel=null;sc++;document.getElementById('ms').textContent=sc===MG.length?'🎉 全部配对成功！':`已配对：${sc} / ${MG.length}`}else{b.classList.add('bad');setTimeout(()=>b.classList.remove('bad'),500)}})}
+function goods(){const G=[['🧵 丝绸','最具代表性的高档商品。在古希腊、罗马是财富和地位的象征，罗马人称中国为“赛里斯”，意思是“丝之国”。'],['🍵 茶叶','约 5 世纪前后经陆路和海路传入南亚、中亚、西亚，15 世纪传入欧洲后迅速流行。'],['🏺 瓷器','大量输入西方，掀起“中国热”，也促进了欧洲制瓷业的兴起。'],['📄 造纸术','约 4 世纪传到朝鲜、日本，8 世纪传入中亚、北非和欧洲，“撒马尔罕纸”十分有名。'],['📚 印刷术','7 世纪已有雕版印刷，吐鲁番、敦煌发现过木刻板；13 世纪起欧洲人把技术带回，15 世纪谷登堡印出《圣经》。'],['🪕 琵琶','南北朝时由波斯经西域传入中国，隋唐成为主要乐器，被誉为“民乐之王”。'],['🍇 西来作物','葡萄、胡麻、胡桃、胡萝卜、胡瓜等从中亚、西亚传入中国。']];
+EB.innerHTML=`<h3>货物与技术</h3><div class='gr'>${G.map(g=>`<div class='gc'><b>${g[0]}</b><p>${g[1]}</p></div>`).join('')}</div>`}
+function people(){const T=[['张骞',0,'我奉汉武帝之命西行，被匈奴扣留多年，仍然没有放弃使命。我走过的路，后来成了丝绸之路。'],['玄奘',5,'我从长安出发，走了十七年，游历一百多个国家，带回六百多部佛经。'],['马可·波罗',7,'我从意大利来到元大都，在中国生活了十七年，回去后写下游记，让欧洲人向往东方。'],['郑和',8,'我率领船队七下西洋，足迹遍及三十多个国家和地区，把中华文明和货物带到远方。']];
+EB.innerHTML=`<h3>我是旅行者</h3><div class='gr'>${T.map((t,i)=>`<div class='gc'><b>${t[0]}</b><p>“${t[2]}”</p><button class='btn alt' data-i='${i}'>在地图上看他的路线</button></div>`).join('')}</div>`;
+EB.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{show(T[+b.dataset.i][1]);scrollTo({top:0,behavior:'smooth'})})}
+function compare(){EB.innerHTML=`<h3>今昔对照</h3><table class='cmp'><tr><th></th><th>古代丝绸之路</th><th>今天的“一带一路”</th></tr><tr><th>时间</th><td>西汉起，跨越两千多年</td><td>2013 年提出</td></tr><tr><th>内容</th><td>陆上丝路 + 海上丝路；丝绸、茶叶、瓷器、纸张流动，也带来宗教与文化交流</td><td>“丝绸之路经济带”和“21 世纪海上丝绸之路”，借用古代丝路的历史符号</td></tr><tr><th>性质</th><td>由商人、使者、僧人走出来的交通网络</td><td>不是实体或机制，而是合作发展的理念和倡议</td></tr><tr><th>想一想</th><td colspan='2'>古代的“丝绸”，今天换成了什么商品？沿线的合作有哪些？和马来西亚有什么关系？</td></tr></table>`}
+tab(0);
+
+// ==================== 丝绸之路古风背景音乐自动播放与动态闪避系统 ====================
+const bgmTracks = [
+  { name: '丝路驼铃 (曲目一)', src: 'audio_track1.mp3' },
+  { name: '丝路驼铃 (曲目二)', src: 'audio_track2.mp3' }
+];
+let currentBgmIndex = 0;
+let bgmAudio = new Audio();
+bgmAudio.src = bgmTracks[0].src;
+bgmAudio.loop = false;
+const NORMAL_BGM_VOL = 0.55;
+const DUCK_BGM_VOL = 0.12; // 自动讲解时调至小声轻音乐 (0.12)
+bgmAudio.volume = NORMAL_BGM_VOL;
+
+let bgmFadeTimer = null;
+function setBgmVolumeSmooth(targetVol, duration = 380) {
+  if (!bgmAudio) return;
+  clearInterval(bgmFadeTimer);
+  const startVol = bgmAudio.volume;
+  const startTime = performance.now();
+  bgmFadeTimer = setInterval(() => {
+    const elapsed = performance.now() - startTime;
+    const p = Math.min(1, elapsed / duration);
+    bgmAudio.volume = Math.max(0, Math.min(1, startVol + (targetVol - startVol) * p));
+    if (p >= 1) {
+      clearInterval(bgmFadeTimer);
+      bgmAudio.volume = targetVol;
+    }
+  }, 25);
+}
+
+function duckBgmVolume() {
+  setBgmVolumeSmooth(DUCK_BGM_VOL, 400);
+}
+
+function restoreBgmVolume() {
+  setBgmVolumeSmooth(NORMAL_BGM_VOL, 450);
+}
+
+function updateBgmUI(isPlaying) {
+  const icon = document.getElementById('bgm-icon');
+  const title = document.getElementById('bgm-title');
+  const btn = document.getElementById('bgm-toggle-btn');
+  if (title) title.textContent = bgmTracks[currentBgmIndex].name;
+  if (btn) btn.textContent = isPlaying ? '❚❚ 暂停' : '▶ 播放';
+  if (icon) icon.style.opacity = isPlaying ? '1' : '0.5';
+}
+
+function playBgmTrack(index) {
+  currentBgmIndex = index % bgmTracks.length;
+  bgmAudio.src = bgmTracks[currentBgmIndex].src;
+  bgmAudio.play().then(() => {
+    updateBgmUI(true);
+  }).catch(err => {
+    console.log('Autoplay deferred:', err);
+    updateBgmUI(false);
+  });
+}
+
+bgmAudio.onended = () => {
+  playBgmTrack((currentBgmIndex + 1) % bgmTracks.length);
+};
+
+function tryAutoPlayBgm() {
+  bgmAudio.play().then(() => {
+    updateBgmUI(true);
+  }).catch(() => {
+    updateBgmUI(false);
+    const resumeOnInteraction = () => {
+      bgmAudio.play().then(() => {
+        updateBgmUI(true);
+      }).catch(e => console.log(e));
+      window.removeEventListener('click', resumeOnInteraction);
+      window.removeEventListener('keydown', resumeOnInteraction);
+      window.removeEventListener('touchstart', resumeOnInteraction);
+    };
+    window.addEventListener('click', resumeOnInteraction, { once: true });
+    window.addEventListener('keydown', resumeOnInteraction, { once: true });
+    window.addEventListener('touchstart', resumeOnInteraction, { once: true });
+  });
+}
+
+window.addEventListener('DOMContentLoaded', tryAutoPlayBgm);
+
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn = document.getElementById('bgm-toggle-btn');
+  const icon = document.getElementById('bgm-icon');
+  const title = document.getElementById('bgm-title');
+  const nextBtn = document.getElementById('bgm-next-btn');
+
+  const toggle = () => {
+    if (bgmAudio.paused) {
+      bgmAudio.play();
+      updateBgmUI(true);
+    } else {
+      bgmAudio.pause();
+      updateBgmUI(false);
+    }
+  };
+
+  if (toggleBtn) toggleBtn.onclick = toggle;
+  if (icon) icon.onclick = toggle;
+  if (title) title.onclick = () => playBgmTrack((currentBgmIndex + 1) % bgmTracks.length);
+  if (nextBtn) nextBtn.onclick = () => playBgmTrack((currentBgmIndex + 1) % bgmTracks.length);
+});
+
+function backToHome() {
+  if (window.parent && window.parent.closeModal) {
+    window.parent.closeModal();
+  } else {
+    location.href = '../../index.html';
+  }
+}
+
+// ===== 自动语音讲解 (含配乐智能闪避降噪) =====
+(()=>{
+  const b = document.getElementById('ap');
+  const S = window.speechSynthesis;
+  let run = false, tm = null, tok = 0;
+
+  const stop = () => {
+    run = false;
+    tok++;
+    clearTimeout(tm);
+    S && S.cancel();
+    b.classList.remove('on');
+    b.textContent = '▶ 自动讲解（语音）';
+    // 讲解停止或结束时，配乐平滑恢复正常音量
+    restoreBgmVolume();
+  };
+
+  const speak = () => {
+    if (!run) return;
+    const id = ++tok;
+    const e = E[cur];
+    const txt = `${e.y}，${e.n}。${e.pl.replace(/ /g, '、')}。${e.d} 意义：${e.i}`;
+
+    const next = () => {
+      if (!run || id !== tok) return;
+      if (cur >= E.length - 1) return stop();
+      show(cur + 1);
+      speak();
+    };
+
+    if (!S) {
+      tm = setTimeout(next, 8000);
+      return;
+    }
+
+    S.cancel();
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = 'zh-CN';
+    u.rate = 0.95;
+    const v = S.getVoices().find(v => /zh|cmn/i.test(v.lang));
+    if (v) u.voice = v;
+
+    u.onend = () => {
+      if (id === tok) tm = setTimeout(next, 800);
+    };
+    u.onerror = () => {
+      if (id === tok) tm = setTimeout(next, 6000);
+    };
+    S.speak(u);
+  };
+
+  b.onclick = () => {
+    if (run) return stop();
+    run = true;
+    b.classList.add('on');
+    b.textContent = '⏹ 停止讲解';
+    // 点击自动讲解时，配乐自动调整小声！
+    duckBgmVolume();
+    if (cur < 0 || cur >= E.length - 1) show(0);
+    speak();
+  };
+
+  // 用户点击时间轴切换时，停止当前讲解并恢复配乐
+  const tlEl = document.getElementById('tl');
+  if (tlEl) {
+    tlEl.addEventListener('click', () => {
+      if (run) stop();
+    });
+  }
+})();
+
+show(0);
+</script>
+</body>
+</html>

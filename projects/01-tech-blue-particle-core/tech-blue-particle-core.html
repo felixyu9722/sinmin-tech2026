@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030914">
+<title>科技蓝粒子核心 | BLUE PARTICLE CORE 2.0</title>
+<style>
+:root{
+  color-scheme:dark;
+  --cyan:#62e8ff;
+  --blue:#4d8dff;
+  --line:rgba(98,232,255,.25);
+  --panel:rgba(5,19,39,.82);
+  --theme-h: 195;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030914;color:#e6f9ff;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+#fx{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+.scanlines{position:fixed;inset:0;pointer-events:none;opacity:.12;background:repeating-linear-gradient(to bottom,transparent 0 3px,rgba(100,210,255,.12) 4px,transparent 5px);mix-blend-mode:screen}
+.ui{position:relative;z-index:2;min-height:100%;width:min(1180px,100%);margin:auto;padding:clamp(16px,3.4vw,36px);display:flex;flex-direction:column;pointer-events:none}
+header{text-align:center;margin-top:clamp(4px,2.5vh,28px)}
+.kicker{font-size:11px;letter-spacing:.36em;color:var(--cyan);text-transform:uppercase;text-shadow:0 0 10px var(--cyan)}
+h1{margin:8px 0 6px;font-size:clamp(26px,4.5vw,52px);font-weight:800;letter-spacing:.09em;text-shadow:0 0 18px rgba(49,191,255,.6),0 0 48px rgba(40,126,255,.4)}
+.subtitle{font-size:clamp(12px,1.6vw,14px);color:#9dbbd8;letter-spacing:.08em}
+.status-bar{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.status{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--line);border-radius:20px;background:#061a30b8;font:11px/1.4 ui-monospace,Consolas,monospace;letter-spacing:.12em;color:#bceeff;backdrop-filter:blur(8px)}
+.status i{width:8px;height:8px;border-radius:50%;background:#4affc1;box-shadow:0 0 12px #4affc1;animation:pulseDot 2s infinite}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.spacer{flex:1;min-height:20px}
+.panel{pointer-events:auto;width:min(880px,100%);margin:0 auto 14px;padding:18px 22px 16px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(135deg,rgba(4,26,50,.92),rgba(4,12,31,.88));box-shadow:0 0 35px rgba(0,120,255,.18),inset 0 0 25px rgba(42,223,255,.08);backdrop-filter:blur(16px);position:relative}
+.panel:before,.panel:after{content:"";position:absolute;width:22px;height:22px;border-color:var(--cyan);opacity:.9}
+.panel:before{left:-1px;top:-1px;border-left:2px solid;border-top:2px solid}
+.panel:after{right:-1px;bottom:-1px;border-right:2px solid;border-bottom:2px solid}
+.panel-title{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:14px;font:11px ui-monospace,Consolas,monospace;letter-spacing:.15em;color:#8beeff}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.control label{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px;color:#b6d7ef;font-size:12px}
+output{color:var(--cyan);font:12px ui-monospace,Consolas,monospace;font-weight:bold}
+input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
+.actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:16px}
+button{font:12px system-ui,sans-serif;letter-spacing:.04em;cursor:pointer;padding:8px 14px;border:1px solid #368cb8;border-radius:6px;color:#dff9ff;background:linear-gradient(180deg,#0b3153,#081b36);transition:all .18s;display:inline-flex;align-items:center;gap:6px}
+button:hover{transform:translateY(-2px);border-color:#8bf1ff;box-shadow:0 0 16px rgba(26,174,255,.3)}
+button.primary{color:#03121f;background:linear-gradient(110deg,#79f0ff,#579eff);border-color:#9af7ff;font-weight:750;box-shadow:0 0 22px rgba(37,191,255,.35)}
+button.danger{background:linear-gradient(110deg,#ff5277,#ff2b54);border-color:#ff859f;color:#fff;font-weight:700;box-shadow:0 0 20px rgba(255,43,84,.4)}
+button[aria-pressed=true]{border-color:var(--cyan);background:#0d426d;color:#fff}
+.modes{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.mode-btn{padding:5px 11px;font-size:11px;border-radius:15px;background:#051a30;border:1px solid #1a4d7c;color:#a3cbe8}
+.mode-btn.active{background:var(--cyan);color:#03121f;border-color:var(--cyan);font-weight:bold;box-shadow:0 0 12px var(--cyan)}
+footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#587c9d;font:10px ui-monospace,Consolas,monospace;letter-spacing:.08em}
+footer b{color:#73dfff;font-weight:500}
+/* UI Visibility Toggle */
+.ui-toggle-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  pointer-events: auto;
+  background: rgba(6, 26, 48, 0.85);
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(98, 232, 255, 0.3);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+}
+.ui-toggle-btn:hover {
+  background: var(--cyan);
+  color: #03121f;
+  box-shadow: 0 0 25px var(--cyan);
+  transform: scale(1.05);
+}
+body.ui-hidden header,
+body.ui-hidden .panel,
+body.ui-hidden footer,
+body.ui-hidden .scanlines {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(15px);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+header, .panel, footer, .scanlines {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media(max-width:640px){.controls{grid-template-columns:1fr;gap:10px}.actions{gap:6px}button{padding:7px 10px;font-size:11px}}
+</style>
+</head>
+<body>
+<button id="uiToggleBtn" class="ui-toggle-btn" title="显示/隐藏设置面板 (快捷键 H)">
+  <span id="uiToggleIcon">👁️</span> <span id="uiToggleText">隐藏控制面板</span>
+</button>
+<canvas id="fx" aria-label="可互动的科技蓝粒子核心"></canvas>
+<div class="scanlines"></div>
+<main class="ui">
+<header>
+  <div class="kicker">Interactive Cyber Particle Core / 01</div>
+  <h1 id="coreTitle">科技蓝粒子核心</h1>
+  <div class="subtitle">量子引力 · 超新星能量爆发 · 声光实时共振</div>
+  <div class="status-bar">
+    <div class="status"><i></i> CORE STABLE <span id="fpsRead">60 FPS</span></div>
+    <div class="status">🔊 音效系统：<span id="audioStatus">开启</span></div>
+  </div>
+</header>
+<div class="spacer"></div>
+<section class="panel" aria-label="粒子控制面板">
+  <div class="panel-title">
+    <span>◈ 量子核心控制终端</span>
+    <span id="coordRead">CORE INTERACTION DECK // 2.0</span>
+  </div>
+  <div class="controls">
+    <div class="control"><label for="amount">粒子通量 <output id="amountOut">180</output></label><input id="amount" type="range" min="60" max="400" step="10" value="180"></div>
+    <div class="control"><label for="velocity">能量流速 <output id="velocityOut">1.0×</output></label><input id="velocity" type="range" min="2" max="25" value="10"></div>
+    <div class="control"><label for="power">辉光辐射 <output id="powerOut">80%</output></label><input id="power" type="range" min="20" max="100" value="80"></div>
+  </div>
+  <div class="modes">
+    <span style="font-size:11px;color:#7eb3dc;line-height:26px;margin-right:6px">鼠标场：</span>
+    <button class="mode-btn active" data-mode="pull">🧲 引力吸附</button>
+    <button class="mode-btn" data-mode="repel">💨 斥力风暴</button>
+    <button class="mode-btn" data-mode="vortex">🌀 黑洞涡流</button>
+  </div>
+  <div class="actions">
+    <button class="primary" id="pulse">⚡ 能量脉冲</button>
+    <button class="danger" id="supernova">💥 超新星引爆 (SUPERNOVA)</button>
+    <button id="themeBtn">🎨 色彩矩阵</button>
+    <button id="connect" aria-pressed="true">连线：开启</button>
+    <button id="audioToggle">🔊 声音</button>
+    <button id="pause" aria-pressed="false">Ⅱ 暂停</button>
+    <button id="reset">↻ 重置</button>
+  </div>
+</section>
+<footer><span><b>●</b> QUANTUM CORE v2.0</span><span id="readout">PARTICLES: 180 · SPARKS: 0</span><span>电脑资讯社 2026 AI 作品</span></footer>
+</main>
+<script>
+(()=>{'use strict';
+// Web Audio Synth Core
+let audioCtx = null;
+let soundEnabled = true;
+function initAudio(){
+  if(!audioCtx){
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if(AudioContext) audioCtx = new AudioContext();
+  }
+  if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playPulseSound(){
+  if(!soundEnabled || !audioCtx) return;
+  try{
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    const now = audioCtx.currentTime;
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(45, now + 0.35);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(now + 0.36);
+  }catch(e){}
+}
+function playSupernovaSound(){
+  if(!soundEnabled || !audioCtx) return;
+  try{
+    const now = audioCtx.currentTime;
+    // Sub bass drop
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(25, now + 1.2);
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(now + 1.25);
+
+    // Noise burst
+    const bufferSize = audioCtx.sampleRate * 1.0;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(600, now);
+    filter.frequency.exponentialRampToValueAtTime(60, now + 1.0);
+    const nGain = audioCtx.createGain();
+    nGain.gain.setValueAtTime(0.35, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+    noise.connect(filter);
+    filter.connect(nGain);
+    nGain.connect(audioCtx.destination);
+    noise.start();
+    noise.stop(now + 1.0);
+  }catch(e){}
+}
+function playTone(freq, dur=0.15, vol=0.08){
+  if(!soundEnabled || !audioCtx) return;
+  try{
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const now = audioCtx.currentTime;
+    osc.frequency.setValueAtTime(freq, now);
+    gain.gain.setValueAtTime(vol, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(now + dur);
+  }catch(e){}
+}
+
+const canvas = document.getElementById('fx'), ctx = canvas.getContext('2d');
+const amount = document.getElementById('amount'), velocity = document.getElementById('velocity'), power = document.getElementById('power');
+const amountOut = document.getElementById('amountOut'), velocityOut = document.getElementById('velocityOut'), powerOut = document.getElementById('powerOut');
+const readout = document.getElementById('readout'), fpsRead = document.getElementById('fpsRead');
+
+let w=0, h=0, dpr=1, particles=[], sparks=[], links=true, paused=false, last=0;
+let mouseMode = 'pull'; // 'pull' | 'repel' | 'vortex'
+let currentTheme = 0;
+const themes = [
+  { name: '科技蓝', h: 195, c: '#62e8ff', core: '#30b0ff' },
+  { name: '赛博霓虹', h: 320, c: '#ff3ebd', core: '#a855f7' },
+  { name: '矩阵极客', h: 145, c: '#00ff88', core: '#10b981' },
+  { name: '恒星金辉', h: 42, c: '#ffd043', core: '#f59e0b' }
+];
+
+let shakeAmount = 0;
+let supernovaActive = false;
+let supernovaProgress = 0;
+const mouse = { x: -1000, y: -1000, active: false };
+const rnd = (a, b) => Math.random() * (b - a) + a;
+
+function newParticle(){
+  let z = rnd(0.4, 1.35);
+  return {
+    x: rnd(0, w), y: rnd(0, h),
+    vx: rnd(-0.35, 0.35) * z, vy: rnd(-0.35, 0.35) * z,
+    z, r: rnd(0.8, 2.2) * z,
+    phase: rnd(0, 6.28), twinkle: rnd(0.8, 2.2),
+    hueOffset: rnd(-15, 15)
+  };
+}
+function seed(n){ particles = Array.from({ length: n }, newParticle); }
+function resize(){
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  w = innerWidth; h = innerHeight;
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  seed(+amount.value);
+}
+
+function pulse(x, y, count = 110, pwr = 1){
+  initAudio();
+  playPulseSound();
+  shakeAmount = Math.max(shakeAmount, 6 * pwr);
+  const curHue = themes[currentTheme].h;
+  for(let i = 0; i < count; i++){
+    let a = Math.random() * Math.PI * 2, v = rnd(1.5, 7.5) * pwr;
+    sparks.push({
+      x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+      life: 1, decay: rnd(0.012, 0.026),
+      r: rnd(1.2, 3.8) * pwr,
+      hue: curHue + rnd(-20, 20)
+    });
+  }
+  if(sparks.length > 900) sparks.splice(0, sparks.length - 900);
+}
+
+function triggerSupernova(){
+  initAudio();
+  playSupernovaSound();
+  supernovaActive = true;
+  supernovaProgress = 0;
+  shakeAmount = 25;
+}
+
+function drawBackground(){
+  const th = themes[currentTheme];
+  let g = ctx.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, '#02050e');
+  g.addColorStop(0.5, '#041224');
+  g.addColorStop(1, '#020815');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  // Dynamic nebula blobs
+  const c1 = [w * 0.2, h * 0.3, Math.max(w,h) * 0.4, `hsla(${th.h}, 90%, 50%, 0.12)`];
+  const c2 = [w * 0.8, h * 0.7, Math.max(w,h) * 0.45, `hsla(${(th.h + 40)%360}, 80%, 45%, 0.11)`];
+  for(const c of [c1, c2]){
+    let q = ctx.createRadialGradient(c[0], c[1], 0, c[0], c[1], c[2]);
+    q.addColorStop(0, c[3]);
+    q.addColorStop(1, 'transparent');
+    ctx.fillStyle = q;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  // Central Reactor HUD
+  const cx = w * 0.5, cy = h * 0.46;
+  const time = performance.now() * 0.001;
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Rotating rings
+  ctx.strokeStyle = `hsla(${th.h}, 100%, 75%, 0.16)`;
+  ctx.lineWidth = 1;
+  for(let i = 1; i <= 3; i++){
+    ctx.save();
+    ctx.rotate(time * 0.25 * (i % 2 === 0 ? 1 : -1));
+    ctx.beginPath();
+    ctx.arc(0, 0, Math.min(w, h) * (0.07 + i * 0.055), 0, Math.PI * 1.5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Core Glow
+  let coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 36);
+  coreGrad.addColorStop(0, `hsla(${th.h}, 100%, 80%, 0.85)`);
+  coreGrad.addColorStop(0.4, `hsla(${th.h}, 90%, 55%, 0.3)`);
+  coreGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = coreGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, 36 + Math.sin(time * 3) * 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+let fpsCount = 0, lastFpsTime = performance.now();
+function render(dt){
+  if(shakeAmount > 0.1){
+    ctx.save();
+    let sx = (Math.random() - 0.5) * shakeAmount;
+    let sy = (Math.random() - 0.5) * shakeAmount;
+    ctx.translate(sx, sy);
+    shakeAmount *= 0.92;
+  }
+
+  drawBackground();
+  const th = themes[currentTheme];
+  let motion = +velocity.value / 10, bright = +power.value / 75;
+  let distMax = Math.min(140, Math.max(80, w * 0.11));
+
+  // Handle Supernova
+  if(supernovaActive){
+    supernovaProgress += dt * 0.04;
+    const cx = w * 0.5, cy = h * 0.46;
+    if(supernovaProgress < 0.4){
+      // Collapse
+      for(const p of particles){
+        p.x += (cx - p.x) * 0.12;
+        p.y += (cy - p.y) * 0.12;
+      }
+    } else if(supernovaProgress < 1.0){
+      // Massive Burst
+      pulse(cx, cy, 18, 2.5);
+      supernovaActive = false;
+    }
+  }
+
+  // Particles update
+  for(const p of particles){
+    p.phase += 0.02 * dt * p.twinkle;
+    if(!paused){
+      p.x += p.vx * motion * dt * 1.5;
+      p.y += p.vy * motion * dt * 1.5;
+      if(p.x < 0) p.x = w;
+      if(p.x > w) p.x = 0;
+      if(p.y < 0) p.y = h;
+      if(p.y > h) p.y = 0;
+
+      // Mouse Force field
+      if(mouse.active){
+        let dx = mouse.x - p.x, dy = mouse.y - p.y;
+        let d = Math.hypot(dx, dy);
+        if(d < 220 && d > 2){
+          let f = (1 - d / 220) * 0.035 * dt;
+          if(mouseMode === 'pull'){
+            p.vx += (dx / d) * f * 2.2;
+            p.vy += (dy / d) * f * 2.2;
+          } else if(mouseMode === 'repel'){
+            p.vx -= (dx / d) * f * 3.5;
+            p.vy -= (dy / d) * f * 3.5;
+          } else if(mouseMode === 'vortex'){
+            let perpX = -dy / d, perpY = dx / d;
+            p.vx += (perpX * 1.8 + dx/d * 0.6) * f;
+            p.vy += (perpY * 1.8 + dy/d * 0.6) * f;
+          }
+        }
+      }
+      p.vx *= 0.994;
+      p.vy *= 0.994;
+    }
+  }
+
+  // Links
+  if(links){
+    for(let i = 0; i < particles.length; i++){
+      for(let j = i + 1; j < particles.length; j++){
+        let a = particles[i], b = particles[j];
+        let dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy);
+        if(d < distMax){
+          ctx.strokeStyle = `hsla(${th.h}, 95%, 70%, ${(1 - d / distMax) * 0.28 * bright})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // Draw Particles
+  for(const p of particles){
+    let alpha = p.z * (0.45 + 0.55 * Math.sin(p.phase)) * bright;
+    ctx.beginPath();
+    ctx.fillStyle = `hsla(${th.h + p.hueOffset}, 100%, ${68 + p.z * 12}%, ${Math.min(1, alpha)})`;
+    ctx.shadowBlur = 9 * p.z * bright;
+    ctx.shadowColor = th.c;
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // Draw Sparks
+  for(let i = sparks.length - 1; i >= 0; i--){
+    let p = sparks[i];
+    if(!paused){
+      p.x += p.vx * motion * dt;
+      p.y += p.vy * motion * dt;
+      p.vx *= 0.978;
+      p.vy *= 0.978;
+      p.life -= p.decay * dt;
+    }
+    if(p.life <= 0){ sparks.splice(i, 1); continue; }
+    ctx.beginPath();
+    ctx.fillStyle = `hsla(${p.hue}, 100%, 75%, ${p.life})`;
+    ctx.shadowBlur = 12 * p.life * bright;
+    ctx.shadowColor = th.c;
+    ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // Mouse reticle
+  if(mouse.active){
+    ctx.strokeStyle = th.c;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, 18, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if(shakeAmount > 0.1) ctx.restore();
+
+  // Readouts
+  readout.textContent = `PARTICLES: ${particles.length} · SPARKS: ${sparks.length}`;
+  fpsCount++;
+  if(performance.now() - lastFpsTime > 800){
+    fpsRead.textContent = `${Math.round(fpsCount / ((performance.now() - lastFpsTime) / 1000))} FPS`;
+    fpsCount = 0;
+    lastFpsTime = performance.now();
+  }
+}
+
+function frame(t){
+  let dt = Math.min(2, last ? (t - last) / 16.67 : 1);
+  last = t;
+  render(dt);
+  requestAnimationFrame(frame);
+}
+
+function labels(){
+  amountOut.value = amount.value;
+  velocityOut.value = (+velocity.value / 10).toFixed(1) + '×';
+  powerOut.value = power.value + '%';
+}
+
+amount.addEventListener('input', () => {
+  labels();
+  let n = +amount.value;
+  while(particles.length < n) particles.push(newParticle());
+  particles.length = n;
+});
+velocity.addEventListener('input', labels);
+power.addEventListener('input', labels);
+
+document.getElementById('pulse').addEventListener('click', () => {
+  pulse(w / 2 + rnd(-w * 0.15, w * 0.15), h * 0.46 + rnd(-h * 0.1, h * 0.1), 120, 1.2);
+});
+
+document.getElementById('supernova').addEventListener('click', triggerSupernova);
+
+document.getElementById('connect').addEventListener('click', e => {
+  links = !links;
+  e.currentTarget.setAttribute('aria-pressed', String(links));
+  e.currentTarget.textContent = '连线：' + (links ? '开启' : '关闭');
+  playTone(520, 0.08);
+});
+
+document.getElementById('pause').addEventListener('click', e => {
+  paused = !paused;
+  e.currentTarget.setAttribute('aria-pressed', String(paused));
+  e.currentTarget.textContent = paused ? '▶ 继续' : 'Ⅱ 暂停';
+  playTone(440, 0.08);
+});
+
+document.getElementById('themeBtn').addEventListener('click', () => {
+  currentTheme = (currentTheme + 1) % themes.length;
+  const th = themes[currentTheme];
+  document.documentElement.style.setProperty('--cyan', th.c);
+  document.getElementById('coreTitle').textContent = `${th.name}粒子核心`;
+  playTone(660, 0.15);
+});
+
+document.getElementById('audioToggle').addEventListener('click', e => {
+  soundEnabled = !soundEnabled;
+  if(soundEnabled) initAudio();
+  document.getElementById('audioStatus').textContent = soundEnabled ? '开启' : '静音';
+  e.currentTarget.textContent = soundEnabled ? '🔊 声音' : '🔇 静音';
+});
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    mouseMode = e.currentTarget.dataset.mode;
+    playTone(580, 0.08);
+  });
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  amount.value = 180; velocity.value = 10; power.value = 80;
+  links = true; paused = false; sparks = []; currentTheme = 0;
+  mouseMode = 'pull';
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-mode="pull"]').classList.add('active');
+  document.getElementById('connect').textContent = '连线：开启';
+  document.getElementById('connect').setAttribute('aria-pressed', 'true');
+  document.getElementById('pause').textContent = 'Ⅱ 暂停';
+  labels(); seed(180);
+  playTone(330, 0.1);
+});
+
+canvas.addEventListener('pointermove', e => {
+  initAudio();
+  mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
+});
+canvas.addEventListener('pointerleave', () => mouse.active = false);
+canvas.addEventListener('pointerdown', e => {
+  initAudio();
+  if(e.target === canvas) pulse(e.clientX, e.clientY, 85, 1);
+});
+
+// UI Toggle Logic
+const uiToggleBtn = document.getElementById('uiToggleBtn');
+let uiHidden = false;
+function toggleUI(){
+  uiHidden = !uiHidden;
+  document.body.classList.toggle('ui-hidden', uiHidden);
+  const icon = document.getElementById('uiToggleIcon');
+  const text = document.getElementById('uiToggleText');
+  if(uiHidden){
+    icon.textContent = '⚙️';
+    text.textContent = '显示控制面板';
+    uiToggleBtn.style.background = 'rgba(6, 26, 48, 0.95)';
+  } else {
+    icon.textContent = '👁️';
+    text.textContent = '隐藏控制面板';
+    uiToggleBtn.style.background = 'rgba(6, 26, 48, 0.85)';
+  }
+  playTone(uiHidden ? 400 : 600, 0.08);
+}
+uiToggleBtn.addEventListener('click', toggleUI);
+window.addEventListener('keydown', e => {
+  if(e.key === 'h' || e.key === 'H') toggleUI();
+});
+
+addEventListener('resize', resize);
+labels(); resize();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

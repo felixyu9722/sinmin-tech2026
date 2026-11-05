@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>课堂实验室</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;700&display=swap">
+<style>
+:root{--bg:#f2f8fb;--grid:#d3e5ee;--ink:#12263f;--mut:#4d6178;--card:#fff;--acc:#f5a524;--acc2:#e4572e;--ok:#1f9d6b;--bad:#d64545;--sky:#dff1fb;--sea:#4aa3d8;--land:#7fae7a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1b2b;--grid:#1a2d44;--ink:#e8f1f8;--mut:#9fb3c8;--card:#17283d;--sky:#1d3a57;--sea:#2d7fb3;--land:#4f7d56}}
+:root[data-theme="dark"]{--bg:#0f1b2b;--grid:#1a2d44;--ink:#e8f1f8;--mut:#9fb3c8;--card:#17283d;--sky:#1d3a57;--sea:#2d7fb3;--land:#4f7d56}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:26px 26px;color:var(--ink);font:16px/1.7 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0 8px}
+h1{font:400 clamp(34px,8vw,56px)/1.15 "ZCOOL KuaiLe","Noto Sans SC",sans-serif;margin:0}
+.sub{color:var(--mut);margin:6px 0 0;max-width:30em}
+.pend{flex:none;width:84px;height:120px}
+.pend g{transform-origin:42px 6px;animation:sw 2.4s ease-in-out infinite alternate}
+@keyframes sw{from{transform:rotate(28deg)}to{transform:rotate(-28deg)}}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.tab{font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:999px;padding:8px 18px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--acc);color:#12263f}
+button:focus-visible,input:focus-visible,select:focus-visible,.hs:focus-visible{outline:3px solid var(--acc2);outline-offset:2px}
+.panel{display:grid;gap:22px}
+.card{background:var(--card);border:2px solid var(--ink);border-radius:12px;box-shadow:5px 5px 0 var(--ink);padding:16px}
+.card h2{margin:0 0 4px;font-size:21px}
+.hint{color:var(--mut);margin:0 0 12px;font-size:15px}
+canvas{width:100%;height:auto;display:block;border:2px solid var(--ink);border-radius:8px;background:var(--sky)}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 18px;margin-top:12px}
+.ctl label{display:flex;flex-direction:column;font-size:14px;font-weight:700;gap:2px}
+.ctl input[type=range]{width:100%;accent-color:var(--acc2)}
+select{font:inherit;padding:6px;border:2px solid var(--ink);border-radius:6px;background:var(--card);color:var(--ink)}
+.read{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:12px;font-weight:700}
+.read span b{color:var(--acc2);font-size:19px}
+.btn{font:inherit;font-weight:700;background:var(--acc2);color:#fff;border:2px solid var(--ink);border-radius:8px;padding:8px 18px;cursor:pointer}
+.btn.alt{background:var(--card);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+svg.cycle{width:100%;height:auto;display:block;border:2px solid var(--ink);border-radius:8px}
+.sky{fill:var(--sky)}.sea{fill:var(--sea)}.land{fill:var(--land)}.river{stroke:var(--sea);stroke-width:6;fill:none;stroke-linecap:round}
+.cloud{fill:#fff;stroke:#12263f;stroke-width:2}
+.pill{fill:var(--card);stroke:var(--ink);stroke-width:2}.pt{font:700 15px "Noto Sans SC",sans-serif;fill:var(--ink);text-anchor:middle}
+.hs{cursor:pointer}
+.hit{fill:transparent;stroke:none}
+.hs.on .hit{fill:rgba(245,165,36,.22);stroke:var(--acc);stroke-width:3;stroke-dasharray:6 4}
+.mv{fill:none;stroke:var(--acc2);stroke-width:3;stroke-linecap:round;stroke-dasharray:7 9}
+.rain{stroke:#2a6fb5}
+.hs.on .mv{animation:fl 1s linear infinite}
+@keyframes fl{to{stroke-dashoffset:-16}}
+.info{margin-top:12px;padding:12px 14px;border-left:6px solid var(--acc);background:var(--bg);border-radius:0 8px 8px 0;min-height:112px}
+.info h3{margin:0 0 4px;font-size:18px}.info p{margin:2px 0}
+.think{color:var(--acc2);font-weight:700}
+.bar{height:10px;border:2px solid var(--ink);border-radius:99px;overflow:hidden;background:var(--bg)}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .35s}
+#qt{font-size:20px;font-weight:700;margin:14px 0 10px}
+.opts{display:grid;gap:10px}
+.opt{font:inherit;text-align:left;color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:8px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){background:var(--bg)}
+.opt.ok{background:var(--ok);color:#fff}.opt.bad{background:var(--bad);color:#fff}
+#qe{min-height:52px;margin:12px 0 0}
+.score{font:400 64px/1.1 "ZCOOL KuaiLe",sans-serif;color:var(--acc2);margin:8px 0}
+footer{margin-top:28px;color:var(--mut);font-size:14px}
+@media(prefers-reduced-motion:reduce){.pend g,.hs.on .mv{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>课堂实验室</h1>
+    <p class="sub">教育不是把知识倒进脑袋，而是让好奇心动起来。动手拖一拖、点一点，再来测测你学到了什么。</p>
+  </div>
+  <svg class="pend" viewBox="0 0 84 120" aria-hidden="true"><line x1="10" y1="6" x2="74" y2="6" stroke="currentColor" stroke-width="4" style="color:var(--ink)"/><g><line x1="42" y1="6" x2="42" y2="86" stroke="#12263f" stroke-width="2" style="stroke:var(--ink)"/><circle cx="42" cy="96" r="14" fill="#f5a524" stroke="#12263f" stroke-width="2.5" style="stroke:var(--ink)"/></g></svg>
+</header>
+
+<nav role="tablist" aria-label="三个互动板块">
+  <button class="tab" role="tab" data-p="sim" aria-selected="true">🔬 科学模拟</button>
+  <button class="tab" role="tab" data-p="dia" aria-selected="false">💧 互动图解</button>
+  <button class="tab" role="tab" data-p="quiz" aria-selected="false">📝 课堂小测验</button>
+</nav>
+
+<section id="sim" class="panel">
+  <div class="card">
+    <h2>单摆：换个星球，摆得一样快吗？</h2>
+    <p class="hint">拖动滑块，摆会重新释放。注意：改变摆球质量，周期竟然不变。</p>
+    <canvas id="pc" width="1200" height="640"></canvas>
+    <div class="ctl">
+      <label>摆长：<span id="lv">1.5 米</span><input id="pL" type="range" min="0.5" max="3" step="0.1" value="1.5"></label>
+      <label>摆球质量：<span id="mv">5 千克</span><input id="pM" type="range" min="1" max="10" step="1" value="5"></label>
+      <label>在哪个星球<select id="pG"><option value="9.8">地球</option><option value="1.62">月球</option><option value="3.71">火星</option><option value="24.8">木星</option></select></label>
+    </div>
+    <div class="read"><span>理论周期 <b id="T">2.46</b> 秒</span><span>当前摆角 <b id="ang">34</b>°</span></div>
+  </div>
+
+  <div class="card">
+    <h2>抛体运动：多大角度扔得最远？</h2>
+    <p class="hint">调好角度和速度，点“发射”。虚线是之前的三次轨迹，方便对比。</p>
+    <canvas id="jc" width="1200" height="560"></canvas>
+    <div class="ctl">
+      <label>发射角度：<span id="av">45°</span><input id="jA" type="range" min="10" max="80" step="1" value="45"></label>
+      <label>初速度：<span id="vv">25 米/秒</span><input id="jV" type="range" min="10" max="40" step="1" value="25"></label>
+    </div>
+    <div class="read"><span>预测射程 <b id="jR"></b> 米</span><span>最高点 <b id="jH"></b> 米</span><span>飞行 <b id="jT"></b> 秒</span></div>
+    <div class="row"><button class="btn" id="go">发射</button><button class="btn alt" id="clr">清除轨迹</button></div>
+  </div>
+</section>
+
+<section id="dia" class="panel" hidden>
+  <div class="card">
+    <h2>水循环：水是怎么“转一圈”的？</h2>
+    <p class="hint">点击图上的四个区域，或者按“播放一圈”。</p>
+    <svg class="cycle" viewBox="0 0 600 320" role="img" aria-label="水循环示意图">
+      <rect class="sky" width="600" height="320"/>
+      <circle cx="70" cy="58" r="28" fill="#f5a524" stroke="#12263f" stroke-width="2.5"/>
+      <rect class="sea" x="0" y="250" width="345" height="70"/>
+      <polygon class="land" points="330,320 330,262 430,262 500,120 570,262 600,262 600,320"/>
+      <polygon points="500,120 480,158 500,148 520,158" fill="#fff"/>
+      <path class="river" d="M498 160 Q480 232 420 264 T332 270"/>
+      <g class="cloud-g"><ellipse class="cloud" cx="300" cy="86" rx="46" ry="26"/><ellipse class="cloud" cx="345" cy="78" rx="42" ry="28"/><ellipse class="cloud" cx="322" cy="62" rx="34" ry="24"/><ellipse cx="322" cy="86" rx="62" ry="22" fill="#fff"/></g>
+
+      <g class="hs" data-k="evap" tabindex="0" role="button" aria-label="蒸发">
+        <rect class="hit" x="95" y="105" width="155" height="150" rx="14"/>
+        <path class="mv" d="M130 240 q12 -16 0 -32 t0 -32 t0 -32"/><path class="mv" d="M175 240 q12 -16 0 -32 t0 -32 t0 -32"/><path class="mv" d="M220 240 q12 -16 0 -32 t0 -32 t0 -32"/>
+        <rect class="pill" x="147" y="212" width="56" height="26" rx="13"/><text class="pt" x="175" y="231">蒸发</text>
+      </g>
+      <g class="hs" data-k="cond" tabindex="0" role="button" aria-label="凝结">
+        <rect class="hit" x="250" y="30" width="170" height="100" rx="14"/>
+        <rect class="pill" x="294" y="72" width="56" height="26" rx="13"/><text class="pt" x="322" y="91">凝结</text>
+      </g>
+      <g class="hs" data-k="rain" tabindex="0" role="button" aria-label="降水">
+        <rect class="hit" x="262" y="134" width="108" height="100" rx="14"/>
+        <path class="mv rain" d="M285 140 v70"/><path class="mv rain" d="M310 140 v70"/><path class="mv rain" d="M335 140 v70"/><path class="mv rain" d="M355 140 v70"/>
+        <rect class="pill" x="294" y="196" width="56" height="26" rx="13"/><text class="pt" x="322" y="215">降水</text>
+      </g>
+      <g class="hs" data-k="flow" tabindex="0" role="button" aria-label="径流">
+        <rect class="hit" x="395" y="140" width="135" height="135" rx="14"/>
+        <path class="mv" d="M498 160 Q480 232 420 264 T332 270" style="stroke:#fff"/>
+        <rect class="pill" x="440" y="196" width="56" height="26" rx="13"/><text class="pt" x="468" y="215">径流</text>
+      </g>
+    </svg>
+    <div class="info" aria-live="polite"><h3 id="it">点一点，开始探索</h3><p id="ib">太阳、海洋、云、雨和河流，哪一步是你最想先了解的？</p><p class="think" id="ik"></p></div>
+    <div class="row"><button class="btn" id="play">播放一圈</button></div>
+  </div>
+</section>
+
+<section id="quiz" class="panel" hidden>
+  <div class="card">
+    <h2>课堂小测验</h2>
+    <p class="hint">5 道题，全部来自前面的实验。答完马上看讲解。</p>
+    <div class="bar"><i id="qbar"></i></div>
+    <div id="qa">
+      <p id="qn" class="hint" style="margin-top:12px"></p>
+      <div id="qt"></div>
+      <div class="opts" id="qo"></div>
+      <p id="qe" aria-live="polite"></p>
+      <button class="btn" id="qnext" hidden>下一题</button>
+    </div>
+    <div id="qr" hidden style="text-align:center;padding:12px 0">
+      <div class="score" id="qs"></div>
+      <p id="qm" style="font-size:18px;font-weight:700"></p>
+      <button class="btn" id="qre">再测一次</button>
+    </div>
+  </div>
+</section>
+
+<footer>小提示：这些模拟都忽略了空气阻力，现实中的结果会略有不同。</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const cv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* 标签页 */
+$$('.tab').forEach(b=>b.onclick=()=>{
+  $$('.tab').forEach(x=>x.setAttribute('aria-selected',x===b));
+  $$('.panel').forEach(p=>p.hidden=p.id!==b.dataset.p);
+});
+
+/* 单摆 */
+const pc=$('#pc'),px=pc.getContext('2d');px.scale(2,2);
+const P={L:1.5,g:9.8,m:5};let th=.6,om=0;
+function updP(){$('#T').textContent=(2*Math.PI*Math.sqrt(P.L/P.g)).toFixed(2);th=.6;om=0}
+$('#pL').oninput=e=>{P.L=+e.target.value;$('#lv').textContent=P.L+' 米';updP()};
+$('#pM').oninput=e=>{P.m=+e.target.value;$('#mv').textContent=P.m+' 千克';updP()};
+$('#pG').onchange=e=>{P.g=+e.target.value;updP()};
+updP();
+function drawP(dt){
+  for(let i=0;i<8;i++){om+=-(P.g/P.L)*Math.sin(th)*dt/8;th+=om*dt/8}
+  const ink=cv('--ink'),acc=cv('--acc');
+  px.clearRect(0,0,600,320);
+  const ox=300,oy=30,s=85,x=ox+P.L*s*Math.sin(th),y=oy+P.L*s*Math.cos(th),r=8+P.m*1.6;
+  px.strokeStyle=ink;px.lineWidth=2;px.setLineDash([5,5]);px.beginPath();px.moveTo(ox,oy);px.lineTo(ox,oy+P.L*s+r);px.stroke();px.setLineDash([]);
+  px.lineWidth=5;px.beginPath();px.moveTo(ox-60,oy-4);px.lineTo(ox+60,oy-4);px.stroke();
+  px.lineWidth=2.5;px.beginPath();px.moveTo(ox,oy);px.lineTo(x,y);px.stroke();
+  px.fillStyle=acc;px.beginPath();px.arc(x,y,r,0,7);px.fill();px.stroke();
+  $('#ang').textContent=Math.abs(th*180/Math.PI).toFixed(0);
+}
+
+/* 抛体 */
+const jc=$('#jc'),jx=jc.getContext('2d');jx.scale(2,2);
+const J={a:45,v:25,paths:[],cur:null},G=9.8,OX=30,OY=260,S=2.8;
+function updJ(){
+  const a=J.a*Math.PI/180;
+  $('#jR').textContent=(J.v*J.v*Math.sin(2*a)/G).toFixed(1);
+  $('#jH').textContent=((J.v*Math.sin(a))**2/(2*G)).toFixed(1);
+  $('#jT').textContent=(2*J.v*Math.sin(a)/G).toFixed(2);
+}
+$('#jA').oninput=e=>{J.a=+e.target.value;$('#av').textContent=J.a+'°';updJ()};
+$('#jV').oninput=e=>{J.v=+e.target.value;$('#vv').textContent=J.v+' 米/秒';updJ()};
+$('#go').onclick=()=>{
+  const a=J.a*Math.PI/180,vx=J.v*Math.cos(a),vy=J.v*Math.sin(a),T=2*vy/G,pts=[];
+  for(let i=0;i<=80;i++){const t=T*i/80;pts.push([vx*t,Math.max(0,vy*t-.5*G*t*t)])}
+  J.cur={pts,t0:performance.now(),dur:Math.max(1.2,T*.7)*1000};
+};
+$('#clr').onclick=()=>{J.paths=[];J.cur=null};
+updJ();
+function trace(pts,n){jx.beginPath();for(let i=0;i<=n;i++){const X=OX+pts[i][0]*S,Y=OY-pts[i][1]*S;i?jx.lineTo(X,Y):jx.moveTo(X,Y)}jx.stroke()}
+function drawJ(now){
+  const ink=cv('--ink'),a2=cv('--acc2'),land=cv('--land');
+  jx.clearRect(0,0,600,280);
+  jx.fillStyle=land;jx.fillRect(0,OY,600,20);
+  jx.strokeStyle=ink;jx.lineWidth=2;jx.setLineDash([6,6]);jx.globalAlpha=.4;
+  J.paths.forEach(p=>trace(p.pts,p.pts.length-1));
+  jx.setLineDash([]);jx.globalAlpha=1;
+  if(J.cur){
+    const c=J.cur,pr=Math.min(1,(now-c.t0)/c.dur),n=Math.floor(pr*(c.pts.length-1));
+    jx.strokeStyle=a2;jx.lineWidth=3;trace(c.pts,n);
+    jx.fillStyle=a2;jx.beginPath();jx.arc(OX+c.pts[n][0]*S,OY-c.pts[n][1]*S,7,0,7);jx.fill();
+    if(pr>=1){J.paths.push(c);if(J.paths.length>3)J.paths.shift();J.cur=null}
+  }
+  const a=J.a*Math.PI/180;
+  jx.strokeStyle=ink;jx.lineWidth=9;jx.lineCap='round';jx.beginPath();jx.moveTo(OX,OY);jx.lineTo(OX+Math.cos(a)*34,OY-Math.sin(a)*34);jx.stroke();jx.lineCap='butt';
+}
+
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(.033,(now-last)/1000);last=now;
+  if(!$('#sim').hidden){drawP(dt);drawJ(now)}
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* 水循环 */
+const W={
+  evap:['蒸发','太阳晒热海面，液态的水变成看不见的水蒸气，升上天空。','想一想：晴天的衣服为什么干得特别快？'],
+  cond:['凝结','水蒸气升到高处遇冷，凝结成小水滴和小冰晶，聚在一起就是云。','想一想：冷饮杯外壁的水珠，和云是同一个原理吗？'],
+  rain:['降水','云里的水滴越长越大，空气托不住了，就以雨或雪的形式落下来。','想一想：下雨还是下雪，取决于哪里的温度？'],
+  flow:['径流','雨水汇成溪流和河流，一路向低处流，最后回到大海，循环又重新开始。','想一想：河水为什么总是往低处流？']
+},order=['evap','cond','rain','flow'];
+let timer=null,idx=0;
+function pick(k){
+  $$('.hs').forEach(h=>h.classList.toggle('on',h.dataset.k===k));
+  $('#it').textContent=W[k][0];$('#ib').textContent=W[k][1];$('#ik').textContent=W[k][2];
+}
+function stop(){clearInterval(timer);timer=null;$('#play').textContent='播放一圈'}
+$$('.hs').forEach(h=>{
+  h.onclick=()=>{stop();pick(h.dataset.k)};
+  h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();h.onclick()}};
+});
+$('#play').onclick=()=>{
+  if(timer)return stop();
+  idx=0;pick(order[0]);$('#play').textContent='停止';
+  timer=setInterval(()=>{idx++;if(idx>=order.length){stop();return}pick(order[idx])},3200);
+};
+
+/* 小测验 */
+const Q=[
+ {q:'单摆摆动一次的时间（周期），和下面哪一项有关？',o:['摆球质量','摆球颜色','摆长','以上都有关'],a:2,e:'周期只由摆长和重力加速度决定，和质量无关，你在上面的模拟里已经验证过。'},
+ {q:'把同一个单摆搬到月球上，摆动会怎样？',o:['更快','一样','更慢','停止摆动'],a:2,e:'月球的重力小，周期变长，所以摆得更慢。'},
+ {q:'不计空气阻力时，抛射角是多少，射程最远？',o:['30°','45°','60°','90°'],a:1,e:'射程和 sin 2θ 成正比，θ = 45° 时最大。'},
+ {q:'水蒸气升到高空，变成小水滴形成云，这一步叫什么？',o:['蒸发','凝结','降水','径流'],a:1,e:'气体变成液体叫凝结，云就是无数小水滴和小冰晶。'},
+ {q:'推动水循环的主要能量来源是？',o:['太阳','月亮','风','地热'],a:0,e:'太阳加热海面让水蒸发，是整个循环的动力。'}
+];
+let qi=0,sc=0;
+function showQ(){
+  $('#qa').hidden=false;$('#qr').hidden=true;
+  const q=Q[qi];
+  $('#qbar').style.width=(qi/Q.length*100)+'%';
+  $('#qn').textContent='第 '+(qi+1)+' / '+Q.length+' 题';
+  $('#qt').textContent=q.q;$('#qe').textContent='';$('#qnext').hidden=true;
+  const box=$('#qo');box.innerHTML='';
+  q.o.forEach((t,i)=>{const b=document.createElement('button');b.className='opt';b.textContent=t;b.onclick=()=>ans(b,i);box.appendChild(b)});
+}
+function ans(b,i){
+  const q=Q[qi];
+  [...$('#qo').children].forEach((x,j)=>{x.disabled=true;if(j===q.a)x.classList.add('ok')});
+  if(i===q.a)sc++;else b.classList.add('bad');
+  $('#qe').textContent=(i===q.a?'答对了！':'差一点：')+q.e;
+  $('#qnext').textContent=qi===Q.length-1?'看成绩':'下一题';$('#qnext').hidden=false;
+}
+$('#qnext').onclick=()=>{qi++;qi<Q.length?showQ():result()};
+function result(){
+  $('#qa').hidden=true;$('#qr').hidden=false;$('#qbar').style.width='100%';
+  $('#qs').textContent=sc+' / '+Q.length;
+  $('#qm').textContent=sc===5?'🏆 满分！你已经可以当小老师了。':sc>=3?'👍 不错，再回去玩玩实验，下次冲满分。':'🌱 没关系，回到模拟里多试几次，再来挑战。';
+}
+$('#qre').onclick=()=>{qi=0;sc=0;showQ()};
+showQ();
+</script>
+</body>
+</html>

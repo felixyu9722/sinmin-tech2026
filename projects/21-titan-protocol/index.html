@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>TITAN PROTOCOL · 泰坦协议</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:dark;--bg:#06080f;--cy:#35e0ff;--or:#ff8a1f;--ink:#d8f3ff}
+html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;color:var(--ink);font-family:ui-monospace,Consolas,"PingFang SC","Microsoft YaHei",monospace;user-select:none}
+#cv{display:block;width:100vw;height:100vh;cursor:none}
+#ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle,rgba(6,12,24,.88),rgba(2,4,8,.97));cursor:pointer;padding:max(20px,env(safe-area-inset-top)) 20px}
+#ov h1{margin:0;font-size:clamp(28px,5vw,52px);letter-spacing:.22em;color:var(--cy);text-shadow:0 0 24px var(--cy)}
+#ov h2{margin:4px 0 18px;font-weight:400;letter-spacing:.5em;color:var(--or);font-size:14px}
+#ov p{margin:6px 0;line-height:1.8;font-size:14px;opacity:.88}
+#ov kbd{background:#16263a;border:1px solid #35e0ff55;border-radius:3px;padding:1px 7px;color:var(--cy)}
+#ov .go{display:inline-block;margin-top:18px;padding:10px 34px;border:1px solid var(--cy);color:var(--cy);letter-spacing:.3em;box-shadow:0 0 18px #35e0ff55 inset,0 0 18px #35e0ff44;animation:b 1.4s infinite}
+@keyframes b{50%{opacity:.4}}
+</style></head><body>
+<canvas id="cv"></canvas>
+<div id="ov"><div>
+<h1>TITAN PROTOCOL</h1><h2>泰坦协议 · 铁驭与机甲</h2>
+<p><kbd>A</kbd><kbd>D</kbd> 移动 · <kbd>W</kbd>/<kbd>空格</kbd> 跳跃（铁驭可二段跳）· <kbd>S</kbd> 穿过平台</p>
+<p><kbd>鼠标左键</kbd> 射击 · <kbd>鼠标右键</kbd> 浪人大剑（泰坦）· <kbd>R</kbd> 换弹 · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 切换武器</p>
+<p><kbd>E</kbd> 泰坦能量 100% 时召唤 → 靠近再按 E 登入 / 在机甲内按 E 离开</p>
+<p>击杀解锁：EVA-8 ×10 · Leadwall＋浪人剑 ×15 · 克莱贝尔 ×25 · 核心激光炮 ×35</p>
+<div class="go">点击部署</div>
+</div></div>
+<script>
+/* ================= 基础 ================= */
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const VH=720,WW=3600,GY=640,GRAV=1800;let VW=1280,K=1,running=false;
+function rs(){const d=Math.min(devicePixelRatio||1,2);cv.width=innerWidth*d;cv.height=innerHeight*d;VW=innerWidth*VH/innerHeight;K=cv.width/VW}
+addEventListener('resize',rs);rs();
+const R=Math.random,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const PL=[{x:480,y:500,w:260},{x:980,y:410,w:300},{x:1480,y:520,w:240},{x:1900,y:420,w:320},{x:2400,y:510,w:260},{x:2850,y:410,w:300},{x:3250,y:520,w:200}];
+/* ---- 武器数据 ---- */
+const WD={
+ r201:{n:'R-201 突击步枪',dmg:16,rate:.09,mag:30,rl:1.5,sp:.035,auto:1,spd:1500,life:.7,col:'#7fe8ff'},
+ eva8:{n:'EVA-8 散弹枪',dmg:11,rate:.7,mag:8,rl:2,sp:.16,pel:8,spd:1300,life:.3,col:'#ffe08a'},
+ kraber:{n:'克莱贝尔 狙击枪',dmg:220,rate:1.3,mag:4,rl:2.4,sp:0,spd:3600,life:.5,pierce:1,col:'#ffffff'},
+ cannon:{n:'40mm 自动炮',dmg:32,rate:.17,mag:40,rl:2.4,sp:.025,auto:1,spd:1500,life:.8,col:'#ffb347',big:1},
+ leadwall:{n:'Leadwall 连发散弹',sub:'右键：浪人大剑',dmg:15,rate:.55,mag:8,rl:2.6,sp:.2,pel:9,spd:1300,life:.4,col:'#ff9d4d',big:1,burst:3},
+ laser:{n:'核心激光炮',dmg:60,rate:.11,mag:60,rl:3,auto:1,beam:1,col:'#ff3d6e'}};
+const PS=['r201','eva8','kraber'],TS=['cannon','leadwall','laser'],UL={eva8:10,leadwall:15,kraber:25,laser:35};
+const ET={g:{n:'步兵 GRUNT',pts:100,core:4},s:{n:'潜行者 STALKER',pts:200,core:7},t:{n:'敌方泰坦 TITAN',pts:1000,core:35}};
+/* ---- 背景装饰（固定种子）---- */
+let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+const STARS=Array.from({length:90},()=>({x:rnd()*2000,y:rnd()*380,s:rnd()*1.6+.4}));
+const SK=Array.from({length:60},(_,i)=>({x:i*70+rnd()*30,w:30+rnd()*50,h:60+rnd()*230}));
+const SK2=Array.from({length:40},(_,i)=>({x:i*110,w:50+rnd()*60,h:40+rnd()*140}));
+/* ---- 状态 ---- */
+let G,P,T,MG,jumpReq=false;const keys={},mouse={x:0,y:0,d:false,buf:0};
+function init(){
+ G={t:0,kills:0,score:0,combo:0,comboT:0,wave:0,over:false,shake:0,cam:0,en:[],bul:[],par:[],txt:[],feed:[],q:[],sc:0,waveT:1.5,banner:0,hit:0,mx:0,my:0,msg:'',msgT:0,red:0,got:{}};
+ P={x:400,y:GY,vx:0,vy:0,w:26,h:54,hp:100,max:100,face:1,jc:0,mode:'pilot',cd:0,rl:0,sw:0,inv:0,regen:0,wi:0,ti:0,onG:true,core:0,ang:0,bq:null,fl:0};
+ T=null;MG={};for(const k in WD)MG[k]=WD[k].mag}
+const act=()=>P.mode==='titan'?T:P;
+const un=id=>!UL[id]||G.kills>=UL[id];
+const curId=()=>P.mode==='titan'?TS[P.ti]:PS[P.wi];
+const note=s=>{G.msg=s;G.msgT=3};
+/* ---- 音效 ---- */
+let ac;function snd(f=200,t=.08,ty='square',v=.04){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain(),n=ac.currentTime;o.type=ty;o.frequency.setValueAtTime(f,n);o.frequency.exponentialRampToValueAtTime(40,n+t);g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+t);o.connect(g);g.connect(ac.destination);o.start();o.stop(n+t)}catch(e){}}
+/* ================= 粒子 / 特效 ================= */
+function sparks(x,y,n,col,spd=300,life=.4,g=600){for(let i=0;i<n;i++){const a=R()*6.283,v=spd*(.3+R());G.par.push({k:'p',x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:life*(.5+R()),max:life,col,sz:1+R()*2.5,g})}}
+const ring=(x,y,col,vr=500,life=.5,w=4)=>G.par.push({k:'r',x,y,r:8,vr,life,max:life,col,w});
+function boomFx(x,y,s=1){sparks(x,y,26*s|0,'#ffb347',500*s,.7);sparks(x,y,14*s|0,'#ff4d2e',350*s,.9);sparks(x,y,10*s|0,'#555',250*s,1.2,300);ring(x,y,'#ffb347',420*s,.45,5);G.shake=Math.max(G.shake,8*s);snd(70,.35,'sawtooth',.07)}
+/* ================= 物理 ================= */
+function phys(a,dt){const py=a.y;a.vy+=GRAV*dt;a.x+=a.vx*dt;a.y+=a.vy*dt;a.x=cl(a.x,a.w/2,WW-a.w/2);a.onG=false;
+ if(a.vy>=0&&!a.drop)for(const p of PL)if(a.x+a.w/2>p.x&&a.x-a.w/2<p.x+p.w&&py<=p.y+1&&a.y>=p.y){a.y=p.y;a.vy=0;a.onG=true}
+ if(a.y>=GY){a.y=GY;a.vy=0;a.onG=true}}
+const ov=(e,a)=>Math.abs(e.x-a.x)<(e.w+a.w)/2&&e.y>a.y-a.h&&e.y-e.h<a.y;
+const shoulder=a=>({x:a.x,y:a.y-(P.mode==='titan'&&a===T?78:36)});
+/* ================= 玩家控制 ================= */
+function ctl(dt){
+ const a=act(),ti=P.mode==='titan',dir=(keys.KeyD?1:0)-(keys.KeyA?1:0),sp=ti?240:340;
+ a.vx+=(dir*sp-a.vx)*Math.min(1,dt*(a.onG?14:5));a.drop=!!keys.KeyS;
+ if(a.onG)a.jc=0;
+ if(jumpReq){jumpReq=false;if(a.onG){a.vy=ti?-600:-680;a.jc=1;if(ti)sparks(a.x,a.y,8,'#aaa',200,.4)}else if(!ti&&a.jc<2){a.vy=-620;a.jc=2;sparks(a.x,a.y,12,'#35e0ff',260,.4);ring(a.x,a.y,'#35e0ff',260,.3,2);snd(500,.1,'sine')}}
+ a.face=G.mx>a.x?1:-1;const s=shoulder(a);P.ang=Math.atan2(G.my-s.y,G.mx-s.x);
+ phys(a,dt)}
+function reload(){const id=curId(),w=WD[id];if(P.rl>0||MG[id]>=w.mag)return;P.rl=w.rl;P.rlId=id;P.bq=null}
+function tryFire(){const id=curId(),w=WD[id];if(P.cd>0||P.rl>0||P.sw>.45)return false;
+ if(MG[id]<=0){reload();return false}
+ MG[id]--;P.cd=w.rate;volley(id);if(w.burst)P.bq={id,n:w.burst-1,t:.08};if(MG[id]<=0)reload();return true}
+function volley(id){
+ const w=WD[id],a=act(),ti=P.mode==='titan',s=shoulder(a),L=ti?62:30,ang=P.ang,mx=s.x+Math.cos(ang)*L,my=s.y+Math.sin(ang)*L;
+ if(w.beam){const dx=Math.cos(ang),dy=Math.sin(ang);let len=1700;if(dy>.001)len=Math.min(len,(GY-my)/dy);
+  for(const e of G.en){if(e.sp>0||e.dead)continue;const cx=e.x-mx,cy=e.y-e.h/2-my,t=cx*dx+cy*dy;if(t<0||t>len)continue;if(Math.abs(cx*dy-cy*dx)<Math.max(e.w*.6,e.h*.35))dmgE(e,w.dmg)}
+  G.par.push({k:'b',x:mx,y:my,x2:mx+dx*len,y2:my+dy*len,life:.1,max:.1,col:w.col});sparks(mx+dx*len,my+dy*len,6,w.col,300,.3);G.shake=Math.max(G.shake,3);snd(900,.1,'sawtooth',.05);return}
+ const n=w.pel||1;for(let i=0;i<n;i++){const an=ang+(R()-.5)*2*w.sp;G.bul.push({x:mx,y:my,vx:Math.cos(an)*w.spd,vy:Math.sin(an)*w.spd,dmg:w.dmg,life:w.life,team:0,pierce:w.pierce,hit:[],col:w.col,big:w.big})}
+ sparks(mx,my,3,w.col,200,.15,0);a.vx-=Math.cos(ang)*(ti?15:25);G.shake=Math.max(G.shake,w.big?4:id==='kraber'?9:1.5);snd(id==='kraber'?90:ti?110:240,.09,'square',.05)}
+function slash(){if(P.mode!=='titan'||!un('leadwall')||P.sw>0)return;P.sw=.7;const a=T;
+ G.par.push({k:'a',x:a.x,y:a.y-70,face:a.face,r:30,vr:420,life:.22,max:.22});G.shake=Math.max(G.shake,6);snd(180,.15,'sawtooth',.06);
+ for(const e of G.en){const d=(e.x-a.x)*a.face;if(e.sp<=0&&d>-30&&d<200&&e.y>a.y-150&&e.y-e.h<a.y){dmgE(e,260);e.vx+=a.face*500;sparks(e.x,e.y-e.h/2,12,'#ff9d4d',400,.4)}}}
+function sw(i){const l=P.mode==='titan'?TS:PS,id=l[i];if(!un(id)){note(`未解锁：需击杀 ${UL[id]} 个敌人（当前 ${G.kills}）`);return}
+ if(P.mode==='titan')P.ti=i;else P.wi=i;P.rl=0;P.cd=.25;P.bq=null}
+function useE(){if(G.over)return;
+ if(P.mode==='titan'){P.mode='pilot';P.x=T.x-T.face*70;P.y=T.y;P.vx=0;P.vy=-300;P.jc=1;T.state='idle';T.vx=0;P.rl=0;ring(T.x,T.y-50,'#35e0ff',350,.4);note('已离开泰坦');return}
+ if(!T){if(P.core>=100){P.core=0;T={state:'warn',t:0,x:cl(P.x+P.face*260,150,WW-150),y:-300,vx:0,vy:0,w:64,h:116,hp:1600,max:1600,face:P.face,jc:0,fl:0,onG:false};note('泰坦空投中，保持距离！')}else note(`泰坦核心充能 ${Math.floor(P.core)}%`);return}
+ if(T.state==='idle'&&Math.abs(P.x-T.x)<150&&P.y>T.y-170&&P.y-P.h<T.y){P.mode='titan';P.rl=0;P.bq=null;for(const id of TS)MG[id]=WD[id].mag;P.x=T.x;P.y=T.y;ring(T.x,T.y-50,'#35e0ff',500,.5,6);G.shake=10;snd(300,.3,'sine',.06);note('泰坦已登入 · 系统在线')}
+ else if(T.state==='idle')note('靠近泰坦后按 E 登入');}
+function eject(){boomFx(T.x,T.y-60,2.2);for(const e of G.en)if(e.sp<=0&&Math.hypot(e.x-T.x,e.y-T.y)<260)dmgE(e,400);
+ P.mode='pilot';P.x=T.x;P.y=T.y-80;P.vx=0;P.vy=-950;P.inv=2;P.jc=1;P.rl=0;P.bq=null;T=null;P.core=0;G.red=.6;note('泰坦被击毁 · 弹射逃生！')}
+function hurtP(d,heavy){if(P.inv>0||G.over)return;G.red=Math.min(.7,G.red+.2);P.regen=4;
+ if(P.mode==='titan'){T.hp-=d*(heavy?1.2:.4);T.fl=.1;G.shake=Math.max(G.shake,heavy?10:3);if(T.hp<=0)eject()}
+ else{P.hp-=d;P.fl=.1;G.shake=Math.max(G.shake,heavy?12:4);if(P.hp<=0){P.hp=0;G.over=true;boomFx(P.x,P.y-30,1.5)}}}
+/* ================= 泰坦空投 ================= */
+function updT(dt){if(!T)return;
+ if(T.state==='warn'){T.t+=dt;if(T.t>1.4){T.state='fall';T.vy=500}}
+ else if(T.state==='fall'){T.vy+=2800*dt;T.y+=T.vy*dt;if(T.y>=GY){T.y=GY;T.vy=0;T.state='idle';slam(T.x)}}
+ else if(P.mode!=='titan'){T.vx*=.85;phys(T,dt)}}
+function slam(x){G.shake=28;ring(x,GY,'#35e0ff',900,.7,8);ring(x,GY,'#ffffff',600,.5,4);sparks(x,GY,40,'#aee',600,.8);sparks(x,GY,20,'#ffb347',400,.8);snd(50,.5,'sawtooth',.09);
+ for(const e of G.en){const d=Math.abs(e.x-x);if(d<320){dmgE(e,380*(1-d/340)+60);if(!e.dead){e.vx+=Math.sign(e.x-x)*500;e.vy=-350}}}
+ if(P.mode==='pilot'&&Math.abs(P.x-x)<80&&P.y>GY-10)hurtP(60,true)}
+/* ================= 敌人 ================= */
+function spawnE(t){let x;for(let i=0;i<12;i++){x=200+R()*(WW-400);if(Math.abs(x-act().x)>650)break}
+ const D={g:{w:28,h:54,hp:60},s:{w:34,h:52,hp:140},t:{w:84,h:140,hp:1400}}[t];
+ G.en.push({t,x,y:GY,vx:0,vy:0,w:D.w,h:D.h,hp:D.hp,max:D.hp,face:1,cd:1+R(),lc:0,hc:0,sp:1.1,fl:0,onG:true,ang:0});ring(x,GY,'#ff4d6a',300,.6,3)}
+function shootE(e,d,spd,spr,heavy,splash){const a=act(),sx=e.x,sy=e.y-e.h*.65,ang=Math.atan2(a.y-a.h/2-sy,a.x-sx)+(R()-.5)*spr,L=e.t==='t'?75:26;e.ang=ang;
+ G.bul.push({x:sx+Math.cos(ang)*L,y:sy+Math.sin(ang)*L,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,dmg:d,life:2.5,team:1,heavy,splash,col:splash?'#ff7a2e':'#ff4d6a',big:!!splash});snd(splash?80:320,.12,'square',.03)}
+function updE(e,dt){
+ if(e.sp>0){e.sp-=dt;return}
+ const a=act(),dx=a.x-e.x,ad=Math.abs(dx);e.face=dx>0?1:-1;e.cd-=dt;e.lc-=dt;e.hc-=dt;e.fl-=dt;
+ if(e.t==='g'){const w=ad>520?1:ad<300?-1:0;e.vx=w*e.face*115;if(ad<950&&e.cd<=0){e.cd=1.1+R()*.8;shootE(e,7,650,.12,false)}else if(ad>=950)e.ang=e.face>0?0:Math.PI}
+ else if(e.t==='s'){if(e.onG){e.vx=ad>40?e.face*250:0;if(ad<300&&ad>100&&e.lc<=0){e.vy=-560;e.vx=e.face*460;e.lc=2.2}}if(e.hc<=0&&ov(e,a)){hurtP(18,false);e.hc=.7}}
+ else{const w=ad>700?1:ad<420?-1:0;e.vx=w*e.face*55;if(ad<1150&&e.cd<=0){e.cd=2.3;shootE(e,45,720,.05,true,110)}else if(ad>=1150)e.ang=e.face>0?0:Math.PI;if(e.hc<=0&&ad<90){hurtP(35,true);e.hc=1.2}}
+ phys(e,dt)}
+function dmgE(e,d){if(e.sp>0||e.dead)return;e.hp-=d;e.fl=.07;G.hit=.18;sparks(e.x,e.y-e.h*.5,4,'#ffd27a',260,.3);if(d>=40)G.txt.push({x:e.x,y:e.y-e.h-8,s:Math.round(d),life:.6});if(e.hp<=0)kill(e)}
+function kill(e){e.dead=true;const D=ET[e.t];G.combo++;G.comboT=4;const m=1+Math.min(Math.floor((G.combo-1)/3),6)*.5,pts=Math.round(D.pts*m);G.score+=pts;G.kills++;if(!T)P.core=Math.min(100,P.core+D.core);
+ G.feed.unshift({s:`击杀 ${D.n}  +${pts}${m>1?'  ×'+m.toFixed(1):''}`,life:2.6,col:e.t==='t'?'#ff8a1f':'#35e0ff'});G.feed.length=Math.min(G.feed.length,4);
+ const big=e.t==='t'?2.4:e.t==='s'?.8:.6;boomFx(e.x,e.y-e.h/2,big);for(let i=0;i<8*big+4;i++)G.par.push({k:'p',x:e.x,y:e.y-e.h/2,vx:(R()-.5)*400,vy:-R()*500,life:1.2,max:1.2,col:'#333c4d',sz:3+R()*4,g:1200});
+ for(const id in UL)if(!G.got[id]&&G.kills>=UL[id]){G.got[id]=1;note(`武器解锁：${WD[id].n}`);snd(800,.3,'sine',.07)}}
+function waves(dt){if(G.q.length){G.sc-=dt;if(G.sc<=0&&G.en.length<6+G.wave){spawnE(G.q.pop());G.sc=.6}}else if(!G.en.length){G.waveT-=dt;if(G.waveT<=0)nextWave()}}
+function nextWave(){const n=++G.wave,q=[];for(let i=0;i<3+n*2;i++)q.push('g');for(let i=0;i<Math.floor(n*1.3);i++)q.push('s');q.sort(()=>R()-.5);if(n%3===0)for(let i=0;i<Math.ceil(n/6);i++)q.push('t');G.q=q;G.sc=1;G.waveT=3;G.banner=3}
+/* ================= 子弹 ================= */
+function explode(b){boomFx(b.x,b.y,.7);const a=act(),d=Math.hypot(a.x-b.x,a.y-a.h/2-b.y);if(d<b.splash+a.w/2)hurtP(b.dmg*(1-d/(b.splash+a.w)),true)}
+function bullets(dt){const a=act();
+ for(const b of G.bul){const st=Math.ceil(Math.hypot(b.vx,b.vy)*dt/14),sx=b.vx*dt/st,sy=b.vy*dt/st;
+  for(let i=0;i<st&&!b.dead;i++){b.x+=sx;b.y+=sy;
+   if(b.y>=GY||b.x<0||b.x>WW){b.dead=true;if(b.splash)explode(b);else sparks(b.x,GY,4,b.col,200,.25);break}
+   if(b.team===0){for(const e of G.en){if(e.dead||e.sp>0||b.hit.includes(e))continue;if(Math.abs(b.x-e.x)<e.w/2+3&&b.y>e.y-e.h-3&&b.y<e.y+3){dmgE(e,b.dmg);b.hit.push(e);if(!b.pierce){b.dead=true;break}}}}
+   else if(Math.abs(b.x-a.x)<a.w/2+3&&b.y>a.y-a.h-3&&b.y<a.y+3){b.dead=true;if(b.splash)explode(b);else{hurtP(b.dmg,b.heavy);sparks(b.x,b.y,5,'#ff4d6a',200,.25)}}}
+  b.life-=dt;if(b.life<=0&&!b.dead){b.dead=true;if(b.splash)explode(b)}
+  if(b.splash&&!b.dead&&R()<.7)G.par.push({k:'p',x:b.x,y:b.y,vx:0,vy:0,life:.3,max:.3,col:'#ff7a2e',sz:3,g:0})}
+ G.bul=G.bul.filter(b=>!b.dead)}
+function parts(dt){for(const p of G.par){p.life-=dt;if(p.k==='p'){p.vy+=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.y>GY){p.y=GY;p.vy*=-.3;p.vx*=.7}}else if(p.r!==undefined)p.r+=p.vr*dt}
+ G.par=G.par.filter(p=>p.life>0);for(const t of G.txt){t.life-=dt;t.y-=40*dt}G.txt=G.txt.filter(t=>t.life>0);for(const f of G.feed)f.life-=dt;G.feed=G.feed.filter(f=>f.life>0)}
+/* ================= 主更新 ================= */
+function update(dt){
+ if(G.over){parts(dt);G.shake*=Math.pow(.02,dt);return}
+ G.t+=dt;P.cd-=dt;P.sw-=dt;P.inv-=dt;P.regen-=dt;P.fl-=dt;mouse.buf-=dt;G.hit-=dt;G.red=Math.max(0,G.red-dt*.8);G.shake*=Math.pow(.02,dt);G.msgT-=dt;G.banner-=dt;G.comboT-=dt;if(G.comboT<=0)G.combo=0;
+ if(!T)P.core=Math.min(100,P.core+1.1*dt);
+ if(P.mode==='pilot'&&P.regen<=0)P.hp=Math.min(P.max,P.hp+9*dt);
+ ctl(dt);updT(dt);if(P.mode==='titan'){P.x=T.x;P.y=T.y;T.fl-=dt}
+ if(P.rl>0){P.rl-=dt;if(P.rl<=0)MG[P.rlId]=WD[P.rlId].mag}
+ if(P.bq&&(P.bq.t-=dt)<=0){volley(P.bq.id);P.bq.t=.08;if(--P.bq.n<=0)P.bq=null}
+ if(mouse.d){const w=WD[curId()];if(w.auto||mouse.buf>0){if(tryFire())mouse.buf=0}}
+ waves(dt);for(const e of G.en)updE(e,dt);G.en=G.en.filter(e=>!e.dead);bullets(dt);parts(dt);
+ const a=act();G.cam+=(cl(a.x-VW/2,0,WW-VW)-G.cam)*Math.min(1,dt*6)}
+/* ================= 绘制：世界 ================= */
+function layer(arr,f,c,span){ctx.fillStyle=c;for(const b of arr){const x=((b.x-G.cam*f)%span+span)%span-120;if(x>VW)continue;ctx.fillRect(x,GY-b.h,b.w,b.h)}}
+const fr=(c,x,y,w,h)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h)};
+function mech(x,y,s,face,ang,c1,c2,eye,fl){ctx.save();ctx.translate(x,y);ctx.scale(face*s,s);const f=(c,a,b,w,h)=>fr(fl?'#fff':c,a,b,w,h);
+ f(c1,-24,-52,17,52);f(c1,7,-52,17,52);f(c2,-26,-8,21,8);f(c2,5,-8,21,8);f(c1,-30,-96,60,48);f(c2,-30,-80,60,6);f(c1,-12,-116,24,20);f(eye,0,-110,13,5);
+ ctx.translate(0,-78);ctx.rotate(face>0?ang:Math.PI-ang);f(c2,0,-7,54,14);f(c1,40,-10,22,20);ctx.restore()}
+function pilot(a,fl){ctx.save();ctx.translate(a.x,a.y);ctx.scale(a.face,1);const w=a.onG?Math.sin(a.x/10)*5*Math.min(1,Math.abs(a.vx)/150):0,f=(c,x,y,ww,h)=>fr(fl>0?'#fff':c,x,y,ww,h);
+ f('#1c2a3f',-9+w,-24,7,24);f('#1c2a3f',2-w,-24,7,24);f('#2b4a6a',-10,-46,20,24);f('#3a3f4d',-15,-44,6,18);f('#27384f',-6,-57,14,12);f('#35e0ff',2,-54,9,4);
+ if(!a.onG)f('#ff8a1f',-14,-26,4,8+R()*9);
+ ctx.translate(0,-36);ctx.rotate(a.face>0?P.ang:Math.PI-P.ang);f('#111c2a',0,-3,30,6);f('#35e0ff',22,-4,3,2);ctx.restore()}
+function grunt(e,fl){ctx.save();ctx.translate(e.x,e.y);ctx.scale(e.face,1);const w=Math.sin(e.x/9)*4*(Math.abs(e.vx)>10),f=(c,x,y,ww,h)=>fr(fl?'#fff':c,x,y,ww,h);
+ f('#3a1e24',-8+w,-22,7,22);f('#3a1e24',1-w,-22,7,22);f('#8a2b36',-10,-44,20,23);f('#2a1519',-6,-54,13,11);f('#ff4d6a',1,-51,8,3);
+ ctx.translate(0,-34);ctx.rotate(e.face>0?e.ang:Math.PI-e.ang);f('#222',0,-3,28,6);ctx.restore()}
+function stalker(e,fl){ctx.save();ctx.translate(e.x,e.y);ctx.scale(e.face,1);const w=Math.sin(e.x/6)*8*(Math.abs(e.vx)>10),f=(c,x,y,ww,h)=>fr(fl?'#fff':c,x,y,ww,h);
+ f('#2b2330',-13+w,-30,6,30);f('#2b2330',7-w,-30,6,30);f('#5a2a55',-14,-46,30,18);f('#2b2330',8,-52,14,14);f('#ff8a1f',15,-48,6,3);f('#8a3f8a',-18,-44,6,24);f('#ff8a1f',-10,-52,4,10);ctx.restore()}
+function drawEnemy(e){const fl=e.fl>0,p=e.sp>0?1-e.sp/1.1:1;ctx.save();
+ if(e.sp>0){ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(255,77,106,${.25*(1-p)})`;ctx.fillRect(e.x-30*(1-p)-4,0,60*(1-p)+8,e.y);ctx.globalCompositeOperation='source-over';ctx.beginPath();ctx.rect(e.x-100,e.y-e.h*p-4,200,e.h*p+4);ctx.clip();ctx.globalAlpha=.4+.6*p}
+ if(e.t==='g')grunt(e,fl);else if(e.t==='s')stalker(e,fl);else mech(e.x,e.y,e.h/116,e.face,e.ang,'#4a1c26','#8a2b36','#ff4d6a',fl);
+ ctx.restore();
+ if(e.sp<=0&&e.hp<e.max){const w=e.t==='t'?90:34;fr('#0008',e.x-w/2,e.y-e.h-14,w,4);fr('#ff4d6a',e.x-w/2,e.y-e.h-14,w*e.hp/e.max,4)}
+ if(e.sp>0){ctx.strokeStyle='#ff4d6a';ctx.globalAlpha=1-p;ctx.beginPath();ctx.ellipse(e.x,e.y,50*(1-p)+10,8,0,0,6.283);ctx.stroke();ctx.globalAlpha=1}}
+function drawWorld(){
+ for(const p of PL){fr('#0e1728',p.x,p.y,p.w,12);fr('#35e0ff',p.x,p.y,p.w,2);ctx.globalAlpha=.15;fr('#35e0ff',p.x,p.y+12,p.w,3);ctx.globalAlpha=1}
+ const g=ctx.createLinearGradient(0,GY,0,VH);g.addColorStop(0,'#101a2c');g.addColorStop(1,'#05080f');ctx.fillStyle=g;ctx.fillRect(G.cam-10,GY,VW+20,VH-GY);
+ fr('#35e0ff',G.cam-10,GY,VW+20,2);ctx.strokeStyle='rgba(53,224,255,.12)';ctx.beginPath();for(let x=Math.floor(G.cam/80)*80;x<G.cam+VW+80;x+=80){ctx.moveTo(x,GY);ctx.lineTo(x-60,VH)}ctx.stroke();
+ if(T){if(T.state==='warn'){const al=.4+.4*Math.sin(G.t*20);ctx.globalCompositeOperation='lighter';fr(`rgba(53,224,255,${al*.5})`,T.x-4,0,8,GY);ctx.strokeStyle=`rgba(53,224,255,${al})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(T.x,GY,90*(1.4-T.t/1.4*.4),12,0,0,6.283);ctx.stroke();ctx.lineWidth=1;ctx.globalCompositeOperation='source-over'}
+  else{if(T.state==='fall'){ctx.globalCompositeOperation='lighter';fr('rgba(255,138,31,.35)',T.x-26,T.y-400,52,400);ctx.globalCompositeOperation='source-over'}
+   if(P.mode==='titan'&&T.state==='idle')ctx.globalAlpha=1;mech(T.x,T.y,1,T.face,P.mode==='titan'?P.ang:(T.face>0?0:Math.PI),'#1a3b52','#2f7a9c','#35e0ff',T.fl>0);
+   if(P.mode!=='titan'&&T.state==='idle'&&Math.abs(P.x-T.x)<150){ctx.strokeStyle='#35e0ff';ctx.globalAlpha=.5+.4*Math.sin(G.t*8);ctx.strokeRect(T.x-45,T.y-130,90,134);ctx.globalAlpha=1}}}
+ for(const e of G.en)drawEnemy(e);
+ if(P.mode==='pilot'&&!(P.inv>0&&Math.floor(G.t*20)%2))pilot(P,P.fl);
+ ctx.globalCompositeOperation='lighter';
+ for(const b of G.bul){ctx.strokeStyle=b.col;ctx.lineWidth=b.big?4:2.5;ctx.globalAlpha=.9;ctx.beginPath();ctx.moveTo(b.x-b.vx*.028,b.y-b.vy*.028);ctx.lineTo(b.x,b.y);ctx.stroke()}
+ ctx.lineWidth=1;
+ for(const p of G.par){const a=cl(p.life/p.max,0,1);ctx.globalAlpha=a;
+  if(p.k==='p'){ctx.fillStyle=p.col;ctx.fillRect(p.x-p.sz/2,p.y-p.sz/2,p.sz,p.sz)}
+  else if(p.k==='r'){ctx.strokeStyle=p.col;ctx.lineWidth=p.w*a;ctx.beginPath();ctx.ellipse(p.x,p.y,p.r,p.r*.28,0,0,6.283);ctx.stroke()}
+  else if(p.k==='b'){ctx.strokeStyle=p.col;ctx.lineWidth=14*a;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x2,p.y2);ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=4*a;ctx.stroke()}
+  else if(p.k==='a'){ctx.strokeStyle='#ff9d4d';ctx.lineWidth=12*a;ctx.beginPath();ctx.arc(p.x,p.y,p.r,p.face>0?-1.2:Math.PI-1.2+.0,p.face>0?1.2:Math.PI+1.2);ctx.stroke()}}
+ ctx.lineWidth=1;ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+ for(const t of G.txt){ctx.globalAlpha=cl(t.life*2,0,1);tx(t.s,t.x,t.y,16,'#fff','center')}ctx.globalAlpha=1}
+/* ================= 绘制：HUD ================= */
+function tx(s,x,y,sz=13,c='#d8f3ff',al='left'){ctx.font=`600 ${sz}px ui-monospace,Consolas,"PingFang SC","Microsoft YaHei",monospace`;ctx.fillStyle=c;ctx.textAlign=al;ctx.fillText(s,x,y)}
+function panel(x,y,w,h,c='rgba(53,224,255,.4)'){ctx.fillStyle='rgba(6,12,22,.72)';ctx.fillRect(x,y,w,h);ctx.strokeStyle=c;ctx.strokeRect(x+.5,y+.5,w,h);fr(c,x,y,10,2)}
+function bar(x,y,w,h,p,c){fr('rgba(255,255,255,.09)',x,y,w,h);fr(c,x,y,w*cl(p,0,1),h);ctx.strokeStyle='rgba(255,255,255,.22)';ctx.strokeRect(x+.5,y+.5,w,h)}
+function hud(){
+ const ti=P.mode==='titan',ready=!T&&P.core>=100;
+ /* 左上：战况 */
+ panel(14,14,210,78);tx(`WAVE ${G.wave}`,26,38,18,'#35e0ff');tx(`SCORE ${G.score}`,26,58);tx(`KILLS ${G.kills}`,26,78);
+ if(G.combo>1)tx(`COMBO ${G.combo}  ×${(1+Math.min(Math.floor((G.combo-1)/3),6)*.5).toFixed(1)}`,120,78,13,'#ff8a1f');
+ /* 左下：生命 / 核心 */
+ const hy=VH-112;panel(14,hy,330,98,ready?'#ff8a1f':'rgba(53,224,255,.4)');
+ tx(ti?'TITAN 机体完整度':'PILOT 生命值',26,hy+24,12,ti?'#35e0ff':'#d8f3ff');tx(`${Math.ceil(ti?T.hp:P.hp)} / ${ti?T.max:P.max}`,332,hy+24,12,'#d8f3ff','right');
+ const hp=ti?T.hp/T.max:P.hp/P.max;bar(26,hy+32,306,14,hp,hp<.3?'#ff4d6a':ti?'#35e0ff':'#7dffa5');
+ tx(T?(T.state==='idle'?'TITAN 待命中':'TITAN 空投中'):(ready?'TITAN CORE 就绪 · 按 E':'TITAN CORE 充能'),26,hy+68,12,ready?'#ff8a1f':'#d8f3ff');tx(`${Math.floor(T?0:P.core)}%`,332,hy+68,12,'#d8f3ff','right');
+ bar(26,hy+76,306,10,T?0:P.core/100,ready&&Math.floor(G.t*4)%2?'#ffd27a':'#ff8a1f');
+ /* 右下：武器 */
+ const ids=ti?TS:PS,cur=ti?P.ti:P.wi,id=ids[cur],w=WD[id],bx=VW-14-3*156;
+ tx(`${MG[id]}`,VW-18,VH-110,40,MG[id]<=w.mag*.25?'#ff4d6a':'#d8f3ff','right');tx(`/ ${w.mag}  ${P.rl>0?'换弹中':''}`,VW-18,VH-92,12,'#8fb4c8','right');
+ if(P.rl>0)bar(VW-18-150,VH-86,150,3,1-P.rl/WD[P.rlId].rl,'#35e0ff');
+ ids.forEach((k,i)=>{const d=WD[k],lk=!un(k),x=bx+i*156,y=VH-76;panel(x,y,148,62,i===cur?'#35e0ff':'rgba(53,224,255,.22)');if(i===cur)fr('rgba(53,224,255,.12)',x,y,148,62);
+  tx(String(i+1),x+8,y+18,14,'#ff8a1f');if(lk){tx('LOCKED',x+26,y+18,12,'#ff4d6a');tx(d.n.split(' ')[0],x+8,y+36,12,'#6d8799');bar(x+8,y+44,132,6,G.kills/UL[k],'#ff4d6a');tx(`${G.kills}/${UL[k]}`,x+140,y+36,11,'#6d8799','right')}
+  else{tx(d.n,x+26,y+18,11,i===cur?'#fff':'#9fc4d6');tx(d.sub||(d.beam?'穿透光束':d.pel?'散弹':d.pierce?'穿透重狙':'自动'),x+8,y+38,11,'#6d8799');tx(`${MG[k]}/${d.mag}`,x+140,y+54,11,'#9fc4d6','right')}});
+ tx(ti?'泰坦武器':'铁驭武器',bx,VH-84,11,'#6d8799');
+ /* 右上：小地图 + 解锁 */
+ const mx=VW-286,my=14,mw=272,mh=62,ms=mw/WW,sy=mh/VH;panel(mx,my,mw,mh);ctx.save();ctx.beginPath();ctx.rect(mx,my,mw,mh);ctx.clip();
+ fr('rgba(53,224,255,.35)',mx,my+GY*sy,mw,1);for(const p of PL)fr('rgba(53,224,255,.5)',mx+p.x*ms,my+p.y*sy,p.w*ms,1.5);
+ ctx.strokeStyle='rgba(255,255,255,.35)';ctx.strokeRect(mx+G.cam*ms,my+1,VW*ms,mh-2);
+ for(const e of G.en){const t=e.t==='t';fr(e.sp>0?'#ff4d6a66':'#ff4d6a',mx+e.x*ms-(t?3:1.5),my+(e.y-e.h/2)*sy-(t?3:1.5),t?6:3,t?6:3)}
+ if(T)fr('#35e0ff',mx+T.x*ms-3,my+(T.y-50)*sy-3,6,6);fr('#7dffa5',mx+P.x*ms-2,my+(P.y-25)*sy-2,4,4);ctx.restore();tx('MINIMAP',mx+6,my+mh+12,10,'#6d8799');
+ panel(mx,my+mh+20,mw,88);const U=[['eva8','EVA-8'],['leadwall','Leadwall+剑'],['kraber','克莱贝尔'],['laser','核心激光炮']];
+ U.forEach(([k,n],i)=>{const y=my+mh+40+i*20,ok=un(k);tx((i%2?'':'')+(k==='eva8'||k==='kraber'?'铁驭 ':'泰坦 ')+n,mx+8,y,11,ok?'#7dffa5':'#9fc4d6');bar(mx+150,y-9,80,8,G.kills/UL[k],ok?'#7dffa5':'#ff8a1f');tx(ok?'✔':`${G.kills}/${UL[k]}`,mx+mw-6,y,11,ok?'#7dffa5':'#9fc4d6','right')});
+ /* 中央提示 */
+ if(G.banner>0){ctx.globalAlpha=cl(G.banner,0,1);tx(`— WAVE ${G.wave} —`,VW/2,150,38,'#35e0ff','center');tx(G.wave%3===0?'警告：敌方泰坦接近':'敌军入场',VW/2,180,15,G.wave%3===0?'#ff8a1f':'#9fc4d6','center');ctx.globalAlpha=1}
+ G.feed.forEach((f,i)=>{ctx.globalAlpha=cl(f.life,0,1);tx(f.s,VW/2,230+i*22,16,f.col,'center')});ctx.globalAlpha=1;
+ if(G.msgT>0){ctx.globalAlpha=cl(G.msgT,0,1);panel(VW/2-190,96,380,30,'#ff8a1f');tx(G.msg,VW/2,116,14,'#ffd27a','center');ctx.globalAlpha=1}
+ let pr='';if(ready)pr='泰坦核心已就绪 — 按 E 呼叫空投';else if(!ti&&T&&T.state==='idle'&&Math.abs(P.x-T.x)<150)pr='按 E 登入泰坦';else if(ti)pr='E 离开泰坦 · 右键 浪人大剑'+(un('leadwall')?'':'（15 杀解锁）');
+ if(pr&&Math.floor(G.t*3)%3)tx(pr,VW/2,VH-30,15,'#ffd27a','center');
+ /* 屏幕效果 */
+ if(G.red>0){const g=ctx.createRadialGradient(VW/2,VH/2,VH*.35,VW/2,VH/2,VH*.9);g.addColorStop(0,'rgba(255,0,40,0)');g.addColorStop(1,`rgba(255,0,40,${G.red})`);ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH)}
+ ctx.fillStyle='rgba(0,0,0,.07)';for(let y=0;y<VH;y+=4)ctx.fillRect(0,y,VW,1);
+ /* 准星 */
+ const cx=mouse.x,cy=mouse.y;ctx.strokeStyle=G.hit>0?'#ff4d6a':'#7dffd0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,9,0,6.283);ctx.moveTo(cx-16,cy);ctx.lineTo(cx-5,cy);ctx.moveTo(cx+5,cy);ctx.lineTo(cx+16,cy);ctx.moveTo(cx,cy-16);ctx.lineTo(cx,cy-5);ctx.moveTo(cx,cy+5);ctx.lineTo(cx,cy+16);ctx.stroke();
+ if(G.hit>0){ctx.strokeStyle='#ff4d6a';ctx.beginPath();ctx.moveTo(cx-14,cy-14);ctx.lineTo(cx-8,cy-8);ctx.moveTo(cx+14,cy-14);ctx.lineTo(cx+8,cy-8);ctx.moveTo(cx-14,cy+14);ctx.lineTo(cx-8,cy+8);ctx.moveTo(cx+14,cy+14);ctx.lineTo(cx+8,cy+8);ctx.stroke()}
+ if(P.rl>0){ctx.strokeStyle='#35e0ff';ctx.beginPath();ctx.arc(cx,cy,20,-1.57,-1.57+6.283*(1-P.rl/WD[P.rlId].rl));ctx.stroke()}ctx.lineWidth=1;
+ if(G.over){ctx.fillStyle='rgba(4,6,12,.8)';ctx.fillRect(0,0,VW,VH);tx('PILOT DOWN · 阵亡',VW/2,VH/2-50,44,'#ff4d6a','center');tx(`最终得分 ${G.score}   波次 ${G.wave}   击杀 ${G.kills}`,VW/2,VH/2,18,'#d8f3ff','center');tx('点击或按 Enter 重新部署',VW/2,VH/2+50,15,'#ffd27a','center')}}
+function draw(){
+ ctx.setTransform(K,0,0,K,0,0);
+ const g=ctx.createLinearGradient(0,0,0,GY);g.addColorStop(0,'#050813');g.addColorStop(.7,'#15192f');g.addColorStop(1,'#46222e');ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
+ ctx.fillStyle='#fff';for(const s of STARS){ctx.globalAlpha=.3+.5*Math.abs(Math.sin(G.t*s.s+s.x));ctx.fillRect(((s.x-G.cam*.05)%VW+VW)%VW,s.y,s.s,s.s)}ctx.globalAlpha=1;
+ layer(SK,.25,'#0c1222',4300);layer(SK2,.5,'#111a2d',4500);
+ ctx.save();const sh=G.shake;ctx.translate(-G.cam+(R()-.5)*sh,(R()-.5)*sh);drawWorld();ctx.restore();hud()}
+/* ================= 输入 ================= */
+function aim(e){mouse.x=e.clientX*VW/innerWidth;mouse.y=e.clientY*VH/innerHeight;G.mx=mouse.x+G.cam;G.my=mouse.y}
+addEventListener('mousemove',aim);
+addEventListener('mousedown',e=>{aim(e);if(!running)return;if(G.over){restart();return}if(e.button===0){mouse.d=true;mouse.buf=.2}else if(e.button===2)slash()});
+addEventListener('mouseup',e=>{if(e.button===0)mouse.d=false});
+addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('keydown',e=>{if(['Space','KeyW','KeyA','KeyS','KeyD','Digit1','Digit2','Digit3','Enter'].includes(e.code))e.preventDefault();if(e.repeat)return;keys[e.code]=true;if(!running)return;
+ if(e.code==='Enter'&&G.over)restart();if(G.over)return;
+ if(e.code==='KeyW'||e.code==='Space')jumpReq=true;else if(e.code==='KeyE')useE();else if(e.code==='KeyR')reload();else if(/^Digit[1-3]$/.test(e.code))sw(+e.code[5]-1)});
+addEventListener('keyup',e=>{keys[e.code]=false});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;mouse.d=false});
+function restart(){init();mouse.d=false}
+document.getElementById('ov').onclick=function(){this.style.display='none';running=true;try{ac=ac||new AudioContext()}catch(e){}};
+/* ================= 主循环 ================= */
+init();let last=performance.now();
+function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1000);last=n;G.mx=mouse.x+G.cam;if(running)update(dt);else G.t+=dt;draw()}
+requestAnimationFrame(loop);
+</script></body></html>

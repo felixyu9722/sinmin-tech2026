@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>霓虹几何躲避战 · 超级进化版</title>
+<style>
+:root{--cyan:#55f5ff;--pink:#ff4fd8;--gold:#ffd166;--bg:#050611;--panel:rgba(9,17,38,.92)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:#eafcff;font-family:system-ui,"Microsoft YaHei",sans-serif}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;inset:0;pointer-events:none;padding:15px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.stats{display:flex;gap:8px;flex-wrap:wrap}.chip{background:#081329cc;border:1px solid #36dff477;border-radius:10px;padding:7px 11px;font-size:13px;box-shadow:0 0 15px #00d9ff22}
+#healthWrap{width:190px;height:9px;border:1px solid #ff648b;border-radius:9px;margin-top:7px;overflow:hidden;background:#25101d}
+#health{height:100%;width:100%;background:linear-gradient(90deg,#ff477e,#ffb36b);transition:width .2s}
+#xpWrap{width:190px;height:6px;border-radius:8px;background:#17233b;margin-top:5px;overflow:hidden}#xp{height:100%;width:0;background:linear-gradient(90deg,#44eaff,#b66bff)}
+#actions{position:fixed;right:16px;bottom:18px;display:flex;gap:9px;pointer-events:auto}
+.action{border:1px solid #58eaff99;background:#07172bdc;color:#dffcff;border-radius:12px;padding:12px 15px;font-weight:700;box-shadow:0 0 18px #00d9ff22}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#101d3ddd,#03040bf2);padding:16px;z-index:5}
+.panel{width:min(760px,96vw);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid #4beaff88;border-radius:20px;padding:24px;box-shadow:0 0 45px #00cfff25,inset 0 0 30px #153b6633;text-align:center}
+h1{font-size:clamp(27px,5vw,48px);margin:4px 0 8px;color:#9dfaff;text-shadow:0 0 18px #00dfff}
+.sub{color:#9db7d2;font-size:14px;line-height:1.7}.btnrow{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+button{cursor:pointer;font:inherit}.mainbtn{background:linear-gradient(100deg,#087eaa,#6947bd);color:white;border:1px solid #8df7ff;border-radius:12px;padding:11px 20px;font-weight:800;box-shadow:0 0 18px #00cfff33}
+.ghost{background:#101e35;color:#d8faff;border:1px solid #42617e;border-radius:11px;padding:10px 15px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:18px 0}
+.card{border:1px solid #42617e;background:#0a1730;border-radius:13px;padding:13px;text-align:left;cursor:pointer;transition:.15s}
+.card:hover{transform:translateY(-2px);border-color:#68f5ff;box-shadow:0 0 16px #00dfff33}
+.card b{display:block;color:#e9fdff;margin-bottom:5px}.card small{color:#9bb5d2;line-height:1.5}.rarity{font-size:11px;font-weight:900;letter-spacing:1px}
+.common{color:#c7d3e4}.rare{color:#50eaff}.epic{color:#c18bff}.legendary{color:#ffd166}
+#toast{position:fixed;top:22%;left:50%;transform:translateX(-50%);background:#09182beF;border:1px solid #5af3ff;border-radius:12px;padding:10px 18px;z-index:8;opacity:0;transition:opacity .25s;pointer-events:none;text-align:center}
+#help{position:fixed;left:16px;bottom:16px;color:#8ba7c3;font-size:12px;pointer-events:none}
+#sound{pointer-events:auto}
+@media(max-width:600px){#hud{padding:9px}.chip{font-size:11px;padding:6px 8px}#help{max-width:58%;font-size:10px}.panel{padding:17px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+ <div class="top">
+  <div>
+   <div class="stats">
+    <div class="chip">❤ <span id="hpText">100/100</span><div id="healthWrap"><div id="health"></div></div></div>
+    <div class="chip">✦ 等级 <span id="level">1</span><div id="xpWrap"><div id="xp"></div></div></div>
+    <div class="chip">★ 得分 <span id="score">0</span></div>
+    <div class="chip">◆ 金币 <span id="coins">0</span></div>
+   </div>
+  </div>
+  <div class="stats">
+   <div class="chip">击毁 <span id="kills">0</span></div>
+   <div class="chip">⏱ <span id="time">0</span>s</div>
+   <div class="chip">武器 <span id="weaponLabel">脉冲核心</span></div>
+   <button class="ghost" id="sound">♫ 音效：开</button>
+  </div>
+ </div>
+</div>
+<div id="help">移动：鼠标 / 触控　·　点击或空格：冲击波　·　P：暂停</div>
+<div id="actions"><button class="action" id="pulseBtn">◉ 冲击波 [空格]</button></div>
+<div id="toast"></div>
+<div id="overlay"><div class="panel" id="panel"></div></div>
+<script>
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id), canvas=$("game"),ctx=canvas.getContext("2d");
+let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2);
+function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2);canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener("resize",resize);resize();
+const rand=(a,b)=>Math.random()*(b-a)+a, clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+let state="menu",last=0,elapsed=0,score=0,kills=0,coins=0,best=0,level=1,xp=0,xpNeed=100;
+let player,enemies=[],bullets=[],particles=[],waves=[],drops=[],stars=[],boss=null,trail=[];
+let lastSpawn=0,lastShot=0,lastPulse=-99999,lastBoss=0,shake=0,shopOpen=false;
+let audioOn=true,audioCtx=null,weapon="脉冲核心",weaponLevel=1,fireRate=650,damage=1;
+let maxHp=100,hp=100,shield=0,invuln=0,magnet=0,moveBoost=1,coinBoost=1;
+let owned=new Set(),achieved=new Set(),runCoins=0,upgradesTaken={};
+const rarityNames=["普通","稀有","史诗","传说"],rarityClass=["common","rare","epic","legendary"];
+const skills=[
+ {id:"rapid",name:"超频射击",desc:"攻击间隔缩短 15%",rarity:0,apply(){fireRate*=.85}},
+ {id:"power",name:"强化弹头",desc:"武器伤害增加 1",rarity:0,apply(){damage+=1}},
+ {id:"vital",name:"纳米修复",desc:"恢复 30 点生命值",rarity:0,apply(){hp=Math.min(maxHp,hp+30)}},
+ {id:"speed",name:"量子推进",desc:"移动速度提升 12%",rarity:0,apply(){moveBoost*=1.12}},
+ {id:"magnet",name:"能量磁场",desc:"自动吸引附近金币与经验",rarity:1,apply(){magnet=190}},
+ {id:"shield",name:"相位护盾",desc:"获得 35 点护盾",rarity:1,apply(){shield+=35}},
+ {id:"double",name:"双联炮",desc:"同时发射两枚弹丸",rarity:1,apply(){owned.add("double")}},
+ {id:"coin",name:"财富协议",desc:"金币获取量增加 35%",rarity:1,apply(){coinBoost*=1.35}},
+ {id:"nova",name:"星爆核心",desc:"冲击波范围增加 35%",rarity:2,apply(){pulseRadius*=1.35}},
+ {id:"drone",name:"守卫无人机",desc:"增加一架自动攻击无人机",rarity:2,apply(){owned.add("drone")}},
+ {id:"regen",name:"生命回路",desc:"每秒恢复 1.5 生命值",rarity:2,apply(){owned.add("regen")}},
+ {id:"legend",name:"超维核心",desc:"伤害、射速和移动速度提升",rarity:3,apply(){damage+=3;fireRate*=.72;moveBoost*=1.2}}
+];
+let pulseRadius=220,pulseCooldown=2500;
+const achievements=[
+ ["first","初次击毁","击毁第一个敌人",()=>kills>=1,40],
+ ["survive","坚持一分钟","生存达到 60 秒",()=>elapsed>=60,80],
+ ["collector","小小收藏家","收集 100 金币",()=>runCoins>=100,60],
+ ["boss","巨型威胁","击败一个 BOSS",()=>bossKills>=1,120],
+ ["level5","持续进化","达到 5 级",()=>level>=5,100],
+ ["combo","清场专家","累计击毁 30 个敌人",()=>kills>=30,100]
+];
+let bossKills=0;
+let drone={x:0,y:0},droneAngle=0,lastDrone=0;
+const live=()=>state==="play"||state==="pause"||state==="upgrade"||state==="shop";
+let meta={bank:0,lv:{}};try{Object.assign(meta,JSON.parse(localStorage.getItem("neonMeta")||"{}"))}catch(e){}
+function saveMeta(){try{localStorage.setItem("neonMeta",JSON.stringify(meta))}catch(e){}}
+function applyMeta(){let L=meta.lv||{};maxHp=100+25*(L.hp||0);hp=maxHp;shield=50*(L.shield||0);damage=1+(L.weapon||0);moveBoost=Math.pow(1.1,L.speed||0);magnet=L.magnet?230:0;coinBoost=Math.pow(1.1,L.coin||0)}
+const shopItems=[
+ {id:"hp",name:"生命扩容",desc:"开局最大生命 +25",cost:60},
+ {id:"shield",name:"能量护盾",desc:"开局获得 50 点护盾",cost:50},
+ {id:"weapon",name:"武器强化",desc:"武器伤害 +1",cost:80,max:3},
+ {id:"speed",name:"推进器升级",desc:"移动速度 +10%",cost:55},
+ {id:"magnet",name:"金币磁铁",desc:"开局自带吸引范围",cost:50,max:1},
+ {id:"coin",name:"财富协议",desc:"金币获取 +10%",cost:45}
+];
+function sound(freq=440,duration=.09,type="sine",vol=.035){if(!audioOn)return;try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();let o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime);g.gain.setValueAtTime(vol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration)}catch(e){}}
+function music(){if(!audioOn||!audioCtx)return;/* 背景氛围由低音合成音循环在游戏事件中触发，避免外部音频依赖 */}
+function toast(t){let el=$("toast");el.textContent=t;el.style.opacity=1;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.opacity=0,1600)}
+function reset(){elapsed=score=kills=coins=runCoins=level=xp=bossKills=0;level=1;xpNeed=100;hp=maxHp=100;shield=0;invuln=0;magnet=0;moveBoost=coinBoost=1;weapon="脉冲核心";weaponLevel=1;fireRate=650;damage=1;pulseRadius=220;owned.clear();upgradesTaken={};enemies=[];bullets=[];particles=[];waves=[];drops=[];trail=[];boss=null;lastSpawn=lastShot=lastPulse=lastBoss=0;player={x:W/2,y:H/2,r:12};drone={x:W/2,y:H/2};droneAngle=0;lastDrone=0;applyMeta();}
+function start(){reset();state="play";canvas.style.cursor="none";$("overlay").style.display="none";last=performance.now();sound(520,.12);sound(780,.12)}
+function show(title,body,buttons=""){ $("panel").innerHTML=`<h1>${title}</h1>${body}${buttons}`;$("overlay").style.display="flex"}
+function menu(){state="menu";let rows=loadScores();show("霓虹几何躲避战","<p class='sub'>超级进化版 · 躲避敌人、收集资源、升级武器，挑战强大的 BOSS。</p><p class='sub'>鼠标 / 触控移动　·　点击或空格释放冲击波　·　P 暂停</p><p class='sub'>包含技能升级、四阶稀有度、隐藏进化、商店、成就与本机排行榜。</p>"+`<p class='sub'>金库：${meta.bank} 金币</p>`+(rows.length?`<p class='sub'>本机最高纪录：${rows[0].score} 分</p>`:""),`<div class="btnrow"><button class="mainbtn" id="startBtn">开始游戏</button><button class="ghost" id="shopMenu">升级商店</button><button class="ghost" id="achMenu">成就与排行榜</button></div>`);$("startBtn").onclick=start;$("shopMenu").onclick=()=>openShop(true);$("achMenu").onclick=showRecords;}
+function loadScores(){try{return JSON.parse(localStorage.getItem("neonScores")||"[]")}catch(e){return []}}
+function saveScore(){let a=loadScores();a.push({score:Math.floor(score),time:Math.floor(elapsed),date:new Date().toLocaleDateString()});a.sort((x,y)=>y.score-x.score);localStorage.setItem("neonScores",JSON.stringify(a.slice(0,5)))}
+function showRecords(){let a=loadScores();let list=a.length?a.map((x,i)=>`<div class="chip">#${i+1}　${x.score} 分　·　${x.time}s　·　${x.date}</div>`).join(""):"<p class='sub'>还没有记录，开始一局创造纪录吧！</p>";let ach=achievements.map(a=>`<div class="chip" style="margin:5px">${achieved.has(a[0])?"🏆":"🔒"} ${a[1]}</div>`).join("");show("成就 · 本机排行榜",`<h3>排行榜 TOP 5</h3><div class="cards">${list}</div><h3>成就进度</h3><div class="cards">${ach}</div>`,`<div class="btnrow"><button class="mainbtn" id="back">返回</button></div>`);$("back").onclick=menu;}
+function openShop(){state="menu";let cards=shopItems.map(it=>{let n=meta.lv[it.id]||0,max=it.max||5,cost=it.cost*(n+1);return `<div class="card" data-buy="${it.id}"><b>${it.name}　·　${n>=max?"已满级":cost+" 金币"}</b><small>${it.desc}（Lv ${n}/${max}）</small></div>`}).join("");show("◆ 能量商店",`<p class="sub">金库：${meta.bank} 金币　·　永久强化，对之后每一局生效。</p><div class="cards">${cards}</div>`,`<div class="btnrow"><button class="mainbtn" id="shopBack">返回</button></div>`);document.querySelectorAll("[data-buy]").forEach(el=>el.onclick=()=>{let it=shopItems.find(x=>x.id===el.dataset.buy),n=meta.lv[it.id]||0,max=it.max||5,cost=it.cost*(n+1);if(n>=max){toast("已满级");return}if(meta.bank<cost){toast("金币不足！");return}meta.bank-=cost;meta.lv[it.id]=n+1;saveMeta();sound(760);toast("购买成功："+it.name);openShop()});$("shopBack").onclick=menu}
+function chooseUpgrade(){state="upgrade";let pool=skills.filter(s=>!((s.id==="double"||s.id==="drone"||s.id==="regen")&&owned.has(s.id)));let picks=[];while(picks.length<3&&pool.length){let total=pool.reduce((n,s)=>n+(s.rarity===3?2:s.rarity===2?5:s.rarity===1?15:30),0),r=Math.random()*total;let s=pool.find(x=>(r-=x.rarity===3?2:x.rarity===2?5:x.rarity===1?15:30)<0);if(!picks.includes(s))picks.push(s);else pool=pool.filter(x=>x!==s)}
+ let cards=picks.map(s=>`<div class="card" data-skill="${s.id}"><span class="rarity ${rarityClass[s.rarity]}">${rarityNames[s.rarity]}</span><b>${s.name}</b><small>${s.desc}</small></div>`).join("");
+ show("✦ 等级提升！",`<p class="sub">选择一项能力继续进化。</p><div class="cards">${cards}</div>`,"");document.querySelectorAll("[data-skill]").forEach(el=>el.onclick=()=>{let s=skills.find(x=>x.id===el.dataset.skill);s.apply();if(["power","rapid","legend"].includes(s.id))weaponLevel++;upgradesTaken[s.id]=(upgradesTaken[s.id]||0)+1;state="play";$("overlay").style.display="none";toast("获得能力："+s.name);sound(900,.18);checkEvolution()});}
+function checkEvolution(){if(weaponLevel>=3&&owned.has("double")&&owned.has("drone")&&!owned.has("evolved")){owned.add("evolved");weapon="超新星风暴";damage+=4;pulseRadius*=1.4;toast("★ 隐藏进化解锁：超新星风暴！");sound(1200,.35,"sawtooth")}}
+function gainXP(n){xp+=n;while(xp>=xpNeed){xp-=xpNeed;level++;xpNeed=Math.floor(xpNeed*1.32);chooseUpgrade();break}}
+function drop(x,y,type){drops.push({x,y,type,r:7,life:900})}
+function spawnEnemy(){let side=Math.floor(rand(0,4)),x=side===0?rand(0,W):side===1?W+25:side===2?rand(0,W):-25,y=side===0?-25:side===1?rand(0,H):side===2?H+25:rand(0,H);let a=Math.atan2(player.y-y,player.x-x),sp=rand(1.3,2.6)+elapsed*.018;enemies.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:rand(13,25),sides:Math.floor(rand(3,7)),rot:rand(0,6),spin:rand(-.04,.04),h:rand(170,330),hp:1+Math.floor(elapsed/35),boss:false})}
+function spawnBoss(){let a=rand(0,Math.PI*2),x=W/2+Math.cos(a)*Math.max(W,H)*.65,y=H/2+Math.sin(a)*Math.max(W,H)*.65;boss={x,y,r:48,hp:55+elapsed*1.4,max:55+elapsed*1.4,shot:0,phase:0};lastBoss=elapsed;toast("⚠ BOSS 入侵！");sound(110,.5,"sawtooth",.07)}
+function nearestTarget(p){let b=null,bd=1e9;for(let e of enemies){let d=dist(e,p);if(d<bd){bd=d;b=e}}if(boss&&dist(boss,p)<bd)b=boss;return b}
+function aimAngle(){let t=nearestTarget(player);return t?Math.atan2(t.y-player.y,t.x-player.x):Math.atan2(pointer.y-player.y,pointer.x-player.x)}
+function fire(){let now=performance.now();if(now-lastShot<fireRate)return;lastShot=now;let angles=owned.has("double")?[-.12,.12]:[0];if(weapon==="超新星风暴")angles=[-.25,0,.25];let base=aimAngle();for(let o of angles){let a=base+o;bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*7,vy:Math.sin(a)*7,life:90,damage});}sound(520,.045,"triangle",.012)}
+function firePulse(){if(state!=="play"||performance.now()-lastPulse<pulseCooldown)return;lastPulse=performance.now();waves.push({x:player.x,y:player.y,r:10,life:1});for(let i=enemies.length-1;i>=0;i--){let e=enemies[i];if(dist(e,player)<pulseRadius+e.r){killEnemy(i)}}if(boss&&dist(boss,player)<pulseRadius+boss.r){boss.hp-=18;toast("冲击波命中 BOSS！")}sound(180,.28,"sawtooth",.055)}
+function killEnemy(i){let e=enemies[i];if(!e)return;enemies.splice(i,1);kills++;score+=50;coins+=Math.ceil(2*coinBoost);runCoins+=Math.ceil(2*coinBoost);drop(e.x,e.y,"coin");drop(e.x+rand(-10,10),e.y+rand(-10,10),"xp");explode(e.x,e.y,e.h,13);sound(220,.06,"square",.018)}
+function explode(x,y,h,n){for(let i=0;i<n;i++){let a=rand(0,Math.PI*2),s=rand(1,5);particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(20,45),h})}}
+function hurt(n){if(invuln>0)return;if(shield>0){let used=Math.min(shield,n);shield-=used;n-=used}if(n>0)hp-=n;invuln=650;shake=10;sound(100,.18,"sawtooth",.06);if(hp<=0)endGame()}
+function endGame(){if(state==="over")return;hp=0;state="over";meta.bank+=coins;saveMeta();saveScore();show("任务结束",`<p class="sub">最终得分：<b>${Math.floor(score)}</b>　·　生存：${Math.floor(elapsed)} 秒</p><p class="sub">击毁：${kills}　·　收集金币：${runCoins}　·　等级：${level}</p><p class="sub">纪录已保存；本局 ${coins} 金币已存入金库（共 ${meta.bank}）。</p>`,`<div class="btnrow"><button class="mainbtn" id="again">再玩一次</button><button class="ghost" id="shopOver">升级商店</button><button class="ghost" id="records">排行榜</button><button class="ghost" id="home">主菜单</button></div>`);$("again").onclick=start;$("records").onclick=showRecords;$("shopOver").onclick=()=>openShop();$("home").onclick=menu;cursorOn()}
+function cursorOn(){canvas.style.cursor="default"}
+let pointer={x:W/2,y:H/2};
+canvas.addEventListener("pointermove",e=>{let r=canvas.getBoundingClientRect();pointer.x=e.clientX-r.left;pointer.y=e.clientY-r.top});
+canvas.addEventListener("pointerdown",()=>{if(state==="play")firePulse();else if(state==="menu"){}});
+$("pulseBtn").onclick=firePulse;$("sound").onclick=()=>{audioOn=!audioOn;$("sound").textContent=audioOn?"♫ 音效：开":"♫ 音效：关";if(audioOn)sound(700)};
+addEventListener("keydown",e=>{if(e.code==="Space"){e.preventDefault();firePulse()}if(e.key.toLowerCase()==="p"&&state==="play"){state="pause";show("暂停中","<p class='sub'>游戏已暂停。</p>",'<div class="btnrow"><button class="mainbtn" id="resume">继续游戏</button><button class="ghost" id="quit">结束本局</button></div>');$("resume").onclick=()=>{state="play";$("overlay").style.display="none";last=performance.now()};$("quit").onclick=endGame}});
+function update(dt){if(state!=="play")return;let step=Math.min(dt,32);elapsed+=step/1000;score+=step*.08;
+ let dx=pointer.x-player.x,dy=pointer.y-player.y,d=Math.hypot(dx,dy)||1;player.x+=dx*.17*moveBoost;player.y+=dy*.17*moveBoost;player.x=clamp(player.x,12,W-12);player.y=clamp(player.y,12,H-12);
+ trail.push({x:player.x,y:player.y});if(trail.length>24)trail.shift();
+ if(elapsed-lastSpawn>Math.max(.22,1.05-elapsed*.006)){lastSpawn=elapsed;spawnEnemy()}
+ if(elapsed>20&&elapsed-lastBoss>48&&!boss)spawnBoss();
+ if(owned.has("regen"))hp=Math.min(maxHp,hp+.0015*step);
+ if(owned.has("drone")){droneAngle+=step*.004;drone.x=player.x+Math.cos(droneAngle)*38;drone.y=player.y+Math.sin(droneAngle)*38;let nd=performance.now();if(nd-lastDrone>700){let t=nearestTarget(drone);if(t){lastDrone=nd;let a=Math.atan2(t.y-drone.y,t.x-drone.x);bullets.push({x:drone.x,y:drone.y,vx:Math.cos(a)*7,vy:Math.sin(a)*7,life:90,damage:Math.max(1,Math.ceil(damage/2))})}}}
+ fire();
+ for(let i=enemies.length-1;i>=0;i--){let e=enemies[i];e.x+=e.vx*step/16;e.y+=e.vy*step/16;e.rot+=e.spin*step/16;if(dist(e,player)<e.r+player.r){explode(e.x,e.y,e.h,14);enemies.splice(i,1);hurt(13);continue}if(e.x<-150||e.x>W+150||e.y<-150||e.y>H+150)enemies.splice(i,1)}
+ for(let b of bullets){b.x+=b.vx*step/16;b.y+=b.vy*step/16;b.life-=step/16}
+ bullets=bullets.filter(b=>b.life>0&&b.x>-20&&b.x<W+20&&b.y>-20&&b.y<H+20);
+ for(let i=bullets.length-1;i>=0;i--){let b=bullets[i],hit=false;for(let j=enemies.length-1;j>=0;j--){let e=enemies[j];if(dist(b,e)<e.r+4){e.hp-=b.damage;explode(b.x,b.y,e.h,3);hit=true;if(e.hp<=0)killEnemy(j);break}}if(!hit&&boss&&dist(b,boss)<boss.r){boss.hp-=b.damage;hit=true}if(hit)bullets.splice(i,1)}
+ if(boss){let a=Math.atan2(player.y-boss.y,player.x-boss.x),sp=1.05;boss.x+=Math.cos(a)*sp*step/16;boss.y+=Math.sin(a)*sp*step/16;boss.phase+=step; if(boss.phase>1600){boss.phase=0;for(let k=0;k<9;k++){let q=k*Math.PI*2/9;enemies.push({x:boss.x,y:boss.y,vx:Math.cos(q)*2.4,vy:Math.sin(q)*2.4,r:10,sides:4,rot:0,spin:.04,h:300,hp:1})}}if(dist(boss,player)<boss.r+player.r)hurt(22);if(boss.hp<=0){explode(boss.x,boss.y,45,70);coins+=Math.ceil(35*coinBoost);runCoins+=35;score+=1000;boss=null;bossKills++;drop(player.x,player.y,"heal");toast("BOSS 击败！奖励已发放");sound(900,.4,"triangle",.06)}}
+ for(let i=drops.length-1;i>=0;i--){let p=drops[i];p.life-=step;if(magnet&&dist(p,player)<magnet){p.x+=(player.x-p.x)*.12;p.y+=(player.y-p.y)*.12}if(dist(p,player)<p.r+player.r+5){if(p.type==="coin"){coins+=Math.ceil(5*coinBoost);runCoins+=Math.ceil(5*coinBoost);score+=15;sound(880,.05)}else if(p.type==="xp")gainXP(25);else hp=Math.min(maxHp,hp+25);drops.splice(i,1)}else if(p.life<=0)drops.splice(i,1)}
+ for(let w of waves){w.r+=(pulseRadius-w.r)*.22+2;w.life-=.045}waves=waves.filter(w=>w.life>0);
+ for(let p of particles){p.x+=p.vx;p.y+=p.vy;p.vx*=.96;p.vy*=.96;p.life--}particles=particles.filter(p=>p.life>0);
+ invuln=Math.max(0,invuln-step);shake*=.88;
+ for(let a of achievements){if(!achieved.has(a[0])&&a[3]()){achieved.add(a[0]);coins+=a[4];runCoins+=a[4];toast("🏆 成就解锁："+a[1]+"（+"+a[4]+" 金币）");sound(1000,.22)}}
+ if(kills>0&&level>=3&&upgradesTaken.power>=2)checkEvolution();
+ updateHUD();
+}
+function updateHUD(){$("hpText").textContent=Math.ceil(hp)+"/"+maxHp+(shield>0?" +"+Math.ceil(shield)+"护盾":"");$("health").style.width=clamp(hp/maxHp*100,0,100)+"%";$("level").textContent=level;$("xp").style.width=xp/xpNeed*100+"%";$("score").textContent=Math.floor(score);$("coins").textContent=coins;$("kills").textContent=kills;$("time").textContent=Math.floor(elapsed);$("weaponLabel").textContent=weapon;let cd=clamp((performance.now()-lastPulse)/pulseCooldown,0,1);$("pulseBtn").style.opacity=.45+.55*cd;$("pulseBtn").textContent=cd>=1?"◉ 冲击波 [空格]":"◉ 冷却 "+Math.ceil((1-cd)*pulseCooldown/1000)+"s"}
+function draw(){ctx.clearRect(0,0,W,H);ctx.fillStyle="#050611";ctx.fillRect(0,0,W,H);
+ // grid and stars
+ ctx.save();ctx.strokeStyle="rgba(65,130,180,.12)";ctx.lineWidth=1;for(let x=0;x<W;x+=55){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=55){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}ctx.restore();
+ ctx.save();if(shake>1)ctx.translate(rand(-shake,shake),rand(-shake,shake));
+ trail.forEach((p,i)=>{ctx.globalAlpha=i/trail.length*.35;ctx.fillStyle="#48eaff";ctx.beginPath();ctx.arc(p.x,p.y,2+i/12,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1;
+ for(let p of particles){ctx.globalAlpha=p.life/45;ctx.fillStyle=`hsl(${p.h},100%,65%)`;ctx.shadowBlur=12;ctx.shadowColor=ctx.fillStyle;ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,7);ctx.fill()}ctx.globalAlpha=1;ctx.shadowBlur=0;
+ for(let e of enemies){ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.rot);ctx.strokeStyle=`hsl(${e.h},100%,65%)`;ctx.fillStyle=`hsla(${e.h},100%,55%,.12)`;ctx.lineWidth=2.5;ctx.shadowBlur=18;ctx.shadowColor=ctx.strokeStyle;ctx.beginPath();for(let i=0;i<e.sides;i++){let a=i*Math.PI*2/e.sides;i?ctx.lineTo(Math.cos(a)*e.r,Math.sin(a)*e.r):ctx.moveTo(Math.cos(a)*e.r,Math.sin(a)*e.r)}ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
+ for(let b of bullets){ctx.fillStyle="#a4fbff";ctx.shadowBlur=14;ctx.shadowColor="#4af5ff";ctx.beginPath();ctx.arc(b.x,b.y,4,0,7);ctx.fill()}ctx.shadowBlur=0;
+ for(let p of drops){ctx.fillStyle=p.type==="coin"?"#ffd166":p.type==="xp"?"#5cf5ff":"#7dff9d";ctx.shadowBlur=15;ctx.shadowColor=ctx.fillStyle;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill()}ctx.shadowBlur=0;
+ for(let w of waves){ctx.globalAlpha=w.life;ctx.strokeStyle="#75f7ff";ctx.lineWidth=3;ctx.shadowBlur=18;ctx.shadowColor="#55eeff";ctx.beginPath();ctx.arc(w.x,w.y,w.r,0,7);ctx.stroke()}ctx.globalAlpha=1;ctx.shadowBlur=0;
+ if(boss){ctx.save();ctx.translate(boss.x,boss.y);ctx.rotate(elapsed);ctx.strokeStyle="#ff4fd8";ctx.fillStyle="#ff4fd822";ctx.lineWidth=4;ctx.shadowBlur=28;ctx.shadowColor="#ff38cb";ctx.beginPath();for(let i=0;i<8;i++){let a=i*Math.PI/4;ctx.lineTo(Math.cos(a)*boss.r,Math.sin(a)*boss.r)}ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();ctx.fillStyle="#32102d";ctx.fillRect(W/2-110,18,220,8);ctx.fillStyle="#ff4fd8";ctx.fillRect(W/2-110,18,220*boss.hp/boss.max,8);ctx.fillStyle="#ffd5f5";ctx.font="12px sans-serif";ctx.textAlign="center";ctx.fillText("BOSS",W/2,14)}
+ // player
+ if(owned.has("drone")&&live()){ctx.fillStyle="#ffd166";ctx.shadowBlur=14;ctx.shadowColor="#ffd166";ctx.beginPath();ctx.arc(drone.x,drone.y,5,0,7);ctx.fill();ctx.shadowBlur=0}
+ if(player&&live()&&(!invuln||Math.floor(performance.now()/90)%2===0)){ctx.save();ctx.translate(player.x,player.y);let a=Math.atan2(pointer.y-player.y,pointer.x-player.x);ctx.rotate(a);ctx.strokeStyle="#68f5ff";ctx.fillStyle="#4beaff44";ctx.lineWidth=2.5;ctx.shadowBlur=25;ctx.shadowColor="#2deaff";ctx.beginPath();ctx.moveTo(17,0);ctx.lineTo(-12,-11);ctx.lineTo(-7,0);ctx.lineTo(-12,11);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
+ ctx.restore();
+}
+function loop(t){let dt=t-last;last=t;update(dt||16);draw();requestAnimationFrame(loop)}
+menu();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

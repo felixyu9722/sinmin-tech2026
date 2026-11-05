@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>打字冒险 · 魔法城堡保卫战</title>
+<style>
+  /* ===================== CSS：界面样式 ===================== */
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #050818;
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; color: #dff; }
+  canvas { position: fixed; inset: 0; display: block; }
+
+  /* 顶部数据栏 */
+  #hud { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between;
+    padding: 14px 28px; font-size: clamp(15px, 2vw, 28px); pointer-events: none;
+    text-shadow: 0 0 10px #7af; z-index: 3; }
+  #hud b { color: #ffe27a; }
+
+  /* 左上角小按钮：暂停 / 静音 */
+  #ctrl { position: fixed; top: 64px; left: 20px; z-index: 4; display: flex; gap: 8px; }
+  #ctrl button { font-size: 18px; padding: 6px 12px; border-radius: 10px; box-shadow: none; }
+
+  /* 输入框 */
+  #inputWrap { position: fixed; bottom: 4vh; left: 50%; transform: translateX(-50%); z-index: 4; }
+  #typed { width: min(70vw, 460px); padding: 12px 18px; font-size: clamp(20px, 2.6vw, 34px);
+    text-align: center; color: #fff; background: rgba(20, 20, 60, .75); border: 2px solid #8af;
+    border-radius: 14px; outline: none; box-shadow: 0 0 18px #58f; letter-spacing: 2px; }
+  #typed:focus { border-color: #ffe27a; box-shadow: 0 0 26px #ffd75a; }
+  #typed.wrong { animation: shake .25s; border-color: #f55; box-shadow: 0 0 26px #f33; }
+  @keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+  /* 开始 / 暂停 / 过关 / 结束 界面 */
+  #overlay { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; background: rgba(5, 8, 24, .86);
+    text-align: center; overflow-y: auto; padding: 16px; box-sizing: border-box; }
+  #overlay h1 { font-size: clamp(32px, 6vw, 72px); margin: 0 0 6px; color: #ffe27a;
+    text-shadow: 0 0 20px #ffb700, 0 0 50px #a6f; }
+  #overlay p { font-size: clamp(15px, 1.8vw, 24px); margin: 6px 0; color: #bcd; max-width: 900px; }
+  #stars { font-size: clamp(36px, 6vw, 70px); color: #ffd23f; text-shadow: 0 0 18px #ffb700; letter-spacing: 8px; }
+  #tips { font-size: clamp(13px, 1.4vw, 19px) !important; line-height: 1.8; color: #9bd !important; }
+  .btns { display: flex; gap: 14px; margin-top: 18px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  button { font-size: clamp(16px, 2vw, 26px); padding: 12px 28px; border: 2px solid #8af;
+    background: linear-gradient(#3a3a9a, #20206a); color: #fff; border-radius: 14px; cursor: pointer;
+    box-shadow: 0 0 16px #58f; transition: transform .15s; }
+  button:hover { transform: scale(1.06); }
+  button.on { border-color: #ffe27a; box-shadow: 0 0 22px #ffd75a; }
+  button.small { font-size: clamp(14px, 1.6vw, 20px); padding: 8px 20px; }
+  select { font-size: clamp(15px, 1.8vw, 22px); padding: 8px 14px; border-radius: 10px;
+    background: #20206a; color: #fff; border: 2px solid #8af; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <div>得分 <b id="sScore">0</b></div>
+  <div>WPM <b id="sWpm">0</b></div>
+  <div>关卡 <b id="sStage">1</b>/10</div>
+  <div>连击 <b id="sCombo">0</b></div>
+</div>
+
+<div id="ctrl">
+  <button id="pauseBtn" class="small" title="暂停 (Esc)">⏸</button>
+  <button id="muteBtn" class="small" title="静音">🔊</button>
+</div>
+
+<div id="inputWrap">
+  <input id="typed" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+         placeholder="输入单词，回车发射魔法" disabled>
+</div>
+
+<div id="overlay">
+  <h1 id="title">打字冒险</h1>
+  <p id="sub"></p>
+  <div id="stars" class="hidden"></div>
+  <p id="result"></p>
+
+  <div id="diffRow" class="btns">
+    <button id="dEasy"   class="small" title="速度慢、城堡血量多、打错不扣血、奖励多">简单</button>
+    <button id="dNormal" class="small" title="标准体验">普通</button>
+    <button id="dHard"   class="small" title="速度快、城堡血量少、打错扣血、诅咒多">困难</button>
+  </div>
+  <div id="stageRow" class="btns" style="margin-top:10px">
+    <label for="stageSel">起始关卡：</label><select id="stageSel"></select>
+  </div>
+
+  <div class="btns">
+    <button id="mainBtn">开始冒险</button>
+    <button id="menuBtn" class="small hidden">返回主菜单</button>
+  </div>
+  <p id="best"></p>
+  <p id="tips">
+    ⭐ 金色单词：三倍得分 ｜ ❄ 冰冻：全部单词停 4 秒 ｜ 💣 炸弹：清掉屏幕上的普通单词<br>
+    ❤ 回血 +20 ｜ 🛡 护盾：抵挡一次落地伤害 ｜ ☠ 诅咒：落地伤害翻倍，并让单词狂暴 5 秒<br>
+    打错会清空连击（普通/困难还会扣血）｜ 连击每 10 次回血 +5，每 25 次送 1 个护盾 ｜ 第 5、10 关有 BOSS ｜ Esc 暂停
+  </p>
+</div>
+
+<script>
+/* ============================================================
+   1. 游戏数据：单词库、难度、关卡设置
+   ============================================================ */
+
+// 英语七年级词汇（全部小写；想加词直接往数组里添加即可）
+const POOL = [
+  // 3 个字母
+  "cat","dog","sun","map","pen","bag","box","cup","hat","red","sky","egg","ice","joy","kid","leg","net","owl","pig","run","tea","toy","van","web","zoo",
+  // 4 个字母
+  "book","desk","moon","star","bird","cake","fish","game","home","jump","king","lake","milk","nice","park","rain","song","tree","wind","farm","gold","hand",
+  // 5 个字母
+  "apple","bread","water","green","happy","music","clock","table","river","horse","smile","heart","light","plant","dream","bring","story","night","cloud",
+  // 6 个字母
+  "friend","school","family","flower","garden","summer","winter","orange","yellow","window","planet","people","spring","bridge","market","monkey","sunset",
+  // 7 个字母
+  "teacher","student","morning","evening","weekend","library","holiday","kitchen","picture","weather","journey","mystery","freedom","problem",
+  // 8 个字母
+  "birthday","football","festival","computer","mountain","umbrella","treasure","survival","princess","dinosaur","homework","exercise","hospital",
+  // 9 个字母
+  "breakfast","adventure","beautiful","classroom","chocolate","wonderful","interested","telephone","champion","vegetable",
+  // 10 个字母及以上
+  "basketball","playground","friendship","dictionary","restaurant","excellent","difficult","experience","temperature","imagination","environment","information"
+];
+// BOSS 专用超长单词
+const BOSSES = ["extraordinary", "communication", "international", "responsibility", "unforgettable"];
+
+// 三档难度
+const DIFFS = {
+  easy:   { name: "简单", speed: 0.75, hp: 150, dmg: 15, typo: 0, len: -1, item: 0.20, curse: 0.04, spawn: 1.25, mult: 1   },
+  normal: { name: "普通", speed: 1.00, hp: 100, dmg: 20, typo: 2, len:  0, item: 0.14, curse: 0.08, spawn: 1.00, mult: 1.5 },
+  hard:   { name: "困难", speed: 1.30, hp:  70, dmg: 25, typo: 4, len:  1, item: 0.10, curse: 0.13, spawn: 0.85, mult: 2   }
+};
+const TOTAL_STAGES = 10;                 // 共 10 关
+const BOSS_STAGES = [5, 10];             // 第 5、10 关有 BOSS
+const stageTarget = s => 8 + 2 * s;      // 第 s 关需要击破的单词数：10, 12, … 28
+
+// 特殊单词类型：icon 图标，hue 光晕颜色
+const TYPES = {
+  normal: { icon: "",   hue: null },
+  gold:   { icon: "⭐", hue: 48  },   // 奖励：三倍得分
+  freeze: { icon: "❄", hue: 195 },   // 奖励：冰冻全场
+  bomb:   { icon: "💣", hue: 25  },   // 奖励：清屏
+  heal:   { icon: "❤", hue: 350 },   // 奖励：回血
+  shield: { icon: "🛡", hue: 215 },   // 奖励：护盾
+  curse:  { icon: "☠", hue: 285 },   // 惩罚：落地伤害翻倍 + 狂暴
+  boss:   { icon: "🐉", hue: 0   }    // BOSS
+};
+
+/* ============================================================
+   2. 画布与全局状态
+   ============================================================ */
+const cvs = document.getElementById('c');
+const ctx = cvs.getContext('2d');
+let W = 0, H = 0, DPR = 1, SCALE = 1;
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cvs.width = W * DPR; cvs.height = H * DPR;
+  cvs.style.width = W + 'px'; cvs.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  SCALE = Math.max(0.6, Math.min(W / 1280, H / 720));   // 随屏幕大小缩放字号和速度
+  buildStars();
+}
+window.addEventListener('resize', resize);
+
+// 本地存储（用 try 包起来，避免隐私模式下报错）
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+let diffKey = lsGet('ta_diff', 'normal');
+if (!DIFFS[diffKey]) diffKey = 'normal';
+let D = DIFFS[diffKey];                        // 当前难度设置
+let unlocked = Math.min(TOTAL_STAGES, Math.max(1, parseInt(lsGet('ta_unlocked', '1')) || 1));
+
+let state = 'menu';       // menu 菜单 / playing 游戏中 / paused 暂停 / clear 过关 / over 失败 / win 通关
+let words = [], particles = [], floaters = [], stars = [];
+let hp = D.hp, maxHp = D.hp;
+let score = 0, combo = 0, maxCombo = 0;
+let stage = 1, runStart = 1;
+let toSpawn = 0, bossPending = false, resolved = 0, spawnTimer = 0, introT = 0;
+let stageStartHp = 0, totalStars = 0;
+let correctWords = 0, attempts = 0, hits = 0, playTime = 0;
+let freezeT = 0, rageT = 0, shield = 0;        // 冰冻剩余秒数 / 狂暴剩余秒数 / 护盾数量
+let shake = 0, hurtFlash = 0, lastTime = 0, fireT = 0;
+let banner = { text: '', sub: '', t: 0, max: 1 };
+let muted = false;
+
+/* ============================================================
+   3. 音效：用 Web Audio 生成，不需要音频文件
+   ============================================================ */
+let audio;
+function beep(freq, dur, type = 'sine', vol = 0.08) {
+  if (muted) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + dur);
+    o.connect(g); g.connect(audio.destination);
+    o.start(); o.stop(audio.currentTime + dur);
+  } catch (e) { /* 浏览器不支持就忽略 */ }
+}
+function jingle(notes) { notes.forEach((f, i) => setTimeout(() => beep(f, 0.18, 'triangle', 0.09), i * 120)); }
+
+/* ============================================================
+   4. 背景：星空、月亮、极光
+   ============================================================ */
+function buildStars() {
+  stars = [];
+  const n = Math.floor(W * H / 9000);
+  for (let i = 0; i < n; i++) {
+    stars.push({ x: Math.random() * W, y: Math.random() * H * 0.8,
+      r: Math.random() * 1.6 + 0.3, p: Math.random() * 6.28, s: Math.random() * 2 + 1 });
+  }
+}
+
+function drawBackground(t) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#04051a'); g.addColorStop(0.55, '#14124a'); g.addColorStop(1, '#3a1d5e');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  for (const s of stars) {                                  // 闪烁的星星
+    ctx.globalAlpha = Math.max(0.1, 0.45 + 0.55 * Math.sin(t * s.s + s.p));
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  const mx = W * 0.85, my = H * 0.2, mr = 40 * SCALE;       // 月亮与光晕
+  const mg = ctx.createRadialGradient(mx, my, mr * 0.5, mx, my, mr * 4);
+  mg.addColorStop(0, 'rgba(255,240,180,.45)'); mg.addColorStop(1, 'rgba(255,240,180,0)');
+  ctx.fillStyle = mg; ctx.fillRect(mx - mr * 4, my - mr * 4, mr * 8, mr * 8);
+  ctx.fillStyle = '#fff4c8';
+  ctx.beginPath(); ctx.arc(mx, my, mr, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(210,195,140,.5)';
+  ctx.beginPath(); ctx.arc(mx - mr * .3, my - mr * .2, mr * .2, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(mx + mr * .3, my + mr * .3, mr * .14, 0, 7); ctx.fill();
+
+  for (let i = 0; i < 3; i++) {                             // 缓缓流动的魔法极光
+    const y = H * (0.25 + i * 0.1) + Math.sin(t * 0.5 + i) * 20;
+    const ag = ctx.createLinearGradient(0, y - 50, 0, y + 50);
+    const col = ['120,80,255', '60,200,255', '200,90,255'][i];
+    ag.addColorStop(0, `rgba(${col},0)`); ag.addColorStop(0.5, `rgba(${col},.10)`); ag.addColorStop(1, `rgba(${col},0)`);
+    ctx.fillStyle = ag; ctx.fillRect(0, y - 50, W, 100);
+  }
+}
+
+/* ============================================================
+   5. 城堡：剪影 + 发光窗户（血量越低越暗）+ 魔法护盾
+   ============================================================ */
+function castleHeight() { return Math.max(110, H * 0.2); }
+
+function drawCastle(t) {
+  const ch = castleHeight(), top = H - ch;
+  ctx.fillStyle = '#0a0a1c';
+  ctx.beginPath(); ctx.moveTo(0, H);                        // 远处山丘
+  for (let x = 0; x <= W; x += 20) ctx.lineTo(x, top + ch * 0.45 + Math.sin(x * 0.01) * 14);
+  ctx.lineTo(W, H); ctx.fill();
+
+  const cx = W / 2, bw = Math.min(W * 0.7, 900), left = cx - bw / 2;
+  ctx.fillStyle = '#080816';
+  ctx.fillRect(left, top + ch * 0.4, bw, ch * 0.6);         // 城墙
+  const towers = [[0.02, 0.18, 0.75], [0.3, 0.14, 0.6], [0.43, 0.14, 0.95], [0.56, 0.14, 0.6], [0.8, 0.18, 0.75]];
+  for (const [px, pw, ph] of towers) {                      // 塔楼与尖顶
+    const tx = left + bw * px, tw = bw * pw, th = ch * ph, ty = H - th;
+    ctx.fillRect(tx, ty, tw, th);
+    ctx.beginPath(); ctx.moveTo(tx - tw * .1, ty); ctx.lineTo(tx + tw / 2, ty - tw * .9); ctx.lineTo(tx + tw * 1.1, ty); ctx.fill();
+  }
+  for (let x = left; x < left + bw; x += 26) ctx.fillRect(x, top + ch * 0.4 - 10, 14, 10);   // 垛口
+
+  const lit = Math.ceil(Math.max(0, hp) / maxHp * 8);       // 血量越低，亮着的窗户越少
+  for (let i = 0; i < 8; i++) {
+    const wx = left + bw * (0.08 + i * 0.12), wy = H - ch * (0.3 + (i % 3) * 0.17), on = i < lit;
+    ctx.fillStyle = on ? `rgba(255,${190 + 30 * Math.sin(t * 3 + i)},80,.95)` : 'rgba(60,40,60,.8)';
+    ctx.shadowColor = '#ffb040'; ctx.shadowBlur = on ? 14 : 0;
+    ctx.fillRect(wx, wy, 10 * SCALE + 4, 18 * SCALE + 4);
+  }
+  ctx.shadowBlur = 0;
+
+  // 魔法护盾光带：有护盾时更亮、偏金色
+  const sh = shield > 0;
+  ctx.globalAlpha = (sh ? 0.7 : 0.25 + 0.35 * (hp / maxHp)) + 0.05 * Math.sin(t * 4);
+  const sg = ctx.createLinearGradient(0, top - 10, 0, top + 30);
+  sg.addColorStop(0, sh ? 'rgba(255,220,120,0)' : 'rgba(120,200,255,0)');
+  sg.addColorStop(1, sh ? 'rgba(255,220,120,.7)' : 'rgba(120,200,255,.6)');
+  ctx.fillStyle = sg; ctx.fillRect(0, top - 10, W, 40);
+  ctx.globalAlpha = 1;
+}
+
+/* 血量条 + 关卡进度条 + 状态提示 */
+function drawBars() {
+  const bw = Math.min(W * 0.5, 520), bx = (W - bw) / 2, by = 58 * Math.max(0.8, SCALE);
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(bx, by, bw, 16);
+  const ratio = Math.max(0, hp / maxHp);
+  ctx.fillStyle = ratio > .5 ? '#5f8' : ratio > .25 ? '#fc4' : '#f54';
+  ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 12;
+  ctx.fillRect(bx, by, bw * ratio, 16); ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#9bf'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, 16);
+
+  const target = stageTarget(stage), pr = Math.min(1, resolved / target);   // 本关进度
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(bx, by + 24, bw, 8);
+  ctx.fillStyle = '#9d7bff'; ctx.fillRect(bx, by + 24, bw * pr, 8);
+
+  ctx.fillStyle = '#dff'; ctx.font = `${14 * Math.max(.9, SCALE)}px sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  let txt = `城堡 ${Math.max(0, Math.ceil(hp))}/${maxHp}   本关 ${Math.min(resolved, target)}/${target}`;
+  if (shield > 0) txt += `   🛡×${shield}`;
+  if (freezeT > 0) txt += `   ❄ ${freezeT.toFixed(1)}s`;
+  if (rageT > 0) txt += `   🔥狂暴 ${rageT.toFixed(1)}s`;
+  ctx.fillText(txt, W / 2, by + 52);
+}
+
+/* ============================================================
+   6. 单词：生成 / 绘制
+   ============================================================ */
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// 按关卡和难度决定单词长度：关卡越高，单词越长
+function pickWord() {
+  const minLen = clamp(3 + Math.floor((stage - 1) / 2) + D.len, 3, 8);
+  const maxLen = clamp(5 + stage + D.len, minLen + 1, 11);
+  const free = w => !words.some(o => o.text === w);
+  let c = POOL.filter(w => w.length >= minLen && w.length <= maxLen && free(w));
+  if (!c.length) c = POOL.filter(free);
+  if (!c.length) c = POOL;
+  return c[Math.floor(Math.random() * c.length)];
+}
+
+// 随机决定这个单词的类型（奖励 / 惩罚 / 普通）
+function rollType() {
+  const r = Math.random();
+  if (r < D.item) {
+    const x = Math.random();                     // 奖励权重：金 35%、回血 20%、冰冻 20%、护盾 15%、炸弹 10%
+    return x < .35 ? 'gold' : x < .55 ? 'heal' : x < .75 ? 'freeze' : x < .90 ? 'shield' : 'bomb';
+  }
+  if (stage >= 3 && r < D.item + D.curse) return 'curse';
+  return 'normal';
+}
+
+function makeWord(text, type, x, fs, speed) {
+  const info = TYPES[type];
+  ctx.font = `bold ${fs}px "Segoe UI", sans-serif`;
+  const textW = ctx.measureText(text).width;
+  const iconW = info.icon ? ctx.measureText(info.icon).width : 0;
+  const totalW = textW + (info.icon ? iconW + 8 : 0);
+  const hue = info.hue === null ? Math.floor(Math.random() * 360) : info.hue;
+  return { text, type, x: x === null ? 40 + totalW / 2 + Math.random() * Math.max(1, W - 80 - totalW) : x,
+    y: -20, speed, fs, hue, icon: info.icon, textW, iconW, totalW,
+    boss: type === 'boss', dmgMul: type === 'boss' ? 3 : type === 'curse' ? 2 : 1 };
+}
+
+function spawnWord() {
+  const type = rollType();
+  const speed = (34 + stage * 7 + Math.random() * 12) * D.speed * SCALE;   // 像素/秒
+  words.push(makeWord(pickWord(), type, null, 26 * SCALE, speed));
+}
+
+function spawnBoss() {
+  const text = BOSSES[Math.floor(Math.random() * BOSSES.length)];
+  const speed = (20 + stage * 2) * D.speed * SCALE;
+  words.push(makeWord(text, 'boss', W / 2, 30 * SCALE, speed));
+  setBanner('⚠ BOSS 来袭！', '输入这个超长单词击败它，落地伤害 ×3', 2.2);
+  beep(80, 0.5, 'sawtooth', 0.1);
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+function drawWords(typed) {
+  ctx.textBaseline = 'middle';
+  for (const w of words) {
+    ctx.font = `bold ${w.fs}px "Segoe UI", sans-serif`;
+    const bw = w.totalW + 30, bh = w.fs + 16;
+    // 魔法光晕
+    const g = ctx.createRadialGradient(w.x, w.y, 4, w.x, w.y, bw * 0.8);
+    g.addColorStop(0, `hsla(${w.hue},90%,65%,.55)`); g.addColorStop(1, `hsla(${w.hue},90%,60%,0)`);
+    ctx.fillStyle = g; ctx.fillRect(w.x - bw, w.y - bw * 0.8, bw * 2, bw * 1.6);
+    // 药丸形外框：诅咒是暗紫色，冰冻时变冰蓝
+    ctx.fillStyle = w.type === 'curse' ? 'rgba(40,0,60,.88)' : 'rgba(15,10,50,.78)';
+    ctx.strokeStyle = freezeT > 0 ? '#bdf' : `hsl(${w.hue},90%,70%)`;
+    ctx.lineWidth = w.boss ? 4 : 2;
+    ctx.shadowColor = `hsl(${w.hue},100%,65%)`; ctx.shadowBlur = w.type === 'gold' || w.boss ? 26 : 16;
+    roundRect(w.x - bw / 2, w.y - bh / 2, bw, bh, bh / 2); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // 图标 + 文字（已输入正确的前缀显示为金色）
+    ctx.textAlign = 'left';
+    let tx = w.x - w.totalW / 2;
+    if (w.icon) { ctx.fillStyle = '#fff'; ctx.fillText(w.icon, tx, w.y + 1); tx += w.iconW + 8; }
+    if (typed && w.text.startsWith(typed)) {
+      const pre = w.text.slice(0, typed.length);
+      ctx.fillStyle = '#ffe27a'; ctx.fillText(pre, tx, w.y + 1);
+      ctx.fillStyle = '#fff'; ctx.fillText(w.text.slice(typed.length), tx + ctx.measureText(pre).width, w.y + 1);
+    } else { ctx.fillStyle = '#fff'; ctx.fillText(w.text, tx, w.y + 1); }
+  }
+  ctx.textAlign = 'center';
+}
+
+/* ============================================================
+   7. 特效：爆炸粒子、飘字、横幅
+   ============================================================ */
+function explode(x, y, hue, count = 28) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * 6.283, v = 60 + Math.random() * 260;
+    particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40,
+      life: 0.6 + Math.random() * 0.5, max: 1.1, hue: hue + Math.random() * 40 - 20 });
+  }
+}
+function floater(x, y, text, color = '#ffe27a') { floaters.push({ x, y, text, color, life: 1.1 }); }
+function setBanner(text, sub, t) { banner = { text, sub, t, max: t }; }
+
+function updateFx(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i]; p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+  for (let i = floaters.length - 1; i >= 0; i--) {
+    const f = floaters[i]; f.life -= dt; f.y -= 50 * dt;
+    if (f.life <= 0) floaters.splice(i, 1);
+  }
+  shake = Math.max(0, shake - 40 * dt);
+  hurtFlash = Math.max(0, hurtFlash - 2.2 * dt);
+  banner.t = Math.max(0, banner.t - dt);
+  if (state === 'win') {                                     // 通关时放烟花
+    fireT -= dt;
+    if (fireT <= 0) { explode(W * (0.15 + Math.random() * 0.7), H * (0.15 + Math.random() * 0.4), Math.random() * 360, 40); fireT = 0.35; }
+  }
+}
+
+function drawFx() {
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = `hsl(${p.hue},100%,65%)`;
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const f of floaters) {
+    ctx.globalAlpha = Math.min(1, f.life * 1.5);
+    ctx.font = `bold ${22 * SCALE}px sans-serif`;
+    ctx.fillStyle = f.color; ctx.shadowColor = f.color; ctx.shadowBlur = 8;
+    ctx.fillText(f.text, f.x, f.y);
+  }
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+  if (banner.t > 0) {                                        // 屏幕中央横幅（关卡开始 / BOSS 来袭）
+    ctx.globalAlpha = Math.min(1, banner.t / 0.5, (banner.max - banner.t) / 0.25 + 0.01);
+    ctx.font = `bold ${64 * SCALE}px "Segoe UI", sans-serif`;
+    ctx.fillStyle = '#ffe27a'; ctx.shadowColor = '#ffb700'; ctx.shadowBlur = 30;
+    ctx.fillText(banner.text, W / 2, H * 0.34);
+    ctx.font = `${26 * SCALE}px "Segoe UI", sans-serif`;
+    ctx.fillStyle = '#fff'; ctx.shadowBlur = 10;
+    ctx.fillText(banner.sub, W / 2, H * 0.34 + 56 * SCALE);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+}
+
+// 全屏状态光效：冰冻 = 淡蓝，狂暴 = 红色脉冲，受伤 = 红闪
+function drawTints(t) {
+  if (freezeT > 0) { ctx.fillStyle = 'rgba(140,200,255,.13)'; ctx.fillRect(0, 0, W, H); }
+  if (rageT > 0)   { ctx.fillStyle = `rgba(255,60,60,${0.07 + 0.05 * Math.sin(t * 10)})`; ctx.fillRect(0, 0, W, H); }
+  if (hurtFlash > 0) { ctx.fillStyle = `rgba(255,40,40,${hurtFlash * 0.35})`; ctx.fillRect(0, 0, W, H); }
+}
+
+/* ============================================================
+   8. 输入处理：回车提交
+   ============================================================ */
+const input = document.getElementById('typed');
+
+input.addEventListener('keydown', e => {
+  if (e.key.length === 1 && state === 'playing') {
+    // 机械键盘敲击轻响
+    beep(750 + Math.random() * 200, 0.03, 'sine', 0.04);
+  }
+  if (e.key !== 'Enter' || state !== 'playing' || introT > 0) return;
+  const v = input.value.trim().toLowerCase();
+  if (!v) return;
+  attempts++;
+  // 多个相同单词时，优先击破最靠近城堡的
+  let target = null;
+  for (const w of words) if (w.text === v && (!target || w.y > target.y)) target = w;
+  if (target) onHit(target); else onTypo();
+  input.value = '';
+});
+
+// 击中单词：得分 + 类型效果 + 连击奖励
+function onHit(w) {
+  hits++; correctWords++; combo++; maxCombo = Math.max(maxCombo, combo);
+  const comboMult = 1 + Math.min(Math.floor(combo / 5), 4) * 0.5;      // 连击倍率：每 5 连击 +0.5，最高 ×3
+  let pts = w.text.length * 10;
+  if (w.type === 'gold') pts *= 3;
+  if (w.boss) pts += 300;
+  pts = Math.round(pts * comboMult * D.mult);
+  score += pts;
+  if (!w.boss) resolved++;
+  words.splice(words.indexOf(w), 1);
+  explode(w.x, w.y, w.hue);
+  floater(w.x, w.y - 20, '+' + pts);
+  beep(520 + Math.min(combo, 10) * 40, 0.12, 'triangle');
+
+  if (w.type === 'freeze') { freezeT = 4; floater(w.x, w.y - 50, '❄ 冰冻 4 秒', '#9df'); beep(900, .25, 'sine'); }
+  if (w.type === 'heal')   { hp = Math.min(maxHp, hp + 20); floater(w.x, w.y - 50, '❤ +20', '#f88'); }
+  if (w.type === 'shield') { shield = Math.min(3, shield + 1); floater(w.x, w.y - 50, '🛡 护盾 +1', '#9bf'); }
+  if (w.type === 'bomb') {                                              // 炸弹：清掉所有普通单词，每个得一半分
+    for (const o of words.slice()) {
+      if (o.boss) continue;
+      score += Math.round(o.text.length * 5 * D.mult); resolved++;
+      explode(o.x, o.y, o.hue, 20); words.splice(words.indexOf(o), 1);
+    }
+    shake = 12; floater(w.x, w.y - 50, '💣 清屏！', '#fa6'); beep(120, .35, 'square', .1);
+  }
+  if (combo % 10 === 0) { hp = Math.min(maxHp, hp + 5); floater(W / 2, H * 0.55, `${combo} 连击！城堡 +5`, '#8f8'); }
+  if (combo % 25 === 0) { shield = Math.min(3, shield + 1); floater(W / 2, H * 0.5, '连击奖励：🛡 护盾 +1', '#9bf'); }
+}
+
+// 打错：清空连击，普通/困难还要扣血
+function onTypo() {
+  combo = 0;
+  if (D.typo > 0) { hp -= D.typo; hurtFlash = 0.5; floater(W / 2, H * 0.6, `打错了 -${D.typo}`, '#f77'); }
+  shake = Math.max(shake, 5);
+  input.classList.remove('wrong'); void input.offsetWidth; input.classList.add('wrong');
+  beep(140, 0.18, 'sawtooth');
+}
+
+/* ============================================================
+   9. 游戏流程：开始 / 关卡 / 过关 / 失败 / 通关
+   ============================================================ */
+const overlay = document.getElementById('overlay');
+const $ = id => document.getElementById(id);
+let mainFn = null, menuFn = null;
+
+// 统一的界面显示函数
+function showOverlay(c) {
+  $('title').textContent = c.title;
+  $('sub').textContent = c.sub || '';
+  $('sub').classList.toggle('hidden', !c.sub);
+  $('stars').textContent = c.stars || '';
+  $('stars').classList.toggle('hidden', !c.stars);
+  $('result').innerHTML = c.result || '';
+  $('diffRow').classList.toggle('hidden', !c.diff);
+  $('stageRow').classList.toggle('hidden', !c.diff);
+  $('tips').classList.toggle('hidden', !c.tips);
+  $('best').classList.toggle('hidden', !c.diff);
+  $('mainBtn').textContent = c.main;
+  $('menuBtn').classList.toggle('hidden', !c.menu);
+  mainFn = c.mainFn; menuFn = c.menu ? showMenu : null;
+  input.disabled = true;
+  overlay.style.display = 'flex';
+  refreshBest();
+}
+function hideOverlay() { overlay.style.display = 'none'; input.disabled = false; input.value = ''; input.focus(); }
+
+function refreshBest() { $('best').textContent = `【${D.name}】最高分：${lsGet('ta_best_' + diffKey, '0')}`; }
+
+function setDiff(k) {
+  diffKey = k; D = DIFFS[k]; lsSet('ta_diff', k);
+  ['easy', 'normal', 'hard'].forEach(n => $('d' + n[0].toUpperCase() + n.slice(1)).classList.toggle('on', n === k));
+  if (state === 'menu') { hp = maxHp = D.hp; }
+  refreshBest();
+}
+
+function showMenu() {
+  state = 'menu'; words = []; floaters = []; shield = 0; freezeT = 0; rageT = 0;
+  hp = maxHp = D.hp;
+  const sel = $('stageSel'); sel.innerHTML = '';
+  for (let i = 1; i <= unlocked; i++) sel.add(new Option(`第 ${i} 关`, i));
+  showOverlay({ title: '打字冒险', sub: '夜幕降临，魔法单词正向城堡坠落！输入单词并按回车，守住城堡，闯过 10 关！',
+    main: '开始冒险', mainFn: () => startRun(parseInt(sel.value) || 1), diff: true, tips: true });
+}
+
+// 开始一轮新游戏（从 startStage 关开始）
+function startRun(startStage) {
+  maxHp = hp = D.hp; runStart = startStage;
+  score = 0; combo = 0; maxCombo = 0; totalStars = 0; shield = 0;
+  correctWords = 0; attempts = 0; hits = 0; playTime = 0;
+  beginStage(startStage);
+}
+
+function beginStage(s) {
+  stage = s; toSpawn = stageTarget(s); bossPending = BOSS_STAGES.includes(s);
+  resolved = 0; words = []; spawnTimer = 0.3; introT = 2.2; stageStartHp = hp;
+  freezeT = 0; rageT = 0; state = 'playing';
+  setBanner(`第 ${s} 关`, `目标：击破 ${toSpawn} 个单词` + (bossPending ? '  ·  BOSS 关' : ''), 2.2);
+  hideOverlay();
+  jingle([523, 659]);
+}
+
+function stageClear() {
+  state = 'clear';
+  const lost = Math.max(0, stageStartHp - hp);               // 本关损失的血量决定星级
+  const st = lost <= maxHp * 0.15 ? 3 : lost <= maxHp * 0.5 ? 2 : 1;
+  totalStars += st;
+  if (stage + 1 > unlocked && stage < TOTAL_STAGES) { unlocked = stage + 1; lsSet('ta_unlocked', unlocked); }
+  hp = Math.min(maxHp, hp + 10);                             // 过关奖励：回血 10
+  jingle([523, 659, 784, 1047]);
+  if (stage >= TOTAL_STAGES) { gameWin(st); return; }
+  showOverlay({ title: `第 ${stage} 关 通过！`, sub: '过关奖励：城堡生命 +10',
+    stars: '★'.repeat(st) + '☆'.repeat(3 - st),
+    result: statsLine(), main: `进入第 ${stage + 1} 关`, mainFn: () => beginStage(stage + 1), menu: true });
+}
+
+function statsLine() {
+  const wpm = playTime > 2 ? Math.round(correctWords / (playTime / 60)) : 0;
+  const acc = attempts ? Math.round(hits / attempts * 100) : 0;
+  return `得分 <b style="color:#ffe27a">${score}</b> ｜ WPM <b style="color:#ffe27a">${wpm}</b> ｜ ` +
+         `命中率 <b style="color:#ffe27a">${acc}%</b> ｜ 最高连击 <b style="color:#ffe27a">${maxCombo}</b> ｜ ` +
+         `累计 ⭐ <b style="color:#ffe27a">${totalStars}</b>`;
+}
+
+// 记录最高分，返回是否打破纪录
+function saveBest() {
+  const k = 'ta_best_' + diffKey, old = parseInt(lsGet(k, '0')) || 0;
+  if (score > old) { lsSet(k, score); return true; }
+  return false;
+}
+
+function gameOver() {
+  state = 'over';
+  const rec = saveBest();
+  beep(110, 0.6, 'sawtooth', 0.1);
+  showOverlay({ title: '城堡陷落了…', sub: `你坚持到了第 ${stage} 关（${D.name}难度）${rec ? ' · 🎉 新纪录！' : ''}`,
+    result: statsLine(), main: '再来一次', mainFn: () => startRun(runStart), menu: true });
+}
+
+function gameWin(st) {
+  state = 'win';
+  const rec = saveBest();
+  showOverlay({ title: '🏆 通关成功！', sub: `城堡守住了！${D.name}难度全部 10 关通过${rec ? ' · 🎉 新纪录！' : ''}`,
+    stars: '★'.repeat(st) + '☆'.repeat(3 - st),
+    result: statsLine() + `<br>三星总数 ${totalStars} / 30`, main: '再玩一次', mainFn: () => startRun(1), menu: true });
+}
+
+function pauseGame() {
+  if (state !== 'playing') return;
+  state = 'paused';
+  showOverlay({ title: '⏸ 暂停', sub: '喘口气，准备好了就继续。', result: statsLine(), main: '继续', mainFn: resumeGame, menu: true });
+}
+function resumeGame() { state = 'playing'; hideOverlay(); }
+
+/* ============================================================
+   10. 每帧更新
+   ============================================================ */
+function update(dt) {
+  playTime += dt;
+  updateFx(dt);
+  if (introT > 0) { introT -= dt; return; }                  // 关卡开场动画期间不出词
+  freezeT = Math.max(0, freezeT - dt);
+  rageT = Math.max(0, rageT - dt);
+
+  // 出词：关卡越高间隔越短；出完后（BOSS 关）召唤 BOSS；全部清空则过关
+  if (toSpawn > 0) {
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      spawnWord(); toSpawn--;
+      spawnTimer = (Math.max(0.9, 2.8 - stage * 0.2) + Math.random() * 0.6) * D.spawn;
+    }
+  } else if (words.length === 0) {
+    if (bossPending) { spawnBoss(); bossPending = false; }
+    else { stageClear(); return; }
+  }
+
+  // 单词下落；冰冻时停住，狂暴时加速
+  const sm = freezeT > 0 ? 0 : rageT > 0 ? 1.35 : 1;
+  const groundY = H - castleHeight() * 0.85;
+  for (let i = words.length - 1; i >= 0; i--) {
+    const w = words[i];
+    w.y += w.speed * sm * dt;
+    if (w.y >= groundY) {
+      words.splice(i, 1);
+      if (!w.boss) resolved++;
+      explode(w.x, groundY, 0, 36);
+      combo = 0;
+      if (shield > 0) {                                      // 有护盾：抵挡一次
+        shield--; explode(w.x, groundY, 210, 30); floater(w.x, groundY - 40, '🛡 抵挡！', '#9bf'); beep(700, .2, 'sine');
+      } else {
+        const dmg = D.dmg * w.dmgMul;
+        hp -= dmg; shake = 14; hurtFlash = 1;
+        floater(w.x, groundY - 40, `-${dmg}`, '#f66');
+        if (w.type === 'curse') { rageT = 5; floater(W / 2, H * 0.4, '☠ 诅咒！单词狂暴 5 秒', '#c8f'); }
+        beep(90, 0.3, 'square', 0.1);
+      }
+    }
+  }
+  if (hp <= 0) { hp = 0; gameOver(); }
+}
+
+function updateHud() {
+  $('sScore').textContent = score;
+  $('sWpm').textContent = playTime > 3 ? Math.round(correctWords / (playTime / 60)) : 0;
+  $('sStage').textContent = stage;
+  const m = 1 + Math.min(Math.floor(combo / 5), 4) * 0.5;
+  $('sCombo').textContent = combo + (m > 1 ? ` (×${m})` : '');
+}
+
+/* ============================================================
+   11. 主循环
+   ============================================================ */
+function frame(ts) {
+  const t = ts / 1000;
+  const dt = Math.min(0.05, t - lastTime || 0.016);
+  lastTime = t;
+
+  if (state === 'playing') update(dt);
+  else if (state !== 'paused') updateFx(dt);
+  updateHud();
+
+  ctx.save();
+  if (shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+  drawBackground(t);
+  drawCastle(t);
+  if (state !== 'menu') { drawWords(input.value.trim().toLowerCase()); drawBars(); }
+  drawTints(t);
+  drawFx();
+  ctx.restore();
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   12. 按钮与键盘
+   ============================================================ */
+$('dEasy').onclick   = e => { setDiff('easy');   e.target.blur(); };
+$('dNormal').onclick = e => { setDiff('normal'); e.target.blur(); };
+$('dHard').onclick   = e => { setDiff('hard');   e.target.blur(); };
+$('mainBtn').onclick = e => { e.target.blur(); if (mainFn) mainFn(); };
+$('menuBtn').onclick = e => { e.target.blur(); if (menuFn) menuFn(); };
+$('pauseBtn').onclick = e => { e.target.blur(); state === 'playing' ? pauseGame() : state === 'paused' && resumeGame(); };
+$('muteBtn').onclick = e => { muted = !muted; e.target.textContent = muted ? '🔇' : '🔊'; e.target.blur(); };
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { state === 'playing' ? pauseGame() : state === 'paused' && resumeGame(); }
+  // 界面显示时，按回车等同于点主按钮
+  if (e.key === 'Enter' && overlay.style.display !== 'none' && document.activeElement === document.body && mainFn) mainFn();
+});
+document.addEventListener('click', () => { if (state === 'playing') input.focus(); });   // 点哪里都回到输入框
+
+/* ============================================================
+   13. 初始化
+   ============================================================ */
+resize();
+setDiff(diffKey);
+showMenu();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

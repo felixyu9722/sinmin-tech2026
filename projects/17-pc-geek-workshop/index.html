@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC 极客工坊：电脑硬件探秘与装机模拟器 - 独中高中资讯科技互动学习平台</title>
+    <!-- Google Fonts 现代高科技感字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- 顶部统一导航栏 -->
+    <header class="app-header">
+        <div class="header-container">
+            <!-- 平台 LOGO 与标题 -->
+            <div class="logo-badge">
+                <div class="logo-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#07090e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="4" width="16" height="16" rx="2" />
+                        <rect x="9" y="9" width="6" height="6" />
+                        <line x1="9" y1="1" x2="9" y2="4" />
+                        <line x1="15" y1="1" x2="15" y2="4" />
+                        <line x1="9" y1="20" x2="9" y2="23" />
+                        <line x1="15" y1="20" x2="15" y2="23" />
+                        <line x1="20" y1="9" x2="23" y2="9" />
+                        <line x1="20" y1="14" x2="23" y2="14" />
+                        <line x1="1" y1="9" x2="4" y2="9" />
+                        <line x1="1" y1="14" x2="4" y2="14" />
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>PC 极客工坊：硬件与网络探秘</h1>
+                    <span>独中高中资讯科技 • 交互式实验平台</span>
+                </div>
+            </div>
+
+            <!-- 四大模式选项卡 -->
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-view="view-workbench" id="tab-workbench">
+                    <span>🛠️</span> 虚拟装机与排错实验室
+                </button>
+                <button class="tab-btn" data-view="view-xray" id="tab-xray">
+                    <span>🔬</span> 微观透视与存储天梯
+                </button>
+                <button class="tab-btn" data-view="view-network" id="tab-network">
+                    <span>🌐</span> 网络拓扑与数据流动
+                </button>
+                <button class="tab-btn" data-view="view-quiz" id="tab-quiz">
+                    <span>📝</span> 课纲考点小测验
+                </button>
+            </nav>
+
+            <!-- 顶部控制按钮 -->
+            <div class="header-controls">
+                <button class="ctrl-btn" id="btn-toggle-sound" title="切换音效">
+                    <span>🔊</span> 音效: 开
+                </button>
+                <button class="ctrl-btn" id="btn-reset-workbench" title="重置工作台重新组装">
+                    <span>↺</span> 重置装机台
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 核心视图区域 -->
+    <main class="app-main">
+
+        <!-- ================= 模式 1：装机与排错实验室 (2.5D Workbench) ================= -->
+        <section class="game-view active" id="view-workbench">
+            <div class="workbench-grid">
+                
+                <!-- 左侧：主板装配实验台舞台 -->
+                <div class="workbench-stage-card">
+                    <div class="stage-header">
+                        <div class="stage-title">
+                            <span>🎛️</span>
+                            <span>ATX 高性能主板装配台</span>
+                            <span class="stage-badge">LGA 1700 / DDR5 / PCIe 4.0</span>
+                        </div>
+                        
+                        <!-- 观看电脑开机实机视频按钮 (参考红框实地演示) -->
+                        <div style="display:flex; align-items:center;">
+                            <button class="ctrl-btn" id="btn-open-boot-video" style="border-color:var(--cyan-primary); color:var(--cyan-primary); background:rgba(0, 245, 255, 0.1); font-weight:bold; display:flex; align-items:center; gap:0.5rem; padding:0.42rem 0.95rem; border-radius:6px; cursor:pointer; box-shadow:0 0 15px rgba(0,245,255,0.22); transition:all 0.2s ease;">
+                                <span style="font-size:1.1rem;">🎬</span>
+                                <span>观看视频：电脑开机实况</span>
+                            </button>
+                        </div>
+
+                        <!-- 实验室内部专属故障排除实战演练按钮 -->
+                        <div style="display:flex; gap:0.6rem; align-items:center;">
+                            <button class="ctrl-btn" id="btn-trigger-diag" style="border-color:var(--amber-warning); color:var(--amber-warning); font-weight:bold;">
+                                <span>🚨</span> 实战故障排除演练 (DRAM报警)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 故障现场警报横幅 (触发排错时动态展现) -->
+                    <div id="diag-alert-banner" style="display:none; margin:1rem 1.25rem 0; padding:0.85rem 1.25rem; background:rgba(255,183,3,0.12); border:1px solid var(--amber-warning); border-radius:var(--radius-md); animation:fadeIn 0.3s ease;">
+                        <div style="font-size:0.95rem; font-weight:bold; color:var(--amber-warning); margin-bottom:4px;">
+                            🚨 现场实况：开机黑屏无信号，主板 DRAM 诊断灯长亮黄灯，蜂鸣器发出连续长鸣报警！
+                        </div>
+                        <div style="font-size:0.8rem; color:#fef08a;">
+                            💡 <strong>工程师排错指引</strong>：内存金手指接触不良或未插紧。请在主板上<strong>点击松动的内存条 (Slot A2)</strong> 将其重新锁死到位！
+                        </div>
+                    </div>
+
+                    <!-- 2.5D 主板矢量挂载容器 -->
+                    <div class="motherboard-canvas-wrap">
+                        <div class="workbench-mat"></div>
+                        <div id="mb-mount" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                            <!-- 由 js/workbench.js 动态绘制精美高精矢量主板 -->
+                        </div>
+                    </div>
+
+                    <!-- 工作台底栏操作与进度条 -->
+                    <div class="stage-footer">
+                        <div class="assembly-progress">
+                            <div class="progress-label-row">
+                                <span>装配就绪进度</span>
+                                <span id="installed-count-txt" style="font-family:var(--font-mono); font-weight:bold; color:var(--cyan-primary);">0 / 8 部件</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                            </div>
+                        </div>
+
+                        <!-- 启动电源按钮 -->
+                        <button class="power-btn" id="btn-power-on" disabled>
+                            <span>⚡</span> 等待组装完成 (0/8)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 右侧：装机步骤提示 + 零件库抽屉 (已用专业硬件 Clipart 替代 Emoji) -->
+                <aside class="workbench-sidebar">
+                    
+                    <!-- 当前装机步骤指引卡片 -->
+                    <div class="card-panel guide-step-card">
+                        <div class="guide-step-header">
+                            <span class="guide-step-tag" id="guide-step-tag">第 1 步 / 共 7 步</span>
+                            <span style="font-size:0.75rem; color:var(--cyan-primary);">装机向导</span>
+                        </div>
+                        <h2 class="guide-step-title" id="guide-step-title">安装中央处理器 (CPU)</h2>
+                        <p class="guide-step-desc" id="guide-step-desc">
+                            在右侧零件库中选中 CPU，注意角落的金色三角形标记，与主板插槽上的标记对齐后放入。
+                        </p>
+                        <div class="guide-tip-box">
+                            <span>💡</span>
+                            <span id="guide-step-tip">防呆机制：LGA1700 插槽拥有双侧定位缺口与金色三角标，严禁大力硬按以防压坏主板针脚！</span>
+                        </div>
+                    </div>
+
+                    <!-- 硬件零件库抽屉 (专业硬件 Clipart 图标展示) -->
+                    <div class="card-panel">
+                        <div class="inventory-header">
+                            <div class="inventory-title">
+                                <span>📦</span>
+                                <span>硬件零件库 (Hardware Tray)</span>
+                            </div>
+                            <span style="font-size:0.72rem; color:var(--text-muted);">点击选中并安装</span>
+                        </div>
+
+                        <div class="inventory-grid" id="inventory-list">
+                            
+                            <!-- 1. CPU (专业金属顶盖+防呆角 Clipart) -->
+                            <div class="part-item" data-part="cpu">
+                                <div class="part-icon-box" id="icon-box-cpu">
+                                    <svg viewBox="0 0 48 48" width="36" height="36" fill="none"><rect x="4" y="4" width="40" height="40" rx="3" fill="#064e3b" stroke="#059669" stroke-width="1.5"/><rect x="3" y="14" width="2" height="4" rx="1" fill="#0a0d14"/><rect x="3" y="30" width="2" height="4" rx="1" fill="#0a0d14"/><polygon points="6,6 12,6 6,12" fill="#f59e0b"/><rect x="10" y="10" width="28" height="28" rx="3" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"/><rect x="13" y="13" width="22" height="22" rx="2" fill="#e2e8f0"/><text x="24" y="23" fill="#0f172a" font-size="5" font-family="sans-serif" font-weight="900" text-anchor="middle">intel</text><text x="24" y="29" fill="#334155" font-size="3.5" font-family="monospace" font-weight="bold" text-anchor="middle">i7-14700K</text></svg>
+                                </div>
+                                <div class="part-meta">
+                                    <div class="part-name">中央处理器 (CPU)</div>
+                                    <div class="part-sub">Core i7-14700K • LGA1700</div>
+                                </div>
+                                <span class="part-badge-tag">待装配</span>
+                                <button class="inspect-btn" data-inspect="cpu" title="查看微观架构与考点">🔍</button>
+                            </div>
+
+                            <!-- 2. 导热硅脂 (专业针筒施加器 Clipart) -->
+                            <div class="part-item" data-part="paste">
+                                <div class="part-icon-box" id="icon-box-paste">
+                                    <svg viewBox="0 0 48 48" width="36" height="36" fill="none"><g transform="rotate(-45 24 24)"><rect x="22" y="2" width="4" height="12" rx="1" fill="#94a3b8"/><rect x="19" y="2" width="10" height="3" rx="1" fill="#64748b"/><rect x="18" y="12" width="12" height="24" rx="2" fill="#1e293b" stroke="#00f3ff" stroke-width="1.5"/><rect x="20" y="20" width="8" height="15" rx="1" fill="#cbd5e1"/><line x1="20" y1="16" x2="24" y2="16" stroke="#00f3ff" stroke-width="1"/><line x1="20" y1="20" x2="25" y2="20" stroke="#00f3ff" stroke-width="1"/><line x1="20" y1="24" x2="24" y2="24" stroke="#00f3ff" stroke-width="1"/><path d="M 22 36 L 26 36 L 25 42 L 23 42 Z" fill="#64748b"/><circle cx="24" cy="46" r="2" fill="#cbd5e1"/></g></svg>
+                                </div>
+                                <div class="part-meta">
+                                    <div class="part-name">导热硅脂 (TIM)</div>
+                                    <div class="part-sub">纳米级金属氧化物 • 14.2 W/m·K</div>
+                                </div>
+                                <span class="part-badge-tag">待装配</span>
+                                <button class="inspect-btn" data-inspect="paste" title="查看热传导原理">🔍</button>
+                            </div>
+
+                            <!-- 3. CPU 散热器 (双塔鳍片+铜热管+风扇 Clipart) -->
+                            <div class="part-item" data-part="cooler">
+                                <div class="part-icon-box" id="icon-box-cooler">
+                                    <svg viewBox="0 0 48 48" width="36" height="36" fill="none"><path d="M 10 38 L 10 8 A 2 2 0 0 1 14 8 L 14 38" stroke="#f59e0b" stroke-width="2" fill="none"/><path d="M 34 38 L 34 8 A 2 2 0 0 1 38 8 L 38 38" stroke="#f59e0b" stroke-width="2" fill="none"/><rect x="7" y="10" width="34" height="2" fill="#94a3b8"/><rect x="7" y="14" width="34" height="2" fill="#94a3b8"/><rect x="7" y="18" width="34" height="2" fill="#94a3b8"/><rect x="7" y="22" width="34" height="2" fill="#94a3b8"/><rect x="7" y="26" width="34" height="2" fill="#94a3b8"/><rect x="7" y="30" width="34" height="2" fill="#94a3b8"/><rect x="12" y="11" width="24" height="24" rx="4" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5"/><circle cx="24" cy="23" r="4" fill="#38bdf8"/><circle cx="24" cy="23" r="9" stroke="#334155" stroke-width="1.5" stroke-dasharray="3,2"/><rect x="12" y="38" width="24" height="5" rx="1" fill="#d97706" stroke="#b45309" stroke-width="1"/></svg>
+                                </div>
+                                <div class="part-meta">
+                                    <div class="part-name">六热管 CPU 散热器</div>
+                                    <div class="part-sub">双塔风冷 • PWM 4-Pin 调速风扇</div>
+                                </div>
+                                <span class="part-badge-tag">待装配</span>
+                                <button class="inspect-btn" data-inspect="cooler" title="查看热管与风道设计">🔍</button>
+                            </div>
+
+                            <!-- 4. 内存条 1 (合金马甲条+RGB+偏心金手指 Clipart) -->
+                            <div class="part-item" data-part="ram1">
+                                <div class="part-icon-box" id="icon-box-ram1">
+                                    <svg viewBox="0 0 48 48" width="36" height="36" fill="none"><g transform="translate(0, 6)"><rect x="4" y="8" width="40" height="18" rx="2" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/><line x1="6" y1="6" x2="42" y2="6" stroke="#00f3ff" stroke-width="2"/><text x="24" y="20" fill="#00f3ff" font-size="4" font-family="monospace" font-weight="bold" text-anchor="middle">DDR5 16GB</text><rect x="5" y="26" width="16" height="5" fill="#f59e0b"/><rect x="21" y="26" width="3" height="6" fill="#0a0d14"/><rect x="24" y="26" width="19" height="5" fill="#f59e0b"/></g></svg>
+                                </div>
+                                <div class="part-meta">
+                                    <div class="part-name">DDR5 内存条 1 (16GB)</div>
+                                    <div class="part-sub">6000MHz • 优先插槽 2 (A2)</div>
+                                </div>
+                                <span class="part-badge-tag">待装配</span>
+                                <button class="inspect-btn" data-inspect="ram1" title="查看易失性存储与双通道">🔍</button>
+                            </div>
+
+                            <!-- 5. 内存条 2 -->
+                            <div class="part-item" data-part="ram2">
+                                <div class="part-icon-box" id="icon-box-ram2">
+                                    <svg viewBox="0 0 48 48" width="36" height="36" fill="none"><g transform="translate(0, 6)"><rect x="4" y="8" width="40" height="18" rx="2" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/><line x1="6" y1="6" x2="42" y2="6" stroke="#00f3ff" stroke-width="2"/><text x="24" y="20" fill="#00f3ff" font-size="4" font-family="monospace" font-weight="bold" text-anchor="middle">DDR5 16GB</text><rect x="5" y="26" width="16" height="5" fill="#f59e0b"/><rect x="21" y="26" width="3" height="6" fill="#0a0d14"/><rect x="24" y="26" width="19" height="5" fill="#f59e0b"/></g></svg>
+                                </div>
+                                <div class="part-meta">
+                                    <div class="part-name">DDR5 内存条 2 (16GB)</div>
+                                    <div class="part-sub">6000MHz • 优先插槽 4 (B2)</div>
+                                </div>
+                                <span class="part-badge-tag">待装配</span>
+                                <button class="inspect-btn" data-inspect="ram2" title="查看双通道带宽提升原理">🔍</button>
+                            </div>
+
+                            <!-- 6. M.2 NVMe SSD (M.2 2280 芯片板+M-Key Clipart) -->
+                            <div class="part-item" data-part="ssd">
+                                <div class="part-icon-box" id="icon-box-ssd">
+                                    <svg viewBox="0 0 48 48" width="36" height="36" fill="none"><g transform="translate(0, 8)"><rect x="4" y="6" width="40" height="16" rx="2" fill="#0f172a" stroke="#00f3ff" stroke-width="1.2"/><circle cx="4" cy="14" r="2.5" fill="#0a0d14"/><rect x="10" y="9" width="7" height="10" rx="1" fill="#cbd5e1" stroke="#64748b" stroke-width="0.8"/><rect x="19" y="10" width="4" height="8" rx="0.5" fill="#334155"/><rect x="25" y="8.5" width="8" height="11" rx="1" fill="#1e293b" stroke="#475569" stroke-width="0.8"/><rect x="35" y="8.5" width="7" height="11" rx="1" fill="#1e293b" stroke="#475569" stroke-width="0.8"/><rect x="42" y="7" width="2" height="4" fill="#f59e0b"/><rect x="42" y="13" width="2" height="8" fill="#f59e0b"/></g></svg>
+                                </div>
+                                <div class="part-meta">
+                                    <div class="part-name">M.2 NVMe 固态硬盘</div>
+                                    <div class="part-sub">PCIe 4.0 1TB • 读速 7400MB/s</div>
+                                </div>
+                                <span class="part-badge-tag">待装配</span>
+                                <button class="inspect-btn" data-inspect="ssd" title="查看非易失性存储与撕膜考点">🔍</button>
+                            </div>
+
+                            <!-- 7. 独立显卡 (双风扇金属背板显卡 Clipart) -->
+                            <div class="part-item" data-part="gpu">
+                                <div class="part-icon-box" id="icon-box-gpu">
+                                    <svg viewBox="0 0 48 48" width="36" height="36" fill="none"><g transform="translate(2, 5)"><rect x="6" y="6" width="36" height="22" rx="3" fill="#1e293b" stroke="#00f3ff" stroke-width="1.5"/><circle cx="16" cy="17" r="7" fill="#090d16" stroke="#475569" stroke-width="1"/><circle cx="16" cy="17" r="2.5" fill="#38bdf8"/><circle cx="32" cy="17" r="7" fill="#090d16" stroke="#475569" stroke-width="1"/><circle cx="32" cy="17" r="2.5" fill="#38bdf8"/><rect x="3" y="2" width="3" height="30" rx="1" fill="#94a3b8"/><rect x="10" y="28" width="28" height="4" fill="#f59e0b"/><rect x="14" y="28" width="2" height="5" fill="#0a0d14"/></g></svg>
+                                </div>
+                                <div class="part-meta">
+                                    <div class="part-name">独立显卡 (GeForce RTX 4070)</div>
+                                    <div class="part-sub">12GB GDDR6X • 5888 CUDA 核心</div>
+                                </div>
+                                <span class="part-badge-tag">待装配</span>
+                                <button class="inspect-btn" data-inspect="gpu" title="查看显存与视频输出接口">🔍</button>
+                            </div>
+
+                            <!-- 8. 电源与供电线 (金属电源盒+模块线束 Clipart) -->
+                            <div class="part-item" data-part="pwr">
+                                <div class="part-icon-box" id="icon-box-pwr">
+                                    <svg viewBox="0 0 48 48" width="36" height="36" fill="none"><g transform="translate(4, 5)"><rect x="2" y="4" width="36" height="28" rx="3" fill="#111827" stroke="#64748b" stroke-width="1.5"/><circle cx="20" cy="18" r="10" fill="#030712" stroke="#f59e0b" stroke-width="1.2"/><circle cx="20" cy="18" r="3" fill="#f59e0b"/><rect x="5" y="7" width="6" height="4" rx="0.5" fill="#f59e0b"/><path d="M 38 12 Q 43 14 43 20" stroke="#f59e0b" stroke-width="2" fill="none"/><path d="M 38 18 Q 42 20 42 26" stroke="#00f3ff" stroke-width="2" fill="none"/><path d="M 38 24 Q 44 26 44 32" stroke="#b066ff" stroke-width="2" fill="none"/></g></svg>
+                                </div>
+                                <div class="part-meta">
+                                    <div class="part-name">750W 全模组电源线组</div>
+                                    <div class="part-sub">24-Pin 主板 + 8-Pin CPU 供电</div>
+                                </div>
+                                <span class="part-badge-tag">待装配</span>
+                                <button class="inspect-btn" data-inspect="pwr" title="查看 80 PLUS 金牌认证">🔍</button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </aside>
+
+            </div>
+        </section>
+
+        <!-- ================= 模式 2：微观透视与存储天梯 (X-Ray & Storage Hierarchy) ================= -->
+        <section class="game-view" id="view-xray">
+            <div class="xray-container">
+                <!-- 左侧子主题菜单 -->
+                <nav class="xray-menu">
+                    <button class="xray-nav-btn active" data-xray="cpu" id="btn-xray-cpu">
+                        <div class="xray-nav-title">🔲 CPU 内部微观体系结构</div>
+                        <div class="xray-nav-desc">运算器 (ALU) + 控制器 (CU) + 寄存器 + 快取与一键全自动指令周期</div>
+                    </button>
+                    <button class="xray-nav-btn" data-xray="storage" id="btn-xray-storage">
+                        <div class="xray-nav-title">⚡ 存储层次与速度天梯竞速</div>
+                        <div class="xray-nav-desc">Cache vs RAM vs 虚拟内存 / M.2 NVMe vs SATA SSD vs 机械 HDD</div>
+                    </button>
+                    <button class="xray-nav-btn" data-xray="gpu" id="btn-xray-gpu">
+                        <div class="xray-nav-title">🎮 CPU vs GPU 算力特征对决</div>
+                        <div class="xray-nav-desc">为什么 3D 游戏渲染与 AI 神经网络计算必须依赖 GPU 并行处理？</div>
+                    </button>
+                </nav>
+
+                <!-- 右侧交互式原理舞台 -->
+                <div class="xray-stage-card" id="xray-content-stage">
+                    <!-- 由 js/xray.js 动态渲染 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 模式 3：网络拓扑与数据流动 (Network Topology) ================= -->
+        <section class="game-view" id="view-network">
+            <div style="display:flex; flex-direction:column; gap:1.25rem;">
+                
+                <!-- 顶部网络场景切换栏 -->
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); border:1px solid var(--border-color); padding:0.85rem 1.25rem; border-radius:var(--radius-lg); flex-wrap:wrap; gap:1rem;">
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <span style="font-size:1.3rem;">🌐</span>
+                        <div>
+                            <div style="font-size:0.95rem; font-weight:700; color:#ffffff;">网络拓扑与数据流动可视化</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">从 ISP 光纤入户到交换机终端全链路图解</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button class="ctrl-btn active" id="btn-net-home">
+                            <span>🏠</span> 家庭式网络 (Home SOHO)
+                        </button>
+                        <button class="ctrl-btn" id="btn-net-school">
+                            <span>🏫</span> 学校局域网 (School Campus & Switch)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 网络可视化舞台 -->
+                <div class="card-panel" id="network-stage-mount">
+                    <!-- 由 js/network.js 动态渲染 -->
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= 模式 4：课纲考点小测验 (Quiz) ================= -->
+        <section class="game-view" id="view-quiz">
+            <div class="quiz-wrapper" id="quiz-stage">
+                <!-- 由 js/quiz.js 动态渲染 -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 底部版权与课纲说明 -->
+    <footer class="app-footer">
+        <div>独中高中资讯科技（高一/高二）• 计算机硬件系统体系结构与组装实务交互式教学软件</div>
+        <div style="font-size:0.7rem; margin-top:4px; color:var(--text-muted);">
+            遵循董总《高中资讯科技》最新课纲标准 • 纯原生 Web 技术（HTML5 / Vanilla CSS / ES6+ JS / Web Audio API）离线即用
+        </div>
+    </footer>
+
+    <!-- ================= 弹窗 1：硬件 2.5D 特写与考点检视器 ================= -->
+    <div class="modal-overlay" id="inspect-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title" id="inspect-title">硬件深度解构</div>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body" id="inspect-body">
+                <!-- 动态注入硬件参数与独中考点解析 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 电脑开机实机演示视频模态框 (参考用户红框要求) ================= -->
+    <div class="modal-backdrop" id="modal-boot-video" style="display:none; position:fixed; inset:0; background:rgba(4,7,18,0.85); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); z-index:9999; align-items:center; justify-content:center; padding:1.5rem;">
+        <div class="modal-card" style="width:min(900px, 94vw); background:rgba(15,23,42,0.96); border:1px solid var(--cyan-primary); border-radius:16px; box-shadow:0 0 50px rgba(0,245,255,0.3); overflow:hidden; display:flex; flex-direction:column; animation:fadeIn 0.25s ease;">
+            
+            <!-- 模态框顶栏 -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem 1.4rem; border-bottom:1px solid rgba(56,189,248,0.2); background:rgba(8,12,22,0.7);">
+                <div style="display:flex; align-items:center; gap:0.6rem; color:var(--cyan-primary); font-weight:800; font-size:1.05rem;">
+                    <span style="font-size:1.25rem;">🎬</span>
+                    <span>实机探秘：电脑开机全过程与硬件启动自检 (POST)</span>
+                </div>
+                <button class="ctrl-btn" id="btn-close-boot-video" style="background:rgba(244,63,94,0.15); border-color:rgba(244,63,94,0.4); color:#ff9aa8; padding:0.35rem 0.85rem; border-radius:8px; cursor:pointer; font-weight:bold;">
+                    ✕ 关闭
+                </button>
+            </div>
+
+            <!-- 视频播放区域 -->
+            <div style="position:relative; background:#000; width:100%; display:flex; justify-content:center; align-items:center; min-height:280px; max-height:65vh;">
+                <video id="player-boot-video" controls playsinline preload="auto" style="width:100%; max-height:65vh; object-fit:contain; outline:none; background:#000;">
+                    <source src="assets/boot_video.mp4" type="video/mp4">
+                    您的浏览器暂不支持内嵌视频播放。
+                </video>
+            </div>
+
+            <!-- 视频底栏：科普知识标签 -->
+            <div style="padding:0.9rem 1.4rem; background:rgba(8,12,22,0.85); border-top:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; gap:0.4rem;">
+                <div style="font-size:0.82rem; color:var(--cyan-primary); font-weight:700;">
+                    💡 电脑开机四阶段极客解密：
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.6rem; font-size:0.75rem; color:#94a3b8;">
+                    <div style="background:rgba(255,255,255,0.03); padding:0.4rem 0.6rem; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+                        <strong style="color:#f8fafc;">1. 电源接通：</strong>主板芯片组发出 Power Good 信号
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); padding:0.4rem 0.6rem; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+                        <strong style="color:#f8fafc;">2. CPU 唤醒：</strong>读取 UEFI / BIOS 第一条固件指令
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); padding:0.4rem 0.6rem; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+                        <strong style="color:#f8fafc;">3. POST 自检：</strong>依次检测 CPU ➔ 内存 ➔ 显卡 ➔ 硬盘
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); padding:0.4rem 0.6rem; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+                        <strong style="color:#f8fafc;">4. 引导载入：</strong>Bootloader 将系统内核移交内存运行
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 弹窗 2：UEFI BIOS 开机自检通过大屏 ================= -->
+    <div class="modal-overlay" id="bios-modal">
+        <div class="modal-container" style="max-width:820px;">
+            <div class="modal-header" style="background:#090d16; border-color:#334155;">
+                <div class="modal-title" style="color:#00f59b; display:flex; align-items:center; gap:8px;">
+                    <span>⚡</span> UEFI BIOS UTILITY - 系统自检通过 (POST SUCCESS)
+                </div>
+                <button class="modal-close-btn" id="btn-bios-close-x">&times;</button>
+            </div>
+            <div class="modal-body" style="background:#020617;">
+                <div class="bios-screen">
+                    <div class="bios-header-line">
+                        AMERICAN MEGATRENDS UEFI BIOS • RELEASE VER: 2.10 • DATE: 2026/11/02<br>
+                        CPU: 14th Gen Intel(R) Core(TM) i7-14700K @ 3.40GHz
+                    </div>
+                    
+                    <div class="bios-grid">
+                        <span class="bios-label">主板型号 (Mainboard):</span>
+                        <span class="bios-val">CYBER-LAB B760-PLUS GAMING ATX</span>
+
+                        <span class="bios-label">处理器主频 (Speed):</span>
+                        <span class="bios-val">3400 MHz (Turbo Boost: 5600 MHz) • 20 Cores / 28 Threads</span>
+
+                        <span class="bios-label">CPU 核心温度 (Temp):</span>
+                        <span class="bios-val" style="color:#38bdf8;">32.5 °C (健康正常，硅脂热传导良好)</span>
+
+                        <span class="bios-label">CPU 风扇转速 (Fan):</span>
+                        <span class="bios-val" style="color:#38bdf8;">1245 RPM (PWM 自动温控)</span>
+
+                        <span class="bios-label">系统内存 (Memory):</span>
+                        <span class="bios-val">32768 MB (32 GB) DDR5-6000MHz Dual-Channel Active (Slot A2 & B2)</span>
+
+                        <span class="bios-label">主存储器状态 (SSD):</span>
+                        <span class="bios-val">M.2 NVMe PCIe 4.0 1024GB (S.M.A.R.T. 状态: 极佳 100% / 36°C)</span>
+
+                        <span class="bios-label">独立显示卡 (VGA):</span>
+                        <span class="bios-val">NVIDIA GeForce RTX 4070 (VRAM 12288MB GDDR6X / PCIe 4.0 x16 @ x16)</span>
+
+                        <span class="bios-label">+12V 电源主供电轨:</span>
+                        <span class="bios-val">12.144 V (80 PLUS Gold 纯净直流稳压)</span>
+                    </div>
+
+                    <div style="margin-top:1.25rem; border-top:1px dashed #334155; padding-top:0.75rem; color:#f8fafc; font-size:0.8rem;">
+                        [✓] POST 硬件自检所有测试项目全数通过！所有总线通信正常！按任意键启动 Windows 操作系统...
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end;">
+                    <button class="ctrl-btn modal-close-btn" id="btn-bios-return-workbench" style="background:var(--green-success); color:#07090e; font-weight:bold; padding:0.6rem 1.5rem; font-size:0.92rem;">
+                        返回工作台
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 逻辑脚本按依赖顺序引入 -->
+    <script src="js/cliparts.js?v=20261103_03"></script>
+    <script src="js/data.js?v=20261103_03"></script>
+    <script src="js/audio.js?v=20261103_03"></script>
+    <script src="js/workbench.js?v=20261103_03"></script>
+    <script src="js/xray.js?v=20261103_03"></script>
+    <script src="js/network.js?v=20261103_03"></script>
+    <script src="js/quiz.js?v=20261103_03"></script>
+    <script src="js/main.js?v=20261103_03"></script>
+</body>
+</html>

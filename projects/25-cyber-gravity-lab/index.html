@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛博朋克风：粒子重力球与星际防御实验室</title>
+    <!-- Tailwind CSS CDN 加载 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ==========================================================================
+           1. 赛博朋克全局视觉与动画样式 (Custom Cyberpunk Styling)
+           ========================================================================== */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #050508;
+            color: #e2e8f0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* 网格透视背景效果 */
+        .cyber-grid {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+        }
+
+        /* 霓虹发光阴影特效 */
+        .neon-glow-cyan {
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.4), inset 0 0 15px rgba(0, 243, 255, 0.2);
+            border: 1px solid rgba(0, 243, 255, 0.6);
+        }
+
+        .neon-glow-pink {
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.4), inset 0 0 15px rgba(255, 0, 85, 0.2);
+            border: 1px solid rgba(255, 0, 85, 0.6);
+        }
+
+        .neon-text-cyan {
+            text-shadow: 0 0 8px rgba(0, 243, 255, 0.8), 0 0 20px rgba(0, 243, 255, 0.4);
+        }
+
+        .neon-text-pink {
+            text-shadow: 0 0 8px rgba(255, 0, 85, 0.8), 0 0 20px rgba(255, 0, 85, 0.4);
+        }
+
+        /* 玻璃拟态卡片 */
+        .glass-panel {
+            background: rgba(10, 15, 30, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 赛博风格按钮特效 */
+        .cyber-btn {
+            position: relative;
+            transition: all 0.3s ease;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        .cyber-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.2);
+        }
+
+        .cyber-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* 滑块自定义样式 */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            height: 6px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #00f3ff;
+            box-shadow: 0 0 10px #00f3ff;
+            cursor: pointer;
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(5, 5, 8, 0.8);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 243, 255, 0.7);
+        }
+    </style>
+</head>
+
+<body class="w-screen h-screen relative cyber-grid">
+
+    <!-- Canvas 画布 (背景粒子 & 游戏画面) -->
+    <canvas id="mainCanvas" class="absolute inset-0 w-full h-full z-0 cursor-crosshair"></canvas>
+
+    <!-- ==========================================================================
+       2. 顶部导航与状态栏 (Top Status Bar)
+       ========================================================================== -->
+    <header class="absolute top-0 left-0 right-0 z-10 p-4 flex justify-between items-center pointer-events-none">
+        <div class="flex items-center space-x-3 pointer-events-auto">
+            <div
+                class="w-10 h-10 rounded-lg bg-cyan-500/20 border border-cyan-400 flex items-center justify-center neon-glow-cyan">
+                <i class="fa-solid font-orbitron fa-atom text-cyan-400 text-xl animate-spin"
+                    style="animation-duration: 8s;"></i>
+            </div>
+            <div>
+                <h1 class="font-orbitron text-lg md:text-2xl font-black tracking-wider text-white neon-text-cyan">
+                    CYBER<span class="text-pink-500 neon-text-pink">LAB</span>
+                </h1>
+                <p class="text-xs text-cyan-300/70 tracking-widest hidden md:block">粒子重力球与星际防御实验室</p>
+            </div>
+        </div>
+
+        <!-- 模式切换与控制工具栏 -->
+        <div class="flex items-center space-x-3 pointer-events-auto">
+            <!-- 音效开关 -->
+            <button id="soundToggleBtn" onclick="toggleAudio()"
+                class="glass-panel px-3 py-2 rounded-lg text-cyan-400 hover:text-white transition flex items-center space-x-2 text-sm border border-cyan-500/30">
+                <i id="soundIcon" class="fa-solid fa-volume-high"></i>
+                <span class="hidden md:inline">音效: <span id="soundStatus">ON</span></span>
+            </button>
+
+            <!-- 模式切换按钮 (自由实验室 vs 防御挑战模式) -->
+            <button id="modeSwitchBtn" onclick="switchMode()"
+                class="cyber-btn bg-cyan-500 text-black font-bold px-4 py-2 text-sm md:text-base flex items-center space-x-2 neon-glow-cyan">
+                <i class="fa-solid fa-gamepad"></i>
+                <span id="modeBtnText">进入防御游戏</span>
+            </button>
+
+            <!-- 回到主页按钮 -->
+            <button onclick="backToHome()"
+                class="cyber-btn bg-rose-600/30 text-rose-300 hover:bg-rose-600 hover:text-white border border-rose-500/50 font-bold px-3 py-2 text-sm md:text-base flex items-center space-x-1.5 transition">
+                <i class="fa-solid fa-house"></i>
+                <span class="hidden sm:inline">回到主页</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==========================================================================
+       3. 左侧控制面板 (自由实验室模式专用 Slider Control Panel)
+       ========================================================================== -->
+    <aside id="labControlPanel"
+        class="absolute left-4 top-24 z-10 w-72 md:w-80 glass-panel p-5 rounded-2xl border border-cyan-500/30 transition-all duration-500 shadow-2xl">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-cyan-500/20">
+            <h2 class="font-orbitron font-bold text-cyan-400 flex items-center gap-2">
+                <i class="fa-solid fa-sliders"></i> 实验室物理参数
+            </h2>
+            <span class="text-xs bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded border border-cyan-800"
+                id="fpsCounter">FPS: 60</span>
+        </div>
+
+        <div class="space-y-4 text-xs md:text-sm">
+            <!-- 粒子数量 -->
+            <div>
+                <div class="flex justify-between text-gray-300 mb-1">
+                    <span>粒子密度 (Count)</span>
+                    <span id="valCount" class="text-cyan-400 font-mono">120</span>
+                </div>
+                <input type="range" id="paramCount" min="30" max="300" value="120" class="w-full">
+            </div>
+
+            <!-- 重力/引力强度 -->
+            <div>
+                <div class="flex justify-between text-gray-300 mb-1">
+                    <span>引力拉扯 (Gravity)</span>
+                    <span id="valGravity" class="text-cyan-400 font-mono">2.5</span>
+                </div>
+                <input type="range" id="paramGravity" min="0" max="8" step="0.5" value="2.5" class="w-full">
+            </div>
+
+            <!-- 基础速率 -->
+            <div>
+                <div class="flex justify-between text-gray-300 mb-1">
+                    <span>基础粒子速度 (Speed)</span>
+                    <span id="valSpeed" class="text-cyan-400 font-mono">2.0</span>
+                </div>
+                <input type="range" id="paramSpeed" min="0.5" max="5" step="0.5" value="2.0" class="w-full">
+            </div>
+
+            <!-- 连接线隐现连线距离 -->
+            <div>
+                <div class="flex justify-between text-gray-300 mb-1">
+                    <span>能量连线距离 (Link Dist)</span>
+                    <span id="valLink" class="text-cyan-400 font-mono">100</span>
+                </div>
+                <input type="range" id="paramLink" min="0" max="200" value="100" class="w-full">
+            </div>
+
+            <!-- 主题调色盘 -->
+            <div>
+                <label class="block text-gray-300 mb-2">霓虹主题光谱 (Theme Color)</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="setTheme('cyber')"
+                        class="h-8 rounded bg-gradient-to-r from-cyan-400 to-pink-500 border border-white/40 hover:scale-105 transition"></button>
+                    <button onclick="setTheme('emerald')"
+                        class="h-8 rounded bg-gradient-to-r from-emerald-400 to-teal-200 border border-white/20 hover:scale-105 transition"></button>
+                    <button onclick="setTheme('ice')"
+                        class="h-8 rounded bg-gradient-to-r from-blue-400 to-indigo-600 border border-white/20 hover:scale-105 transition"></button>
+                    <button onclick="setTheme('fire')"
+                        class="h-8 rounded bg-gradient-to-r from-amber-400 to-red-600 border border-white/20 hover:scale-105 transition"></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5 pt-3 border-t border-cyan-500/20 text-center text-xs text-cyan-300/60">
+            <i class="fa-solid fa-hand-pointer animate-bounce mr-1"></i> 移动光标吸引 / 点击鼠标释放冲击波
+        </div>
+    </aside>
+
+    <!-- ==========================================================================
+       4. 游戏数据 HUD 界面 (游戏模式专用 Overhead Display)
+       ========================================================================== -->
+    <div id="gameHud"
+        class="absolute left-1/2 -translate-x-1/2 top-20 z-10 glass-panel px-8 py-3 rounded-full border border-pink-500/40 hidden flex items-center space-x-8 neon-glow-pink">
+        <div class="text-center">
+            <div class="text-xs text-pink-300/70 uppercase tracking-widest font-orbitron">核心护盾 (Shield)</div>
+            <div class="w-28 bg-gray-800 rounded-full h-3 mt-1 overflow-hidden p-0.5 border border-pink-500/30">
+                <div id="shieldBar"
+                    class="bg-gradient-to-r from-pink-500 to-red-500 h-full rounded-full transition-all duration-300"
+                    style="width: 100%;"></div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <div class="text-xs text-cyan-300/70 uppercase tracking-widest font-orbitron">消灭积分 (Score)</div>
+            <div id="scoreDisplay" class="font-orbitron text-2xl font-black text-cyan-400 neon-text-cyan">0</div>
+        </div>
+
+        <div class="text-center">
+            <div class="text-xs text-amber-300/70 uppercase tracking-widest font-orbitron">连击 (Combo)</div>
+            <div id="comboDisplay" class="font-orbitron text-2xl font-black text-amber-400">x1</div>
+        </div>
+    </div>
+
+    <!-- 游戏结束/胜利 模态弹窗 -->
+    <div id="gameOverModal"
+        class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div
+            class="glass-panel p-8 rounded-3xl border-2 border-pink-500/60 max-w-md w-full text-center neon-glow-pink relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-pink-500/20 rounded-full blur-2xl"></div>
+
+            <h2 id="gameOverTitle" class="font-orbitron text-3xl font-black text-pink-500 neon-text-pink mb-2">核心失守!
+            </h2>
+            <p class="text-gray-300 text-sm mb-6">赛博病毒已入侵核心防线，防御实验室陷入停摆。</p>
+
+            <div class="bg-black/40 p-4 rounded-xl mb-6 space-y-2 border border-white/5 font-orbitron">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-400">本次最终得分:</span>
+                    <span id="finalScore" class="text-cyan-400 font-bold">0</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-400">历史最高纪录:</span>
+                    <span id="highScore" class="text-amber-400 font-bold">0</span>
+                </div>
+            </div>
+
+            <button onclick="restartGame()"
+                class="cyber-btn w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-black py-3 rounded-lg text-lg neon-glow-cyan">
+                重新开启防御系统
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       5. 人机协作 Prompt 演进展板 Drawer (Campus Tech Exhibition Key Highlight)
+       ========================================================================== -->
+    <div id="promptModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex justify-end">
+        <div
+            class="w-full max-w-2xl bg-gray-950 border-l border-cyan-500/30 h-full p-6 md:p-8 overflow-y-auto relative shadow-2xl">
+            <!-- 关闭按钮 -->
+            <button onclick="togglePromptModal(false)"
+                class="absolute top-6 right-6 text-gray-400 hover:text-white text-2xl transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- 侧边栏标题 -->
+            <div class="mb-6 border-b border-cyan-500/20 pb-4">
+                <div
+                    class="inline-block px-3 py-1 bg-cyan-500/10 border border-cyan-500/40 rounded-full text-cyan-400 text-xs font-mono mb-2">
+                    CAMPUS TECH EXHIBITION • AI INSIGHTS
+                </div>
+                <h2 class="font-orbitron text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-code-merge text-pink-500"></i> 人机协作创作脉络展示
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">演示中学生如何通过精准 Prompt 指令一步步构建该复杂物理引擎网页。</p>
+            </div>
+
+            <!-- Prompt 演进三大步骤卡片 -->
+            <div class="space-y-6 text-sm">
+                <!-- Step 1 -->
+                <div class="bg-gray-900/80 p-4 rounded-xl border border-cyan-500/30">
+                    <div class="flex items-center justify-between mb-2">
+                        <span
+                            class="font-orbitron font-bold text-cyan-400 text-xs px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800">
+                            STEP 1: 架构搭建 (Initial Prompt)
+                        </span>
+                        <i class="fa-solid fa-cubes text-cyan-500/50"></i>
+                    </div>
+                    <div
+                        class="font-mono text-xs text-gray-300 bg-black/50 p-3 rounded border border-white/5 whitespace-pre-wrap">
+                        "请作为资深前端专家，用单文件 HTML/CSS/JS 编写一个【交互式重力粒子画布】。
+                        实现核心功能：使用 Canvas 渲染粒子，鼠标靠近时粒子聚集，点击时爆开，并提供粒子数量与重力的控制面板。"
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">💡 成果：生成了基础的物理画布和原生 HTML 滑块控制逻辑。</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-gray-900/80 p-4 rounded-xl border border-pink-500/30">
+                    <div class="flex items-center justify-between mb-2">
+                        <span
+                            class="font-orbitron font-bold text-pink-400 text-xs px-2 py-0.5 rounded bg-pink-950 border border-pink-800">
+                            STEP 2: 视觉提升 (Style Enhancement)
+                        </span>
+                        <i class="fa-solid fa-wand-magic-sparkles text-pink-500/50"></i>
+                    </div>
+                    <div
+                        class="font-mono text-xs text-gray-300 bg-black/50 p-3 rounded border border-white/5 whitespace-pre-wrap">
+                        "请将整体风格重构成『暗黑赛博朋克风格』。
+                        加入 Tailwind CSS、网格阴影、CSS 霓虹发光（Neon Glow）以及玻璃拟态（Glassmorphism）浮动面板。
+                        粒子增加能量连线，并提供 4 套赛博霓虹主题色（赛博霓虹、翡翠光极、深海冰蓝、烈焰红莲）一键切换。"
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">💡 成果：界面大幅跃升为科幻展会级视觉效果，粒子间连线增加科技感。</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-gray-900/80 p-4 rounded-xl border border-amber-500/30">
+                    <div class="flex items-center justify-between mb-2">
+                        <span
+                            class="font-orbitron font-bold text-amber-400 text-xs px-2 py-0.5 rounded bg-amber-950 border border-amber-800">
+                            STEP 3: 玩法深化与音效 (Game & Web Audio)
+                        </span>
+                        <i class="fa-solid fa-gamepad text-amber-500/50"></i>
+                    </div>
+                    <div
+                        class="font-mono text-xs text-gray-300 bg-black/50 p-3 rounded border border-white/5 whitespace-pre-wrap">
+                        "在物理画布的基础上，拓展一个『迷你赛博防御游戏模式』。
+                        利用 Web Audio API 合成激光和爆炸音效（不依赖外部音效文件）。
+                        增加下落的赛博病毒，允许玩家拖拽光标护盾进行拦截，计算连击与积分，并在核心被破毁时弹出高分结算弹窗。"
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">💡 成果：成功将静态展示转化为具备强烈互动感的展会互动游戏。</p>
+                </div>
+            </div>
+
+            <!-- 人机协作总结 -->
+            <div
+                class="mt-6 p-4 rounded-xl bg-gradient-to-r from-cyan-950/40 to-pink-950/40 border border-white/10 text-xs text-gray-300">
+                <h4 class="font-bold text-white mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i> 学生现场讲解提纲：
+                </h4>
+                <p>AI 不是代码的替代者，而是创意加速器。我们通过『递进式提示词工程（Iterative Prompting）』，将复杂的数学物理演算与 Web 音频接口分层落地，最终完成此项科技展作品。</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==========================================================================
+       6. JavaScript 核心逻辑 (Canvas Physics, Web Audio & Game Logic)
+       ========================================================================== -->
+    <script>
+        function backToHome() {
+            if (window.parent && window.parent.closeModal) {
+                window.parent.closeModal();
+            } else {
+                location.href = '../../index.html';
+            }
+        }
+
+        /**
+         * 赛博朋克粒子实验室 & 迷你游戏核心脚本
+         * 包含：
+         * 1. Canvas 高帧率渲染引擎 (支持防抖自适应 resize)
+         * 2. 粒子物理学模型 (引力吸引、斥力爆开、能量碰撞)
+         * 3. Web Audio API 无外部依赖音效合成器
+         * 4. 迷你游戏逻辑与 HUD 状态机
+         */
+
+        // ----------------------------------------------------------------------
+        // 全局变量与配置
+        // ----------------------------------------------------------------------
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        // 当前模式: 'lab' (实验室) 或 'game' (防御游戏)
+        let currentMode = 'lab';
+
+        // 鼠标/触控位置
+        const mouse = {
+            x: width / 2,
+            y: height / 2,
+            radius: 150,
+            isDown: false
+        };
+
+        // 物理参数 (由 UI 控件控制)
+        const params = {
+            count: 120,
+            gravity: 2.5,
+            speed: 2.0,
+            linkDist: 100,
+            theme: 'cyber'
+        };
+
+        // 配色方案定义
+        const themes = {
+            cyber: ['#00f3ff', '#ff0055', '#ffe600', '#00ff99'],
+            emerald: ['#00ff99', '#059669', '#34d399', '#a7f3d0'],
+            ice: ['#38bdf8', '#818cf8', '#c084fc', '#e0e7ff'],
+            fire: ['#f59e0b', '#ef4444', '#dc2626', '#fde047']
+        };
+
+        let particles = [];
+        let enemies = [];
+        let shockwaves = [];
+
+        // 游戏状态
+        const gameState = {
+            score: 0,
+            combo: 1,
+            shield: 100,
+            highScore: localStorage.getItem('cyber_high_score') || 0,
+            spawnTimer: 0,
+            active: false
+        };
+
+        // 音效控制
+        let audioEnabled = true;
+        let audioCtx = null;
+
+        // FPS 侦测
+        let lastFrameTime = performance.now();
+        let frameCount = 0;
+
+        // ----------------------------------------------------------------------
+        // Web Audio API 声音合成器 (不需要加载任何外部 mp3/wav)
+        // ----------------------------------------------------------------------
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+        }
+
+        // 播放合成音效 (不同频率/波形组合)
+        function playSynthesizedSound(type) {
+            if (!audioEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'pop') {
+                // 点击波纹冲击声
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'hit') {
+                // 消灭病毒音效
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'damage') {
+                // 受伤警报音效
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.linearRampToValueAtTime(40, now + 0.3);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('soundStatus').innerText = audioEnabled ? 'ON' : 'OFF';
+            document.getElementById('soundIcon').className = audioEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+        }
+
+        // ----------------------------------------------------------------------
+        // 粒子与物理类 (Particle Physics System)
+        // ----------------------------------------------------------------------
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * params.speed;
+                this.vy = (Math.random() - 0.5) * params.speed;
+                this.radius = Math.random() * 2.5 + 1.5;
+                const palette = themes[params.theme];
+                this.color = palette[Math.floor(Math.random() * palette.length)];
+                this.alpha = Math.random() * 0.5 + 0.5;
+            }
+
+            update() {
+                // 1. 基础运动
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // 2. 边界碰撞反弹
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+
+                // 3. 鼠标交互物理（引力/斥力）
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < mouse.radius && dist > 0) {
+                    const force = (1 - dist / mouse.radius) * params.gravity;
+                    const angle = Math.atan2(dy, dx);
+
+                    // 默认鼠标靠近吸引
+                    this.vx += Math.cos(angle) * force * 0.2;
+                    this.vy += Math.sin(angle) * force * 0.2;
+                }
+
+                // 速度上限限制
+                const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                const maxSpeed = params.speed * 3;
+                if (currentSpeed > maxSpeed) {
+                    this.vx = (this.vx / currentSpeed) * maxSpeed;
+                    this.vy = (this.vy / currentSpeed) * maxSpeed;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 8;
+                ctx.globalAlpha = this.alpha;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 冲击波类 (点击鼠标时产生)
+        class Shockwave {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 1;
+                this.maxRadius = 120;
+                this.alpha = 1;
+                this.color = themes[params.theme][0];
+            }
+
+            update() {
+                this.radius += 8;
+                this.alpha -= 0.03;
+            }
+
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 3;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 15;
+                ctx.globalAlpha = this.alpha;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // 敌人类 (赛博病毒/陨石)
+        class Enemy {
+            constructor() {
+                this.radius = Math.random() * 12 + 10;
+                // 从屏幕上方随机降落
+                this.x = Math.random() * (width - 100) + 50;
+                this.y = -this.radius;
+                this.speed = Math.random() * 2 + 1.5;
+                this.color = '#ff0055';
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = '#ff0055';
+                ctx.shadowBlur = 12;
+                ctx.fill();
+
+                // 核心病毒内部发光点
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 0.4, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // ----------------------------------------------------------------------
+        // 初始化与粒子管理
+        // ----------------------------------------------------------------------
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < params.count; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        // 动态绘制粒子间的连线 (网络连接感)
+        function drawLines() {
+            if (params.linkDist <= 0) return;
+
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < params.linkDist) {
+                        const alpha = (1 - dist / params.linkDist) * 0.3;
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = particles[i].color;
+                        ctx.globalAlpha = alpha;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                }
+            }
+        }
+
+        // ----------------------------------------------------------------------
+        // 主渲染循环 (Main Loop)
+        // ----------------------------------------------------------------------
+        function animate(timestamp) {
+            // 计算 FPS
+            frameCount++;
+            if (timestamp - lastFrameTime >= 1000) {
+                document.getElementById('fpsCounter').innerText = `FPS: ${frameCount}`;
+                frameCount = 0;
+                lastFrameTime = timestamp;
+            }
+
+            // 清空画布 (留微弱残影拖尾)
+            ctx.fillStyle = 'rgba(5, 5, 8, 0.25)';
+            ctx.fillRect(0, 0, width, height);
+
+            // 1. 更新并绘制粒子
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // 2. 绘制连接线条
+            drawLines();
+
+            // 3. 绘制并更新冲击波
+            shockwaves.forEach((sw, index) => {
+                sw.update();
+                sw.draw();
+                if (sw.alpha <= 0) shockwaves.splice(index, 1);
+            });
+
+            // 4. 绘制光标吸引力护盾光圈
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(mouse.x, mouse.y, currentMode === 'game' ? 40 : mouse.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = currentMode === 'game' ? 'rgba(255, 0, 85, 0.6)' : 'rgba(0, 243, 255, 0.15)';
+            ctx.lineWidth = currentMode === 'game' ? 3 : 1;
+            if (currentMode === 'game') {
+                ctx.shadowColor = '#ff0055';
+                ctx.shadowBlur = 10;
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // 5. 游戏模式特定更新逻辑
+            if (currentMode === 'game' && gameState.active) {
+                updateGameLogic();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // ----------------------------------------------------------------------
+        // 防御游戏模式逻辑 (Defense Game Rules)
+        // ----------------------------------------------------------------------
+        function updateGameLogic() {
+            // 生成病毒敌人
+            gameState.spawnTimer++;
+            if (gameState.spawnTimer % 45 === 0) {
+                enemies.push(new Enemy());
+            }
+
+            // 绘制中心保护核心
+            const coreX = width / 2;
+            const coreY = height - 60;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(coreX, coreY, 35, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 243, 255, 0.2)';
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#00f3ff';
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+
+            // 遍历并更新敌人
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                enemy.update();
+                enemy.draw();
+
+                // 碰撞检测 A: 敌人 vs 玩家光标屏障
+                const dxMouse = mouse.x - enemy.x;
+                const dyMouse = mouse.y - enemy.y;
+                const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+
+                if (distMouse < 40 + enemy.radius) {
+                    // 玩家成功拦截病毒
+                    playSynthesizedSound('hit');
+                    shockwaves.push(new Shockwave(enemy.x, enemy.y));
+                    enemies.splice(i, 1);
+
+                    // 增加分数与连击
+                    gameState.score += 10 * gameState.combo;
+                    gameState.combo = Math.min(gameState.combo + 1, 10);
+                    updateHudDisplay();
+                    continue;
+                }
+
+                // 碰撞检测 B: 敌人 vs 底部核心
+                const dxCore = coreX - enemy.x;
+                const dyCore = coreY - enemy.y;
+                const distCore = Math.sqrt(dxCore * dxCore + dyCore * dyCore);
+
+                if (distCore < 35 + enemy.radius) {
+                    // 核心受创
+                    playSynthesizedSound('damage');
+                    enemies.splice(i, 1);
+                    gameState.shield -= 20;
+                    gameState.combo = 1; // 连击中断
+                    updateHudDisplay();
+
+                    if (gameState.shield <= 0) {
+                        endGame();
+                    }
+                }
+            }
+        }
+
+        function updateHudDisplay() {
+            document.getElementById('scoreDisplay').innerText = gameState.score;
+            document.getElementById('comboDisplay').innerText = `x${gameState.combo}`;
+            document.getElementById('shieldBar').style.width = `${Math.max(0, gameState.shield)}%`;
+        }
+
+        function switchMode() {
+            if (currentMode === 'lab') {
+                currentMode = 'game';
+                document.getElementById('modeBtnText').innerText = '返回实验室';
+                document.getElementById('labControlPanel').classList.add('hidden');
+                document.getElementById('gameHud').classList.remove('hidden');
+                restartGame();
+            } else {
+                currentMode = 'lab';
+                document.getElementById('modeBtnText').innerText = '进入防御游戏';
+                document.getElementById('labControlPanel').classList.remove('hidden');
+                document.getElementById('gameHud').classList.add('hidden');
+                document.getElementById('gameOverModal').classList.add('hidden');
+                gameState.active = false;
+                enemies = [];
+            }
+        }
+
+        function restartGame() {
+            gameState.score = 0;
+            gameState.combo = 1;
+            gameState.shield = 100;
+            gameState.active = true;
+            enemies = [];
+            updateHudDisplay();
+            document.getElementById('gameOverModal').classList.add('hidden');
+        }
+
+        function endGame() {
+            gameState.active = false;
+            playSynthesizedSound('damage');
+
+            // 更新最高分记录
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                localStorage.setItem('cyber_high_score', gameState.highScore);
+            }
+
+            document.getElementById('finalScore').innerText = gameState.score;
+            document.getElementById('highScore').innerText = gameState.highScore;
+            document.getElementById('gameOverModal').classList.remove('hidden');
+        }
+
+        // ----------------------------------------------------------------------
+        // 事件监听与 UI 绑定
+        // ----------------------------------------------------------------------
+        // 窗口大小缩放防抖适应
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initParticles();
+        });
+
+        // 鼠标/触控位置更新
+        function handleMove(e) {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            mouse.x = clientX;
+            mouse.y = clientY;
+        }
+
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove);
+
+        // 点击冲击波
+        window.addEventListener('click', (e) => {
+            // 防止点击 UI 菜单时触发粒子冲击
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.closest('#promptModal') || e.target.closest('#labControlPanel')) {
+                return;
+            }
+
+            shockwaves.push(new Shockwave(mouse.x, mouse.y));
+            playSynthesizedSound('pop');
+
+            // 扩散推开附近粒子
+            particles.forEach(p => {
+                const dx = p.x - mouse.x;
+                const dy = p.y - mouse.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 150) {
+                    const angle = Math.atan2(dy, dx);
+                    const force = (1 - dist / 150) * 12;
+                    p.vx += Math.cos(angle) * force;
+                    p.vy += Math.sin(angle) * force;
+                }
+            });
+        });
+
+        // 滑块参数绑定
+        document.getElementById('paramCount').addEventListener('input', (e) => {
+            params.count = parseInt(e.target.value);
+            document.getElementById('valCount').innerText = params.count;
+            initParticles();
+        });
+
+        document.getElementById('paramGravity').addEventListener('input', (e) => {
+            params.gravity = parseFloat(e.target.value);
+            document.getElementById('valGravity').innerText = params.gravity.toFixed(1);
+        });
+
+        document.getElementById('paramSpeed').addEventListener('input', (e) => {
+            params.speed = parseFloat(e.target.value);
+            document.getElementById('valSpeed').innerText = params.speed.toFixed(1);
+        });
+
+        document.getElementById('paramLink').addEventListener('input', (e) => {
+            params.linkDist = parseInt(e.target.value);
+            document.getElementById('valLink').innerText = params.linkDist;
+        });
+
+        function setTheme(themeKey) {
+            params.theme = themeKey;
+            initParticles();
+        }
+
+        function togglePromptModal(show) {
+            document.getElementById('promptModal').classList.toggle('hidden', !show);
+        }
+
+        // ----------------------------------------------------------------------
+        // 入口初始化
+        // ----------------------------------------------------------------------
+        window.onload = function () {
+            initParticles();
+            requestAnimationFrame(animate);
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>霓虹记忆配对 2.0 · 声光赛博卡牌</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      box-sizing: border-box;
+      --c: #00f0ff;
+      --m: #ff2bd6;
+      --y: #ffe600
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #05010f;
+      color: #e8f6ff;
+      font-family: ui-monospace, "Courier New", monospace
+    }
+
+    body {
+      background: radial-gradient(ellipse at 50% 20%, #20093d, #05010f 80%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: calc(10px + env(safe-area-inset-top, 0px)) 10px calc(10px + env(safe-area-inset-bottom, 0px))
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .03) 0 1px, transparent 1px 3px)
+    }
+
+    #hud {
+      display: flex;
+      gap: clamp(8px, 2.5vw, 24px);
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      font-weight: 700;
+      font-size: clamp(12px, 3.2vw, 17px);
+      margin-bottom: 6px;
+      text-shadow: 0 0 10px currentColor
+    }
+
+    #hud span:nth-child(1) {
+      color: var(--c)
+    }
+
+    #hud span:nth-child(2) {
+      color: var(--m)
+    }
+
+    #hud span:nth-child(3) {
+      color: #3dff9a
+    }
+
+    #hud span:nth-child(5) {
+      color: var(--y)
+    }
+
+    #audioToggle {
+      background: transparent;
+      border: 1px solid rgba(0, 240, 255, .4);
+      color: var(--c);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 11px;
+      cursor: pointer
+    }
+
+    #combo {
+      color: var(--y);
+      height: 1.4em;
+      font-weight: 800;
+      font-size: clamp(14px, 3.8vw, 22px);
+      text-shadow: 0 0 14px var(--y);
+      animation: pulseCombo .8s infinite alternate
+    }
+
+    @keyframes pulseCombo {
+      from {
+        transform: scale(1)
+      }
+
+      to {
+        transform: scale(1.06)
+      }
+    }
+
+    #bar {
+      width: min(94vw, 520px);
+      height: 7px;
+      border: 1px solid #3dff9a;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      box-shadow: 0 0 8px #3dff9a;
+      background: #07161c
+    }
+
+    #bar i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #3dff9a, #00f0ff);
+      box-shadow: 0 0 10px #3dff9a;
+      transition: width .1s linear
+    }
+
+    #wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 0
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), 1fr);
+      gap: clamp(6px, 1.5vmin, 14px);
+      width: min(94vw, calc((100dvh - 150px) * var(--cols) / var(--rows)));
+      perspective: 900px
+    }
+
+    .card {
+      aspect-ratio: 1;
+      position: relative;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform .35s cubic-bezier(0.34, 1.56, 0.64, 1)
+    }
+
+    .card.on {
+      transform: rotateY(180deg)
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .back {
+      border: 2px solid var(--m);
+      background: repeating-linear-gradient(45deg, #160633 0 6px, #240d4f 6px 12px);
+      box-shadow: 0 0 12px rgba(255, 43, 214, .5), inset 0 0 12px rgba(255, 43, 214, .25);
+      transition: all .2s
+    }
+
+    .back::after {
+      content: "?";
+      color: var(--m);
+      font-size: clamp(16px, 4.5vmin, 32px);
+      text-shadow: 0 0 12px var(--m);
+      font-weight: 900
+    }
+
+    .card:hover .back {
+      box-shadow: 0 0 22px var(--m), inset 0 0 16px rgba(255, 43, 214, .5);
+      transform: scale(1.03)
+    }
+
+    .front {
+      transform: rotateY(180deg);
+      background: #09021c;
+      border: 2px solid var(--k);
+      color: var(--k);
+      font-size: clamp(22px, 6.8vmin, 56px);
+      text-shadow: 0 0 14px var(--k);
+      box-shadow: 0 0 16px var(--k), inset 0 0 16px rgba(255, 255, 255, .08)
+    }
+
+    .card.ok {
+      cursor: default;
+      animation: pulseOk 1.2s ease-in-out infinite
+    }
+
+    .card.ok .front {
+      background: rgba(12, 4, 36, .75);
+      opacity: .8;
+      border-color: #3dff9a;
+      color: #3dff9a;
+      box-shadow: 0 0 14px #3dff9a
+    }
+
+    .card.bad .front {
+      border-color: #ff3b3b;
+      box-shadow: 0 0 20px #ff3b3b;
+      animation: badShake .3s
+    }
+
+    @keyframes pulseOk {
+      50% {
+        filter: brightness(1.4);
+        box-shadow: 0 0 24px #3dff9a
+      }
+    }
+
+    @keyframes badShake {
+
+      0%,
+      100% {
+        transform: rotateY(180deg) translateX(0)
+      }
+
+      25% {
+        transform: rotateY(180deg) translateX(-6px)
+      }
+
+      75% {
+        transform: rotateY(180deg) translateX(6px)
+      }
+    }
+
+    #ov {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 14px;
+      background: rgba(5, 1, 15, .88);
+      padding: 24px;
+      z-index: 2;
+      backdrop-filter: blur(10px)
+    }
+
+    #ov.hide {
+      display: none
+    }
+
+    #ov h1 {
+      margin: 0;
+      font-size: clamp(28px, 7.5vw, 54px);
+      letter-spacing: .1em;
+      color: var(--c);
+      text-shadow: 0 0 8px var(--c), 0 0 28px var(--c), 3px 3px 0 var(--m)
+    }
+
+    #ov p {
+      margin: 0;
+      line-height: 1.8;
+      font-size: clamp(13px, 2.6vw, 16px);
+      max-width: 500px
+    }
+
+    #ov b {
+      color: var(--y);
+      text-shadow: 0 0 8px var(--y)
+    }
+
+    #btn {
+      margin-top: 10px;
+      padding: 12px 36px;
+      font: inherit;
+      font-size: 16px;
+      letter-spacing: .2em;
+      color: var(--c);
+      background: rgba(0, 240, 255, .1);
+      border: 2px solid var(--c);
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 16px var(--c), inset 0 0 14px rgba(0, 240, 255, .25);
+      text-shadow: 0 0 8px var(--c);
+      transition: all .18s
+    }
+
+    #btn:hover {
+      background: rgba(0, 240, 255, .25);
+      transform: scale(1.05)
+    }
+
+    #banner {
+      position: fixed;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(28px, 9vw, 64px);
+      font-weight: 800;
+      color: #ff9cf0;
+      text-shadow: 0 0 28px var(--m);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .3s;
+      z-index: 3;
+      text-align: center
+    }
+
+    #banner.on {
+      opacity: 1
+    }
+  </style>
+</head>
+
+<body>
+  <div id="hud">
+    <span id="sc">SCORE 0</span>
+    <span id="lv">LEVEL 1</span>
+    <span id="tm">TIME 0</span>
+    <span id="mv">MOVES 0</span>
+    <span id="bs">BEST 0</span>
+    <button id="audioToggle">🔊 音效: 开</button>
+  </div>
+  <div id="combo"></div>
+  <div id="bar"><i id="barI"></i></div>
+  <div id="wrap">
+    <div id="grid"></div>
+  </div>
+  <div id="banner"></div>
+  <div id="ov">
+    <h1 id="t"></h1>
+    <p id="d"></p><button id="btn"></button>
+  </div>
+  <script>
+    (() => {
+      // Web Audio Neon Synth SFX
+      let audioCtx = null, soundOn = true;
+      function initAudio() {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      }
+      function playFlipSound() {
+        if (!soundOn) return;
+        initAudio();
+        try {
+          const now = audioCtx.currentTime;
+          const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.exponentialRampToValueAtTime(750, now + 0.07);
+          g.gain.setValueAtTime(0.08, now);
+          g.gain.linearRampToValueAtTime(0.001, now + 0.07);
+          osc.connect(g); g.connect(audioCtx.destination);
+          osc.start(); osc.stop(now + 0.08);
+        } catch (e) { }
+      }
+      function playMatchSound(comboLevel = 1) {
+        if (!soundOn) return;
+        initAudio();
+        try {
+          const baseFreqs = [523.25, 659.25, 783.99, 1046.5, 1318.5]; // C E G C E
+          const idx = Math.min(comboLevel - 1, baseFreqs.length - 1);
+          const now = audioCtx.currentTime;
+          const f1 = baseFreqs[idx];
+          const f2 = f1 * 1.5;
+          [f1, f2].forEach((f, i) => {
+            const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(f, now + i * 0.08);
+            g.gain.setValueAtTime(0.12, now + i * 0.08);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.35);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(now + i * 0.08); osc.stop(now + i * 0.08 + 0.38);
+          });
+        } catch (e) { }
+      }
+      function playMissSound() {
+        if (!soundOn) return;
+        initAudio();
+        try {
+          const now = audioCtx.currentTime;
+          const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.linearRampToValueAtTime(120, now + 0.18);
+          g.gain.setValueAtTime(0.1, now);
+          g.gain.linearRampToValueAtTime(0.001, now + 0.18);
+          osc.connect(g); g.connect(audioCtx.destination);
+          osc.start(); osc.stop(now + 0.19);
+        } catch (e) { }
+      }
+      function playVictorySound() {
+        if (!soundOn) return;
+        initAudio();
+        try {
+          const now = audioCtx.currentTime;
+          [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+            const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(f, now + i * 0.1);
+            g.gain.setValueAtTime(0.09, now + i * 0.1);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.1 + 0.4);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(now + i * 0.1); osc.stop(now + i * 0.1 + 0.42);
+          });
+        } catch (e) { }
+      }
+
+      const $ = id => document.getElementById(id);
+      const SYM = '◆▲●■★✚☾☀♥♠♣♦⚡✿☂☯✦❖☢♫✈⚓☠'.match(/./gu), NEON = ['#00f0ff', '#ff2bd6', '#ffe600', '#b26bff', '#3dff9a', '#ff7a3d'];
+      const LEVELS = [[4, 4], [4, 5], [5, 6], [6, 6], [6, 7]];
+      let state = 'menu', level = 1, score = 0, moves = 0, combo = 0, maxCombo = 0, timeLeft = 0, timeMax = 1, pairs = 0, found = 0, first = null, busy = false, tick = null, high = 0, newRec = false;
+      try { high = +localStorage.getItem('neonMemoryHigh') || 0 } catch (e) { }
+      const mult = () => Math.min(5, combo);
+
+      function show(t, d, b) { $('t').textContent = t; $('d').innerHTML = d; $('btn').textContent = b; $('ov').classList.remove('hide') }
+      function menu() { show('NEON MEMORY', '翻开两张卡片，找出相同的一对。<br>连续配对成功会累积 <b>COMBO</b>（最高 ×5），翻错就归零。<br>每关有倒计时，剩余时间会转成奖励分。<br>通关后进入更大的棋盘，卡片更多、时间更紧！<br>历史最高分：<b>' + high + '</b>', '开始游戏') }
+      function hud() {
+        $('sc').textContent = 'SCORE ' + score; $('lv').textContent = 'LEVEL ' + level; $('tm').textContent = 'TIME ' + Math.ceil(timeLeft); $('mv').textContent = 'MOVES ' + moves; $('bs').textContent = 'BEST ' + Math.max(high, score);
+        $('combo').textContent = combo > 1 ? `COMBO ${combo}  ×${mult()}` : ''; $('barI').style.width = Math.max(0, timeLeft / timeMax * 100) + '%';
+      }
+      function banner(txt) { const b = $('banner'); b.innerHTML = txt; b.classList.add('on'); setTimeout(() => b.classList.remove('on'), 1100) }
+
+      $('audioToggle').onclick = () => {
+        soundOn = !soundOn;
+        initAudio();
+        $('audioToggle').textContent = soundOn ? '🔊 音效: 开' : '🔇 音效: 关';
+      };
+
+      // ---- 发牌 ----
+      function deal() {
+        const [r, c] = LEVELS[Math.min(level, LEVELS.length) - 1]; pairs = r * c / 2; found = 0; first = null; busy = false;
+        const pool = [...SYM.keys()].sort(() => Math.random() - .5).slice(0, pairs);
+        const deck = [...pool, ...pool].sort(() => Math.random() - .5);
+        const g = $('grid'); g.style.setProperty('--cols', c); g.style.setProperty('--rows', r); g.innerHTML = '';
+        deck.forEach(id => {
+          const d = document.createElement('div'); d.className = 'card'; d.dataset.id = id;
+          d.innerHTML = `<div class="face back"></div><div class="face front" style="--k:${NEON[id % NEON.length]}">${SYM[id]}</div>`;
+          d.onclick = () => flip(d); g.appendChild(d);
+        });
+        timeMax = timeLeft = Math.round(pairs * (6 - Math.min(2, level * .35)) + 10); hud();
+      }
+      function start() { score = 0; moves = 0; combo = 0; maxCombo = 0; level = 1; newRec = false; state = 'play'; $('ov').classList.add('hide'); deal(); run() }
+      function run() { clearInterval(tick); tick = setInterval(() => { if (state !== 'play') return; timeLeft -= .1; if (timeLeft <= 0) { timeLeft = 0; over() } hud() }, 100) }
+      function over() {
+        state = 'over'; clearInterval(tick);
+        if (score > high) { high = score; newRec = true; try { localStorage.setItem('neonMemoryHigh', String(high)) } catch (e) { } }
+        show('TIME UP', `得分 <b>${score}</b> · 到达第 <b>${level}</b> 关 · 最高连击 <b>${maxCombo}</b><br>历史最高分 <b>${high}</b>${newRec ? ' 🎉 新纪录！' : ''}`, '再来一局');
+      }
+
+      // ---- 翻牌与配对判断 ----
+      function flip(card) {
+        if (state !== 'play' || busy || card.classList.contains('on')) return;
+        playFlipSound();
+        card.classList.add('on');
+        if (!first) { first = card; return }
+        moves++; busy = true; const a = first, b = card; first = null;
+        if (a.dataset.id === b.dataset.id) {
+          combo++; maxCombo = Math.max(maxCombo, combo); score += 100 * mult(); found++;
+          playMatchSound(combo);
+          setTimeout(() => { a.classList.add('ok'); b.classList.add('ok'); busy = false; hud(); if (found === pairs) clear() }, 350);
+        } else {
+          combo = 0; a.classList.add('bad'); b.classList.add('bad');
+          playMissSound();
+          setTimeout(() => { a.classList.remove('on', 'bad'); b.classList.remove('on', 'bad'); busy = false; hud() }, Math.max(450, 800 - level * 60));
+        }
+        hud();
+      }
+      function clear() {
+        playVictorySound();
+        const bonus = Math.round(timeLeft * 5); score += bonus; state = 'cleared'; clearInterval(tick);
+        banner(`LEVEL ${level} CLEAR<br><span style="font-size:.4em;color:#ffe600">时间奖励 +${bonus}</span>`); hud();
+        setTimeout(() => { level++; state = 'play'; deal(); run() }, 1600);
+      }
+      $('btn').onclick = () => start();
+      addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && (state === 'menu' || state === 'over') && !$('ov').classList.contains('hide')) { e.preventDefault(); start() } });
+      hud(); menu();
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>数据潮汐 · 互动粒子艺术</title>
+  <style>
+    :root {
+      --bg: #000;
+      --panel: rgba(12, 14, 26, 0.6);
+      --line: rgba(255, 255, 255, 0.14);
+      --text: #eef2ff;
+      --muted: #9aa6cc;
+      --accent: #6fe3ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .vig {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.55) 100%);
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 2;
+      pointer-events: none;
+      text-align: center;
+      padding: calc(env(safe-area-inset-top) + 16px) 20px 34px;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.35) 60%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 5vw, 44px);
+      font-weight: 700;
+      letter-spacing: 0.32em;
+      padding-left: 0.32em;
+      background: linear-gradient(90deg, #6fe3ff, #8d7bff, #ff6fae, #ffb86b);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .sub {
+      margin: 4px 0 0;
+      font-size: clamp(10px, 2vw, 12px);
+      letter-spacing: 0.36em;
+      padding-left: 0.36em;
+      color: var(--muted);
+    }
+
+    .hint {
+      margin: 10px auto 0;
+      max-width: 860px;
+      font-size: clamp(12px, 2.6vw, 14px);
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .hint b {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .hint span {
+      display: inline-block;
+      margin: 0 8px;
+    }
+
+    .controls {
+      position: fixed;
+      z-index: 3;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(env(safe-area-inset-bottom) + 14px);
+      width: min(880px, calc(100% - 24px));
+      display: grid;
+      grid-template-columns: repeat(3, 1fr) auto auto;
+      gap: 12px 16px;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .ctl label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .ctl output {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 22px;
+      background: transparent;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      margin-top: -7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+      border: none;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+      border: none;
+    }
+
+    button {
+      font: inherit;
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+      padding: 10px 16px;
+      min-width: 96px;
+      border-radius: 12px;
+      background: rgba(111, 227, 255, 0.12);
+      border: 1px solid rgba(111, 227, 255, 0.5);
+      transition: background .2s, transform .1s;
+    }
+
+    button:hover {
+      background: rgba(111, 227, 255, 0.24);
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    button.on {
+      background: rgba(255, 111, 174, 0.2);
+      border-color: rgba(255, 111, 174, 0.65);
+    }
+
+    #nogl {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 760px) {
+      .controls {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px 12px;
+        padding: 10px 12px;
+      }
+
+      .controls button {
+        padding: 9px;
+        min-width: 0;
+      }
+
+      .ctl label {
+        font-size: 11px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>数据潮汐</h1>
+    <p class="sub">Data Tide · Fluid Sculpture</p>
+    <p class="hint">
+      <span>移动<b>鼠标 / 手指</b>：拨动烟雾与浪潮</span>
+      <span><b>点击 / 轻触</b>：释放冲击波，雕塑重新塑形</span>
+      <span><b>空白键</b>：暂停</span>
+    </p>
+  </header>
+
+  <canvas id="c"></canvas>
+  <div class="vig"></div>
+  <div id="nogl">此浏览器不支持 WebGL，无法显示本作品。</div>
+
+  <section class="controls" aria-label="控制面板">
+    <div class="ctl">
+      <label for="count">数据粒子 <output id="countOut">80k</output></label>
+      <input type="range" id="count" min="20000" max="160000" step="10000" value="80000">
+    </div>
+    <div class="ctl">
+      <label for="speed">流速 <output id="speedOut">1.0×</output></label>
+      <input type="range" id="speed" min="0.3" max="2.5" step="0.1" value="1">
+    </div>
+    <div class="ctl">
+      <label for="sculpt">雕塑凝聚 <output id="sculptOut">100%</output></label>
+      <input type="range" id="sculpt" min="0" max="1.6" step="0.05" value="1">
+    </div>
+    <button id="pal" type="button">色彩 · 虹彩</button>
+    <button id="audioBtn" type="button">🔊 音效: 开</button>
+    <button id="pause" type="button">暂停</button>
+  </section>
+
+  <script>
+    (() => {
+      const TAU = Math.PI * 2;
+      const rnd = (a, b) => a + Math.random() * (b - a);
+      const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) * 1.3;
+      const $ = id => document.getElementById(id);
+
+      const cv = $('c');
+      const gl = cv.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: true });
+      if (!gl) { $('nogl').style.display = 'flex'; return; }
+
+      /* ================= 噪声 ================= */
+      const P = new Uint8Array(512);
+      (() => {
+        const p = [...Array(256).keys()];
+        for (let i = 255; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0;[p[i], p[j]] = [p[j], p[i]]; }
+        for (let i = 0; i < 512; i++) P[i] = p[i & 255];
+      })();
+      const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+      const lerp = (t, a, b) => a + t * (b - a);
+      function grad(h, x, y, z) {
+        h &= 15;
+        const u = h < 8 ? x : y, v = h < 4 ? y : (h === 12 || h === 14 ? x : z);
+        return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+      }
+      function noise(x, y, z) {
+        let X = Math.floor(x), Y = Math.floor(y), Z = Math.floor(z);
+        x -= X; y -= Y; z -= Z; X &= 255; Y &= 255; Z &= 255;
+        const u = fade(x), v = fade(y), w = fade(z);
+        const A = P[X] + Y, AA = P[A] + Z, AB = P[A + 1] + Z, B = P[X + 1] + Y, BA = P[B] + Z, BB = P[B + 1] + Z;
+        return lerp(w,
+          lerp(v, lerp(u, grad(P[AA], x, y, z), grad(P[BA], x - 1, y, z)), lerp(u, grad(P[AB], x, y - 1, z), grad(P[BB], x - 1, y - 1, z))),
+          lerp(v, lerp(u, grad(P[AA + 1], x, y, z - 1), grad(P[BA + 1], x - 1, y, z - 1)), lerp(u, grad(P[AB + 1], x, y - 1, z - 1), grad(P[BB + 1], x - 1, y - 1, z - 1))));
+      }
+
+      /* ================= WebGL ================= */
+      function compile(type, src) {
+        const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+        return s;
+      }
+      function program(vs, fs, attribs) {
+        const p = gl.createProgram();
+        gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+        gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+        attribs.forEach((n, i) => gl.bindAttribLocation(p, i, n));
+        gl.linkProgram(p);
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(p));
+        return p;
+      }
+
+      const pProg = program(`
+    attribute vec2 a_pos; attribute float a_col; attribute float a_life; attribute float a_seed;
+    uniform vec2 uRes; uniform float uSize; uniform float uTime;
+    varying float vT; varying float vA;
+    void main(){
+      vec2 c = a_pos / uRes * 2.0 - 1.0;
+      gl_Position = vec4(c.x, -c.y, 0.0, 1.0);
+      gl_PointSize = uSize * (0.7 + a_seed * 0.9);
+      vT = a_col + a_seed * 0.16 + uTime * 0.02;
+      vA = smoothstep(0.0, 0.1, a_life) * (1.0 - smoothstep(0.75, 1.0, a_life));
+    }`, `
+    precision mediump float;
+    varying float vT; varying float vA;
+    uniform vec3 uA; uniform vec3 uB; uniform vec3 uC; uniform vec3 uD; uniform float uGain;
+    void main(){
+      vec2 p = gl_PointCoord - 0.5;
+      float a = exp(-dot(p, p) * 12.8);
+      vec3 col = uA + uB * cos(6.28318 * (uC * vT + uD));
+      gl_FragColor = vec4(col * a * vA * uGain, 1.0);
+    }`, ['a_pos', 'a_col', 'a_life', 'a_seed']);
+
+      const fProg = program(`
+    attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`, `
+    precision mediump float; uniform vec4 uC; void main(){ gl_FragColor = uC; }`, ['p']);
+
+      const U = {
+        res: gl.getUniformLocation(pProg, 'uRes'), size: gl.getUniformLocation(pProg, 'uSize'),
+        time: gl.getUniformLocation(pProg, 'uTime'), gain: gl.getUniformLocation(pProg, 'uGain'),
+        a: gl.getUniformLocation(pProg, 'uA'), b: gl.getUniformLocation(pProg, 'uB'),
+        c: gl.getUniformLocation(pProg, 'uC'), d: gl.getUniformLocation(pProg, 'uD'),
+        fc: gl.getUniformLocation(fProg, 'uC')
+      };
+
+      const quad = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+
+      const isMobile = Math.min(innerWidth, innerHeight) < 700 || matchMedia('(pointer:coarse)').matches;
+      const MAXN = isMobile ? 70000 : 160000;
+      const pbuf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, pbuf);
+      gl.bufferData(gl.ARRAY_BUFFER, MAXN * 20, gl.DYNAMIC_DRAW);
+
+      /* ================= 配色（余弦调色板） ================= */
+      const PALS = [
+        { n: '虹彩', a: [.5, .5, .5], b: [.5, .5, .5], c: [1, 1, 1], d: [0, .33, .67] },
+        { n: '冰焰', a: [.5, .5, .5], b: [.5, .5, .5], c: [1, 1, 1], d: [0, .10, .20] },
+        { n: '琥珀', a: [.5, .5, .5], b: [.5, .5, .5], c: [1, 1, .5], d: [.8, .9, .3] },
+        { n: '绛紫', a: [.5, .5, .5], b: [.5, .5, .5], c: [2, 1, 0], d: [.5, .2, .25] },
+        { n: '暮光', a: [.8, .5, .4], b: [.2, .4, .2], c: [2, 1, 1], d: [0, .25, .25] }
+      ];
+      let palIdx = 0;
+      function applyPal() {
+        const p = PALS[palIdx];
+        gl.useProgram(pProg);
+        gl.uniform3fv(U.a, p.a); gl.uniform3fv(U.b, p.b); gl.uniform3fv(U.c, p.c); gl.uniform3fv(U.d, p.d);
+        $('pal').textContent = '色彩 · ' + p.n;
+      }
+
+      /* ================= 状态 ================= */
+      const state = { n: isMobile ? 30000 : 80000, speed: 1, sculpt: 1, paused: false };
+      let W = 0, H = 0, dpr = 1, UN = 600;                  // UN：单位长度（像素），= min(W,H)
+      let GW = 128, GH = 72, cellW = 1, cellH = 1;
+      let psi, FX, FY, FC;
+      const px = new Float32Array(MAXN), py = new Float32Array(MAXN);
+      const pvx = new Float32Array(MAXN), pvy = new Float32Array(MAXN);
+      const age = new Float32Array(MAXN), span = new Float32Array(MAXN);
+      const buf = new Float32Array(MAXN * 5);
+
+      // 雕塑形态参数（当前 / 目标）
+      const sh = { a1: .25, a2: .15, a3: .12, p1: 0, p2: 1.3, p3: 2.4 };
+      const st = { ...sh };
+      function reshape() {
+        st.a1 = rnd(.08, .34); st.a2 = rnd(.05, .26); st.a3 = rnd(.04, .22);
+        st.p1 = rnd(0, TAU); st.p2 = rnd(0, TAU); st.p3 = rnd(0, TAU);
+      }
+      let bcx = 1, bcy = .6, bR0 = .27;   // 每帧更新（单位坐标）
+      function blobR(th, t) {
+        return bR0 * (1 + sh.a1 * Math.sin(3 * th + sh.p1 + t * .35) + sh.a2 * Math.sin(5 * th + sh.p2 - t * .5) + sh.a3 * Math.sin(2 * th + sh.p3 + t * .2));
+      }
+
+      const ptr = { x: 0, y: 0, vx: 0, vy: 0, active: false, lastT: 0 };
+      const shocks = [];
+
+      function respawn(i, t, initial) {
+        if (Math.random() < 0.55) {
+          const th = Math.random() * TAU, r = blobR(th, t) + gauss() * 0.07 * bR0 * 2;
+          px[i] = (bcx + Math.cos(th) * r) * UN; py[i] = (bcy + Math.sin(th) * r) * UN;
+        } else { px[i] = Math.random() * W; py[i] = Math.random() * H; }
+        pvx[i] = pvy[i] = 0;
+        span[i] = rnd(5, 13);
+        age[i] = initial ? Math.random() * span[i] : 0;
+        buf[i * 5 + 4] = Math.random();
+      }
+
+      function setupGrid() {
+        GW = isMobile ? 80 : 128;
+        GH = Math.max(40, Math.min(120, Math.round(GW * H / W)));
+        cellW = W / GW; cellH = H / GH;
+        psi = new Float32Array((GW + 1) * (GH + 1));
+        FX = new Float32Array(GW * GH); FY = new Float32Array(GW * GH); FC = new Float32Array(GW * GH);
+      }
+
+      let curW = 0, curH = 0;
+      function resize() {
+        const oW = W, oH = H;
+        W = innerWidth; H = innerHeight;
+        dpr = Math.min(devicePixelRatio || 1, isMobile ? 1.5 : 1.75);
+        cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+        UN = Math.min(W, H);
+        setupGrid();
+        if (oW) for (let i = 0; i < MAXN; i++) { px[i] *= W / oW; py[i] *= H / oH; }
+        gl.viewport(0, 0, cv.width, cv.height);
+        gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+      }
+
+      /* ================= 流场 ================= */
+      const CURL = 0.04;
+      function updateField(t, now) {
+        const uw = cellW / UN, uh = cellH / UN;
+        const S = state.sculpt;
+        const s1 = 1.5, s2 = 3.3, nw = GW + 1;
+
+        // 雕塑参数缓动
+        for (const k in sh) sh[k] += (st[k] - sh[k]) * 0.02;
+        bcx = 0.5 * W / UN + Math.sin(t * .07) * .05;
+        bcy = 0.5 * H / UN + Math.cos(t * .05) * .035;
+        bR0 = 0.27 * (1 + 0.06 * Math.sin(t * .5));
+        const R0 = bR0;
+
+        // 势函数
+        for (let j = 0; j <= GH; j++) {
+          const uy = j * uh;
+          for (let i = 0; i <= GW; i++) {
+            const ux = i * uw;
+            psi[j * nw + i] = noise(ux * s1 + 3.1, uy * s1 - 1.7, t * .12) + .45 * noise(ux * s2 - 5.3, uy * s2 + 8.2, t * .2 + 10);
+          }
+        }
+
+        // 逐格：旋度 + 海浪 + 雕塑
+        for (let j = 0; j < GH; j++) {
+          const uy = (j + .5) * uh;
+          for (let i = 0; i < GW; i++) {
+            const ux = (i + .5) * uw;
+            const n00 = psi[j * nw + i], n10 = psi[j * nw + i + 1], n01 = psi[(j + 1) * nw + i], n11 = psi[(j + 1) * nw + i + 1];
+            const dpx = ((n10 - n00) + (n11 - n01)) / (2 * uw);
+            const dpy = ((n01 - n00) + (n11 - n10)) / (2 * uh);
+            let vx = dpy * CURL, vy = -dpx * CURL;
+
+            // 海浪：横向行进的涌动 + 缓慢漂移
+            vy += .09 * Math.sin(ux * 7 + t * .9 + 1.7 * Math.sin(uy * 3.5 + t * .5));
+            vx += .05 + .05 * Math.sin(uy * 5 + t * .35);
+
+            // 雕塑
+            const dx = ux - bcx, dy = uy - bcy;
+            const r = Math.max(Math.hypot(dx, dy), 1e-3), th = Math.atan2(dy, dx);
+            const Rb = R0 * (1 + sh.a1 * Math.sin(3 * th + sh.p1 + t * .35) + sh.a2 * Math.sin(5 * th + sh.p2 - t * .5) + sh.a3 * Math.sin(2 * th + sh.p3 + t * .2));
+            const s = r - Rb;
+            let fr = -S * .42 * Math.tanh(s / (.22 * R0));
+            if (s < 0) fr *= .6;
+            const q = s / (.45 * R0);
+            const sw = S * .30 * Math.exp(-q * q) * (1 + .5 * Math.sin(th * 2 + t * .6));
+            const ex = dx / r, ey = dy / r;
+            vx += fr * ex - sw * ey;
+            vy += fr * ey + sw * ex;
+
+            const idx = j * GW + i;
+            FX[idx] = vx; FY[idx] = vy;
+            FC[idx] = (n00 + n11) * .55 + .5 * Math.max(-1, Math.min(1, s / R0));
+          }
+        }
+
+        // 指针：拖动烟雾
+        if (ptr.active) {
+          const rad = .2, rpx = rad * UN;
+          const i0 = Math.max(0, Math.floor((ptr.x - rpx) / cellW)), i1 = Math.min(GW - 1, Math.ceil((ptr.x + rpx) / cellW));
+          const j0 = Math.max(0, Math.floor((ptr.y - rpx) / cellH)), j1 = Math.min(GH - 1, Math.ceil((ptr.y + rpx) / cellH));
+          let vxu = ptr.vx / UN, vyu = ptr.vy / UN;
+          const sp = Math.hypot(vxu, vyu);
+          if (sp > 1.6) { vxu *= 1.6 / sp; vyu *= 1.6 / sp; }
+          const sw = Math.min(1, sp / .5);
+          const pxu = ptr.x / UN, pyu = ptr.y / UN;
+          for (let j = j0; j <= j1; j++) {
+            for (let i = i0; i <= i1; i++) {
+              const dx = (i + .5) * uw - pxu, dy = (j + .5) * uh - pyu;
+              const d2 = (dx * dx + dy * dy) / (rad * rad);
+              if (d2 > 1) continue;
+              const g = Math.exp(-d2 * 3), d = Math.sqrt(dx * dx + dy * dy) || 1e-3;
+              const idx = j * GW + i;
+              FX[idx] += vxu * .9 * g - (dy / d) * .25 * g * sw;
+              FY[idx] += vyu * .9 * g + (dx / d) * .25 * g * sw;
+            }
+          }
+        }
+
+        // 冲击波
+        for (let k = shocks.length - 1; k >= 0; k--) {
+          const w = shocks[k];
+          const r = (now - w.t0) * 0.0009;       // 单位 / 毫秒
+          if (r > 2.4) { shocks.splice(k, 1); continue; }
+          const amp = 1.3 * (1 - r / 2.4), wid = .09;
+          const wx = w.x / UN, wy = w.y / UN;
+          for (let j = 0; j < GH; j++) {
+            const dy = (j + .5) * uh - wy;
+            for (let i = 0; i < GW; i++) {
+              const dx = (i + .5) * uw - wx;
+              const d = Math.sqrt(dx * dx + dy * dy) || 1e-3;
+              const df = (d - r) / wid;
+              if (df > 3 || df < -3) continue;
+              const g = amp * Math.exp(-df * df) / d;
+              const idx = j * GW + i;
+              FX[idx] += dx * g; FY[idx] += dy * g;
+            }
+          }
+        }
+      }
+
+      /* ================= 粒子更新 + 绘制 ================= */
+      let simT = 0, last = performance.now(), nextShock = 4000, nextShape = 9000, gTime = 0;
+
+      function step(dtS, t) {
+        const N = state.n;
+        const k = 1 - Math.exp(-dtS * 3.2);
+        const invCW = 1 / cellW, invCH = 1 / cellH;
+        for (let i = 0; i < N; i++) {
+          let x = px[i], y = py[i];
+          let gi = (x * invCW) | 0, gj = (y * invCH) | 0;
+          if (gi < 0) gi = 0; else if (gi >= GW) gi = GW - 1;
+          if (gj < 0) gj = 0; else if (gj >= GH) gj = GH - 1;
+          const idx = gj * GW + gi;
+          const vx = pvx[i] += (FX[idx] - pvx[i]) * k;
+          const vy = pvy[i] += (FY[idx] - pvy[i]) * k;
+          x += vx * UN * dtS; y += vy * UN * dtS;
+          const a = age[i] += dtS;
+          if (a >= span[i] || x < -30 || x > W + 30 || y < -30 || y > H + 30) { respawn(i, t, false); x = px[i]; y = py[i]; }
+          else { px[i] = x; py[i] = y; }
+          const o = i * 5;
+          buf[o] = x; buf[o + 1] = y;
+          buf[o + 2] = FC[idx] + (Math.abs(vx) + Math.abs(vy)) * .6;
+          buf[o + 3] = age[i] / span[i];
+        }
+      }
+
+      function render() {
+        const N = state.n;
+        gl.enable(gl.BLEND);
+
+        // 拖尾淡出：乘性 + 微量减法（清掉 8 位残影）
+        gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+        gl.useProgram(fProg);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+        gl.blendEquation(gl.FUNC_ADD);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.uniform4f(U.fc, 0, 0, 0, 0.075);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        gl.blendEquation(gl.FUNC_REVERSE_SUBTRACT);
+        gl.blendFunc(gl.ONE, gl.ONE);
+        gl.uniform4f(U.fc, 2 / 255, 2 / 255, 2 / 255, 1);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        // 粒子（叠加混合）
+        gl.blendEquation(gl.FUNC_ADD);
+        gl.blendFunc(gl.ONE, gl.ONE);
+        gl.useProgram(pProg);
+        gl.bindBuffer(gl.ARRAY_BUFFER, pbuf);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, buf.subarray(0, N * 5));
+        gl.enableVertexAttribArray(0); gl.enableVertexAttribArray(1);
+        gl.enableVertexAttribArray(2); gl.enableVertexAttribArray(3);
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 20, 0);
+        gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 8);
+        gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 20, 12);
+        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, 20, 16);
+        gl.uniform2f(U.res, W, H);
+        gl.uniform1f(U.size, 1.9 * dpr);
+        gl.uniform1f(U.time, gTime);
+        gl.uniform1f(U.gain, Math.min(1.1, 0.5 * Math.sqrt(80000 / N)));
+        gl.drawArrays(gl.POINTS, 0, N);
+      }
+
+      function addShock(x, y, now) {
+        if (shocks.length >= 4) shocks.shift();
+        shocks.push({ x, y, t0: now });
+      }
+
+      function frame(now) {
+        requestAnimationFrame(frame);
+        const dt = Math.min((now - last) / 1000, 0.05); last = now;
+        if (state.paused) return;
+        const dtS = dt * state.speed;
+        simT += dtS; gTime += dt;
+
+        // 指针速度衰减
+        if (ptr.active) { ptr.vx *= Math.pow(.02, dt); ptr.vy *= Math.pow(.02, dt); }
+
+        // 自动演化
+        nextShock -= dt * 1000; nextShape -= dt * 1000;
+        if (nextShock <= 0) {
+          nextShock = 8000 + Math.random() * 4000;
+          addShock(bcx * UN + rnd(-.3, .3) * UN, bcy * UN + rnd(-.2, .2) * UN, now);
+        }
+        if (nextShape <= 0) { nextShape = 11000 + Math.random() * 6000; reshape(); }
+
+        updateField(simT, now);
+        step(dtS, simT);
+        render();
+      }
+
+      // Web Audio Fluid Theremin Synth
+      let tideAudioCtx = null, tideGain = null, tideOsc = null, tideSoundOn = true;
+      function initTideAudio() {
+        if (!tideAudioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) tideAudioCtx = new AC();
+        }
+        if (tideAudioCtx && tideAudioCtx.state === 'suspended') tideAudioCtx.resume();
+        if (tideAudioCtx && !tideOsc) {
+          tideOsc = tideAudioCtx.createOscillator();
+          tideGain = tideAudioCtx.createGain();
+          tideOsc.type = 'sine';
+          tideOsc.frequency.setValueAtTime(220, tideAudioCtx.currentTime);
+          tideGain.gain.setValueAtTime(0, tideAudioCtx.currentTime);
+          tideOsc.connect(tideGain);
+          tideGain.connect(tideAudioCtx.destination);
+          tideOsc.start();
+        }
+      }
+      function playTideShock() {
+        if (!tideSoundOn) return;
+        initTideAudio();
+        try {
+          const now = tideAudioCtx.currentTime;
+          const osc = tideAudioCtx.createOscillator(), g = tideAudioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.exponentialRampToValueAtTime(35, now + 0.6);
+          g.gain.setValueAtTime(0.35, now);
+          g.gain.linearRampToValueAtTime(0.001, now + 0.6);
+          osc.connect(g); g.connect(tideAudioCtx.destination);
+          osc.start(); osc.stop(now + 0.65);
+        } catch (e) { }
+      }
+      const audioBtn = $('audioBtn');
+      if (audioBtn) {
+        audioBtn.onclick = () => {
+          tideSoundOn = !tideSoundOn;
+          initTideAudio();
+          audioBtn.textContent = tideSoundOn ? '🔊 音效: 开' : '🔇 音效: 关';
+          if (!tideSoundOn && tideGain) tideGain.gain.setValueAtTime(0, tideAudioCtx.currentTime);
+        };
+      }
+
+      /* ================= 输入 ================= */
+      cv.addEventListener('pointermove', e => {
+        const now = performance.now();
+        if (tideSoundOn && tideAudioCtx && tideOsc && tideGain) {
+          const freq = 160 + (e.clientX / window.innerWidth) * 440;
+          tideOsc.frequency.setTargetAtTime(freq, tideAudioCtx.currentTime, 0.05);
+          tideGain.gain.setTargetAtTime(0.04, tideAudioCtx.currentTime, 0.05);
+        }
+        if (ptr.active && ptr.lastT) {
+          const dtm = Math.max(now - ptr.lastT, 1);
+          ptr.vx = ptr.vx * .5 + ((e.clientX - ptr.x) / dtm * 1000) * .5;
+          ptr.vy = ptr.vy * .5 + ((e.clientY - ptr.y) / dtm * 1000) * .5;
+        }
+        ptr.x = e.clientX; ptr.y = e.clientY; ptr.active = true; ptr.lastT = now;
+      });
+      cv.addEventListener('pointerdown', e => {
+        initTideAudio();
+        playTideShock();
+        ptr.x = e.clientX; ptr.y = e.clientY; ptr.active = true; ptr.lastT = performance.now();
+        addShock(e.clientX, e.clientY, performance.now());
+        reshape(); nextShape = 12000;
+      });
+      const off = () => {
+        ptr.active = false; ptr.vx = ptr.vy = 0; ptr.lastT = 0;
+        if (tideAudioCtx && tideGain) tideGain.gain.setTargetAtTime(0, tideAudioCtx.currentTime, 0.1);
+      };
+      cv.addEventListener('pointerleave', off);
+      cv.addEventListener('pointercancel', off);
+      cv.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') off(); });
+      cv.addEventListener('contextmenu', e => e.preventDefault());
+
+      /* ================= 控制项 ================= */
+      const fmtN = n => (n / 1000) + 'k';
+      const cEl = $('count');
+      if (isMobile) { cEl.max = 70000; cEl.value = state.n; }
+      $('countOut').textContent = fmtN(state.n);
+      cEl.addEventListener('input', e => {
+        const old = state.n; state.n = +e.target.value; $('countOut').textContent = fmtN(state.n);
+        for (let i = old; i < state.n; i++) respawn(i, simT, true);
+      });
+      $('speed').addEventListener('input', e => { state.speed = +e.target.value; $('speedOut').textContent = state.speed.toFixed(1) + '×'; });
+      $('sculpt').addEventListener('input', e => { state.sculpt = +e.target.value; $('sculptOut').textContent = Math.round(state.sculpt * 100) + '%'; });
+      $('pal').addEventListener('click', () => { palIdx = (palIdx + 1) % PALS.length; applyPal(); });
+      const pb = $('pause');
+      function togglePause() { state.paused = !state.paused; pb.textContent = state.paused ? '继续' : '暂停'; pb.classList.toggle('on', state.paused); }
+      pb.addEventListener('click', togglePause);
+      addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); togglePause(); } });
+
+      /* ================= 启动 ================= */
+      addEventListener('resize', resize);
+      resize();
+      reshape(); Object.assign(sh, st);
+      bcx = .5 * W / UN; bcy = .5 * H / UN;
+      for (let i = 0; i < MAXN; i++) respawn(i, 0, true);
+      applyPal();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+
+</html>

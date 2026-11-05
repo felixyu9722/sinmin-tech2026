@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>极光湖 · Aurora Lake</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #e9f3ee;
+    }
+
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #02050a;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      animation: appear 2.4s ease both;
+    }
+
+    @keyframes appear {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    #cap {
+      position: fixed;
+      left: calc(22px + env(safe-area-inset-left));
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      color: var(--ink);
+      font: 300 13px/1.6 system-ui, -apple-system, "Segoe UI", "PingFang SC", sans-serif;
+      letter-spacing: .16em;
+      opacity: 0;
+      text-shadow: 0 1px 12px rgba(0, 0, 0, .7);
+      animation: cap 14s ease 1.2s forwards;
+      pointer-events: none;
+    }
+
+    #cap b {
+      display: block;
+      font-weight: 400;
+      font-size: 17px;
+      letter-spacing: .3em;
+      margin-bottom: 2px;
+    }
+
+    @keyframes cap {
+      0% {
+        opacity: 0;
+      }
+
+      12%,
+      70% {
+        opacity: .85;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    #gear,
+    #panel {
+      position: fixed;
+      right: calc(16px + env(safe-area-inset-right));
+      z-index: 5;
+      color: var(--ink);
+      font: 13px/1.5 system-ui, -apple-system, "PingFang SC", sans-serif;
+    }
+
+    #gear {
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 19px;
+      cursor: pointer;
+      opacity: .8;
+      border: 1px solid rgba(233, 243, 238, .35);
+      background: rgba(5, 10, 16, .45);
+      color: var(--ink);
+      backdrop-filter: blur(6px);
+    }
+
+    #gear:hover,
+    #gear[aria-expanded=true] {
+      opacity: 1;
+      border-color: rgba(140, 255, 200, .8);
+    }
+
+    #panel {
+      bottom: calc(70px + env(safe-area-inset-bottom));
+      width: 220px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(5, 10, 16, .6);
+      border: 1px solid rgba(233, 243, 238, .2);
+      backdrop-filter: blur(10px);
+      display: grid;
+      gap: 10px;
+    }
+
+    #panel[hidden] {
+      display: none;
+    }
+
+    #panel label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    #panel input[type=range] {
+      width: 110px;
+      accent-color: #6fe3b0;
+    }
+
+    #panel input[type=checkbox] {
+      accent-color: #6fe3b0;
+      width: 16px;
+      height: 16px;
+    }
+
+    #sw {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #sw button {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    #sw button.on {
+      border-color: #fff;
+    }
+
+    #err {
+      display: none;
+      position: fixed;
+      inset: 0;
+      place-items: center;
+      color: var(--ink);
+      font: 15px system-ui, sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="c"></canvas>
+  <div id="cap"><b>极光湖</b>拖动画面，360° 环顾湖、山与雪村<br>右下角 ⚙ 调整画面 · 按 H 隐藏界面</div>
+  <button id="gear" type="button" aria-label="控制面板" aria-expanded="false">⚙</button>
+  <div id="panel" hidden>
+    <div id="sw" role="group" aria-label="极光颜色"><button data-hue="0" class="on" style="background:#4fe3a0"
+        aria-label="绿"></button><button data-hue="1.7" style="background:#9b6bff" aria-label="紫"></button><button
+        data-hue="3.3" style="background:#ff5f8a" aria-label="红"></button><button data-hue="4.8"
+        style="background:#4fc3ff" aria-label="蓝"></button></div>
+    <label>强度 <input id="inten" type="range" min=".3" max="2" step=".05" value="1"></label>
+    <label>流速 <input id="speed" type="range" min=".2" max="3" step=".1" value="1"></label>
+    <label>飘雪 <input id="snow" type="checkbox" checked></label>
+    <label>流星 <input id="met" type="checkbox" checked></label>
+    <label>篝火 <input id="fire" type="checkbox" checked></label>
+    <label>自动环游 <input id="drift" type="checkbox" checked></label>
+    <label>星座连线 <input id="con" type="checkbox" checked></label>
+    <label>结冰 <input id="ice" type="range" min="0" max="1" step=".01" value="0"></label>
+    <label>月亮 <input id="moon" type="checkbox" checked></label>
+    <label>水雾 <input id="mist" type="checkbox" checked></label>
+    <label>萤火虫 <input id="fly" type="checkbox" checked></label>
+    <label>时间 <input id="day" type="range" min="0" max="1" step=".01" value="0" aria-label="夜晚到黎明"></label>
+    <label>昼夜循环 <input id="cycle" type="checkbox"></label>
+    <label>空灵音效 <input id="auroraAudio" type="checkbox" checked></label>
+    <button id="solarFlare"
+      style="padding:6px 10px;border-radius:8px;background:linear-gradient(90deg,#ff5f8a,#9b6bff);border:none;color:#fff;cursor:pointer;font-weight:bold;margin-top:4px;">⚡
+      极光爆发 (Solar Flare)</button>
+    <label>暂停 <input id="pause" type="checkbox"></label>
+  </div>
+  <div id="err">此设备不支持 WebGL。</div>
+  <script>
+    const cv = document.getElementById('c');
+    const gl = cv.getContext('webgl', { antialias: false, powerPreference: 'high-performance' });
+    if (!gl) { document.getElementById('err').style.display = 'grid'; }
+    else {
+      const VS = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0., 1.); }';
+      const FS = `
+precision highp float;
+uniform vec2 R, M; uniform float T, uInt, uHue, uSnow, uMet, uDrift, uFire, uDay, uMoon, uMist, uFly, uCon, uIce, uWob, uYaw;
+float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
+  return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y); }
+float fbm(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 5; i++){ s += a * noise(p); p = p * 2.03 + 7.1; a *= .5; } return s; }
+mat2 m2 = mat2(.95534, .29552, -.29552, .95534);
+float tri(float x){ return clamp(abs(fract(x) - .5), .01, .49); }
+vec2 tri2(vec2 p){ return vec2(tri(p.x) + tri(p.y), tri(p.y + tri(p.x))); }
+float triNoise(vec2 p, float spd){
+  float z = 1.8, z2 = 2.5, rz = 0.; p *= m2; vec2 bp = p;
+  for (float i = 0.; i < 5.; i++){
+    vec2 dg = tri2(bp * 1.85) * .75; float c = cos(T*spd), s = sin(T*spd); dg *= mat2(c, -s, s, c);
+    p -= dg / z2; bp *= 1.3; z2 *= .45; z *= .42; p *= 1.21 + (rz - 1.) * .02;
+    rz += tri(p.x + tri(p.y)) * z; p *= -m2;
+  }
+  return clamp(1. / pow(rz * 29., 1.3), 0., .55);
+}
+vec3 gP = vec3(0., 0., 1.);
+vec3 aurora(vec3 rd){
+  float dm = length(rd - gP); rd.x += .03 * sin(dm * 40. - T * 3.) * exp(-dm * 4.) * uWob;
+  vec3 col = vec3(0.), avg = vec3(0.); vec3 ro = vec3(0.);
+  for (float i = 0.; i < 26.; i++){
+    float of = .006 * hash(gl_FragCoord.xy + T) * smoothstep(0., 15., i);
+    float pt = ((.8 + pow(i, 1.4) * .002) - ro.y) / (rd.y * 2. + .4) - of;
+    vec3 bp = ro + pt * rd;
+    float rzt = triNoise(bp.zx + vec2(0., 3.), .06);
+    vec3 c2 = (sin(1. - vec3(2.15, -.5, 1.2) + i * .043 + uHue) * .5 + .5) * rzt;
+    c2 += vec3(.55, .12, .25) * rzt * exp(-i * .3) * .5 * (1. - uDay);
+    avg = mix(avg, c2, .5);
+    col += avg * exp2(-i * .065 - 2.5) * smoothstep(0., 5., i);
+  }
+  return col * clamp(rd.y * 15. + .4, 0., 1.) * 2.1 * uInt * (.88 + .12 * sin(T * .45 + rd.x * 4.));
+}
+float ridge(float a, float k){
+  vec2 c = vec2(cos(a), sin(a)) * k;
+  return .035 + .16 * fbm(c + k) + .1 * pow(1. - abs(noise(c * 1.7 + 3.) * 2. - 1.), 3.);
+}
+vec3 stars(vec3 rd){
+  vec2 u = vec2(atan(rd.z, rd.x) * 70., rd.y * 70.); vec2 id = floor(u), f = fract(u) - .5;
+  float h = hash(id), tw = .6 + .4 * sin(T * (1. + h * 3.) + h * 40.);
+  float s = smoothstep(.04, 0., length(f + (vec2(hash(id+1.7), hash(id+9.1)) - .5) * .6)) * step(.972, h);
+  return mix(vec3(.7, .85, 1.), vec3(1., .85, .68), fract(h * 37.)) * s * tw * (.4 + 1.4 * h) * smoothstep(.0, .25, rd.y);
+}
+vec3 meteor(vec3 rd){
+  vec3 c = vec3(0.); vec2 p = vec2(atan(rd.x, rd.z), rd.y); vec2 dn = normalize(vec2(.8, -.5));
+  for (float k = 0.; k < 2.; k++){
+    float per = 7. + k * 4., tt = T + k * 5.3, id = floor(tt / per), ph = (tt / per - id) * per;
+    if (ph > 1.3) continue;
+    vec2 s = vec2(hash(vec2(id, k)) * 1.8 - .9, .45 + .35 * hash(vec2(id + 3., k)));
+    vec2 q = p - s - dn * ph * .5; float al = dot(q, -dn), pe = dot(q, vec2(-dn.y, dn.x));
+    float tl = smoothstep(0., .01, al) * exp(-al * 12.) * step(al, .35);
+    c += vec3(.8, .95, 1.) * tl * exp(-pe * pe * 12000.) * (1. - ph / 1.3) * smoothstep(0., .1, ph) * smoothstep(.05, .2, rd.y) * 3.;
+  }
+  return c;
+}
+float crack(vec2 p){
+  vec2 i = floor(p), f = fract(p); float d1 = 8., d2 = 8.;
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){
+    vec2 g = vec2(float(x), float(y)), r = g + vec2(hash(i + g), hash(i + g + 7.3)) - f; float d = dot(r, r);
+    if (d < d1){ d2 = d1; d1 = d; } else if (d < d2) d2 = d;
+  }
+  return sqrt(d2) - sqrt(d1);
+}
+float seg(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; return length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0., 1.)); }
+float gs(vec2 p, vec2 q){ vec2 d = p - q; return 1.5e-5 / (dot(d, d) + 1.5e-5); }
+// two constellations joined by faint lines: a dipper, and a W
+vec3 constel(vec3 rd){
+  vec2 p = vec2(atan(rd.x, rd.z), rd.y), o = vec2(-.5, .5), o2 = vec2(.7, .62);
+  vec2 q0 = o + .09 * vec2(-1.4, .3), q1 = o + .09 * vec2(-.9, .1), q2 = o + .09 * vec2(-.4, 0.), q3 = o + .09 * vec2(0., -.1), q4 = o + .09 * vec2(.15, -.5), q5 = o + .09 * vec2(.8, -.45), q6 = o + .09 * vec2(.75, 0.);
+  vec2 r0 = o2 + .08 * vec2(-1.2, 0.), r1 = o2 + .08 * vec2(-.6, .5), r2 = o2 + .08 * vec2(0., 0.), r3 = o2 + .08 * vec2(.6, .45), r4 = o2 + .08 * vec2(1.2, -.05);
+  float l = min(min(min(seg(p, q0, q1), seg(p, q1, q2)), min(seg(p, q2, q3), seg(p, q3, q4))), min(min(seg(p, q4, q5), seg(p, q5, q6)), seg(p, q6, q3)));
+  l = min(l, min(min(seg(p, r0, r1), seg(p, r1, r2)), min(seg(p, r2, r3), seg(p, r3, r4))));
+  float s = gs(p, q0) + gs(p, q1) + gs(p, q2) + gs(p, q3) + gs(p, q4) + gs(p, q5) + gs(p, q6) + gs(p, r0) + gs(p, r1) + gs(p, r2) + gs(p, r3) + gs(p, r4);
+  return vec3(.6, .75, 1.) * (exp(-l * l * 4e5) * .15 + s * .6) * smoothstep(0., .1, rd.y);
+}
+vec3 world(vec3 rd, out float solid){
+  solid = 0.;
+  float a = atan(rd.x, rd.z);
+  vec3 au = aurora(rd) * (1. - .85 * uDay);
+  vec3 sky = mix(vec3(.004, .01, .02), vec3(.0, .012, .03), smoothstep(0., .8, rd.y));
+  sky += vec3(.01, .03, .03) * exp(-rd.y * 7.);
+  sky += (vec3(.9, .38, .2) * exp(-rd.y * 6.) + vec3(.1, .2, .4) * (1. - rd.y)) * uDay * .35;
+  // a crescent moon, with its halo
+  vec3 md = normalize(vec3(.3, .38, .87)); float mc = dot(rd, md), mc2 = dot(rd, normalize(md + vec3(.018, .008, 0.)));
+  float disc = smoothstep(.99965, .99975, mc) * (1. - smoothstep(.99965, .99975, mc2));
+  sky += uMoon * (vec3(1., .95, .85) * disc * 2.2 + vec3(.5, .62, .8) * (exp(-(1. - mc) * 1200.) * .25 + exp(-(1. - mc) * 60.) * .04)) * (1. - uDay * .7);
+  sky += (stars(rd) * (1. - clamp(dot(au, vec3(1.)) * 2., 0., .9)) + meteor(rd) * uMet + constel(rd) * uCon) * (1. - uDay);
+  vec3 col = sky + au;
+  float h1 = ridge(a, 2.6) * .9, h2 = ridge(a + 4., 4.2) * .62;
+  vec3 tint = au * .5 + vec3(.01, .02, .035) + vec3(.35, .2, .15) * uDay * .15;
+  if (rd.y < h1){ float k = smoothstep(h1, h1 - .05, rd.y); col = mix(col, vec3(.012, .02, .03) + tint * (.4 + 1.2 * pow(1. - k, 3.)) * .5, 1.); solid = 1.; }
+  if (rd.y < h2){ float k = smoothstep(h2, h2 - .06, rd.y); col = vec3(.003, .006, .01) + tint * .12 * pow(1. - k, 4.); solid = 1.; }
+  return col;
+}
+void main(){
+  vec2 uv = (gl_FragCoord.xy - .5 * R) / R.y;
+  float yaw = uYaw, pit = .1 + (M.y - .5) * .22;
+  vec3 rd = normalize(vec3(uv.x, uv.y + pit - .03, 1.1));
+  float cy = cos(yaw), sy = sin(yaw); rd.xz = mat2(cy, -sy, sy, cy) * rd.xz;
+  { vec2 pu = (M - .5) * vec2(R.x / R.y, 1.); vec3 rp = normalize(vec3(pu.x, pu.y + pit - .03, 1.1)); rp.xz = mat2(cy, -sy, sy, cy) * rp.xz; gP = rp; }
+  vec3 col; float solid;
+  float d = 1. / max(-rd.y, .02), rp = (fbm(vec2(rd.x * d * 2.2 + T * .05, d * 1.3 - T * .12)) - .5) * (1. - .9 * uIce);
+  vec3 rr = rd.y >= 0. ? rd : normalize(vec3(rd.x + rp * .06 * -rd.y * 6., -rd.y + abs(rp) * .02, rd.z));
+  col = world(rr, solid);
+  if (rd.y < 0.){
+    col *= vec3(.82, .93, 1.);
+    float F = .12 + .88 * pow(1. - clamp(-rd.y * 1.4, 0., 1.), 3.);
+    col = col * F + vec3(.0, .008, .014) * (1. - F);
+    col += vec3(.04, .1, .08) * exp(-d * .3) * .2;
+    col += vec3(.5, .9, .8) * pow(noise(vec2(rd.x * d * 30. + T * .5, d * 14. - T * .8)), 14.) * 3. * smoothstep(30., 5., d) * (1. - uIce * .7) * (1. - uDay);
+    float ck = (1. - smoothstep(0., .07, crack(rd.xz * d * 1.1 + 3.))) * smoothstep(40., 8., d);
+    col = mix(col, col * .75 + vec3(.01, .02, .03), uIce * .6) + vec3(.5, .75, .9) * ck * (.04 + dot(col, vec3(.4))) * uIce;
+  }
+  // mist hugging the water, tinted by the aurora's own colour
+  float mh = fbm(vec2(atan(rd.x, rd.z) * 6. + T * .03, rd.y * 30. + T * .02));
+  col += ((sin(1. - vec3(2.15, -.5, 1.2) + uHue) * .5 + .5) * .12 + vec3(.02, .04, .05) + vec3(.3, .15, .1) * uDay * .2) * exp(-abs(rd.y) * 12.) * (.4 + .9 * mh) * uMist;
+  // the world all round: snowy shore, pines, a village, a campfire, fireflies (all fixed in the world)
+  float az = atan(rd.x, rd.z), L = smoothstep(-.2, .5, cos(az - 2.1));
+  float gr = -.62 + .5 * L + .025 * noise(vec2(az * 9., 1.)) + .05 * L * noise(vec2(az * 4., 5.));
+  float fl = .8 + .2 * sin(T * 17.) * sin(T * 11.3) + .1 * hash(vec2(floor(T * 14.), 2.)); fl *= uFire;
+  vec3 fc = vec3(1., .5, .18), sc = sin(1. - vec3(2.15, -.5, 1.2) + uHue) * .5 + .5;
+  float fda = mod(az - 2.35 + 3.14159, 6.28318) - 3.14159, fdy = rd.y + .34, fd2 = fda * fda + fdy * fdy * 2.;
+  vec3 snowc = vec3(.03, .04, .055) + sc * .05 * uInt * (.5 + .5 * noise(vec2(az * 30., rd.y * 30.))) + vec3(.2, .16, .15) * uDay * .35;
+  snowc += fc * fl * .25 * exp(-(fda * fda + fdy * fdy) * 40.) + vec3(.6, .8, 1.) * step(.985, hash(floor(vec2(az * 140., rd.y * 140.)))) * .15;
+  snowc *= .75 + .5 * noise(vec2(az * 7., rd.y * 14.));
+  snowc += sc * .05 * uInt * exp(-max(gr - rd.y, 0.) * 45.);
+  col = mix(col, snowc, step(rd.y, gr));
+  // pines
+  float xs = az * 9. + 3., hh = hash(vec2(floor(xs), 3.)), cf = fract(xs) - .5;
+  float th = .06 + .14 * hh, tt2 = (rd.y - gr) / th, wd = .5 * (1. - tt2) * (.72 + .28 * sin(tt2 * 34. + hh * 9.));
+  float tree = step(0., tt2) * step(tt2, 1.) * step(abs(cf), wd) * step(.4, hh) * step(.08, L);
+  col = mix(col, vec3(.004, .007, .011) + sc * .012 * uInt + fc * fl * .15 * exp(-fd2 * 15.), tree);
+  // the village behind you
+  float hs = 0., hrf = 0., smk = 0.; vec3 lit = vec3(0.);
+  for (float k = 0.; k < 8.; k++){
+    float hk = hash(vec2(k, 9.)), da = mod(az - (2.1 + (k - 3.5) * .24 + (hk - .5) * .1) + 3.14159, 6.28318) - 3.14159;
+    float w = .05 + .028 * hk, wh = .08 + .03 * hash(vec2(k, 6.)), rh = .06 + .035 * hk, yy = rd.y - (gr - .02 - .05 * hash(vec2(k, 4.)));
+    float wall = step(abs(da), w) * step(0., yy) * step(yy, wh);
+    float roof = step(0., yy - wh) * step(yy - wh, rh) * step(abs(da), w * 1.25 * (1. - (yy - wh) / rh));
+    float win = step(abs(abs(da) - w * .45), w * .16) * step(abs(yy - wh * .55), wh * .2) * wall * step(.12, hash(vec2(k + (da > 0. ? .5 : 0.), 8.)));
+    hs = max(hs, max(wall, roof)); hrf = max(hrf, roof);
+    lit += vec3(1., .62, .28) * win * (2.4 + .6 * sin(T * 3. + k)) + vec3(1., .55, .25) * .09 * exp(-(da * da + (yy - wh * .55) * (yy - wh * .55)) * 250.);
+    float sx = da - w * .55, sy2 = yy - wh - rh;
+    smk += exp(-sx * sx * 2500.) * smoothstep(0., .02, sy2) * exp(-sy2 * 22.) * (.4 + .6 * noise(vec2(az * 40., rd.y * 30. - T * .6))) * step(.5, hk);
+  }
+  col = mix(col, vec3(.012, .014, .02) + sc * .02 * uInt + fc * fl * .05 * exp(-fda * fda * 8.), hs);
+  col = mix(col, snowc * 1.2 + vec3(.012), hrf * .85);
+  col += lit + vec3(.18, .22, .28) * smk * .25;
+  // the campfire
+  col += fc * fl * .0022 / (fd2 + .0035) + vec3(1., .8, .4) * fl * exp(-(fda * fda * 3000. + fdy * fdy * 1200.)) * .8;
+  // fireflies, in cells round the whole circle
+  vec2 gq = vec2((az + 3.14159) * 5.093, (rd.y + 1.) * 5.), gi = floor(gq);
+  for (float dy = -1.; dy < 2.; dy++) for (float dx = -1.; dx < 2.; dx++){
+    vec2 c2 = gi + vec2(dx, dy); float cx = mod(c2.x, 32.), h0 = hash(vec2(cx, c2.y));
+    if (h0 < .45) continue;
+    vec2 pos = c2 + vec2(hash(vec2(cx, c2.y) + 3.1), hash(vec2(cx, c2.y) + 7.7)) + .35 * vec2(sin(T * (.4 + h0) + h0 * 20.), cos(T * (.3 + h0) + h0 * 9.));
+    vec2 d = (gq - pos) / 5.; float d2 = dot(d, d), bl = pow(.5 + .5 * sin(T * (1. + h0 * 2.) + h0 * 30.), 3.);
+    col += vec3(.6, 1., .4) * bl * (.00002 / (d2 + .00002) * .6 + .0001 / (d2 + .0004) * .04) * uFly * smoothstep(.1, -.1, rd.y);
+  }
+  // falling snow, three depths
+  float sn = 0.;
+  for (float l = 0.; l < 3.; l++){
+    vec2 p = uv * (8. + l * 7.); p.y += T * (.6 + .25 * l); p.x += sin(T * .4 + l * 2.) * .6 + T * .15;
+    vec2 id = floor(p), f = fract(p) - .5, o = (vec2(hash(id + 3.1 + l), hash(id + 7.7)) - .5) * .6;
+    sn += smoothstep(.07, 0., length(f - o)) * step(.6, hash(id + l * 17.)) * (.9 - .22 * l);
+  }
+  col += vec3(.7, .82, .95) * sn * uSnow * .55;
+  col *= 1. - .5 * smoothstep(.35, 1.1, length(uv * vec2(.8, 1.)));
+  col = 1. - exp(-col * 1.6);
+  col = pow(col, vec3(.86, .88, .92));
+  col = mix(col, col * col * (3. - 2. * col), .35);
+  col += (hash(gl_FragCoord.xy + fract(T) * 91.) - .5) * .025;
+  gl_FragColor = vec4(col, 1.);
+}`;
+      function sh(t, s) { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) { const m = gl.getShaderInfoLog(o); console.warn(m); const e = document.getElementById('err'); e.style.display = 'grid'; e.textContent = '着色器编译失败：' + m; } return o; }
+      const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); gl.useProgram(pr);
+      const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      const uR = gl.getUniformLocation(pr, 'R'), uT = gl.getUniformLocation(pr, 'T'), uM = gl.getUniformLocation(pr, 'M');
+      const S = { uInt: 1, uHue: 0, uSnow: 1, uMet: 1, uDrift: 1, uFire: 1, uDay: 0, uMoon: 1, uMist: 1, uFly: 1, uCon: 1, uIce: 0, uWob: 0, uYaw: .7, speed: 1, pause: false, cycle: false }, U = {};
+      for (const k of ['uInt', 'uHue', 'uSnow', 'uMet', 'uDrift', 'uFire', 'uDay', 'uMoon', 'uMist', 'uFly', 'uCon', 'uIce', 'uWob', 'uYaw']) U[k] = gl.getUniformLocation(pr, k);
+      let tAcc = 20, drag = false, lx = 0;
+      {
+        const $ = (id) => document.getElementById(id), gear = $('gear'), panel = $('panel');
+        gear.addEventListener('click', () => { panel.hidden = !panel.hidden; gear.setAttribute('aria-expanded', String(!panel.hidden)); });
+        document.querySelectorAll('#sw button').forEach((b) => b.addEventListener('click', () => {
+          S.uHue = +b.dataset.hue; document.querySelectorAll('#sw button').forEach((x) => x.classList.toggle('on', x === b));
+        }));
+        $('inten').addEventListener('input', (e) => S.uInt = +e.target.value);
+        $('speed').addEventListener('input', (e) => S.speed = +e.target.value);
+        for (const [id, k] of [['snow', 'uSnow'], ['met', 'uMet'], ['fire', 'uFire'], ['drift', 'uDrift'], ['moon', 'uMoon'], ['mist', 'uMist'], ['fly', 'uFly'], ['con', 'uCon']]) $(id).addEventListener('change', (e) => S[k] = e.target.checked ? 1 : 0);
+        $('pause').addEventListener('change', (e) => S.pause = e.target.checked);
+        $('day').addEventListener('input', (e) => S.uDay = +e.target.value);
+        $('ice').addEventListener('input', (e) => S.uIce = +e.target.value);
+        // Ambient Aurora Web Audio Synth
+        let auroraCtx = null, droneGain = null;
+        function initAuroraAudio() {
+          if (!auroraCtx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) auroraCtx = new AC();
+          }
+          if (auroraCtx && auroraCtx.state === 'suspended') auroraCtx.resume();
+          if (auroraCtx && !droneGain) {
+            droneGain = auroraCtx.createGain();
+            droneGain.gain.setValueAtTime(0.04, auroraCtx.currentTime);
+            droneGain.connect(auroraCtx.destination);
+            // Dual ethereal detuned sines
+            [110, 164.8, 220].forEach((freq, idx) => {
+              const osc = auroraCtx.createOscillator();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq + (idx === 1 ? 0.5 : -0.5), auroraCtx.currentTime);
+              const g = auroraCtx.createGain();
+              g.gain.setValueAtTime(0.3, auroraCtx.currentTime);
+              osc.connect(g);
+              g.connect(droneGain);
+              osc.start();
+            });
+          }
+        }
+        function playWaterDrop() {
+          if (!auroraCtx || !droneGain || droneGain.gain.value < 0.001) return;
+          try {
+            const osc = auroraCtx.createOscillator(), g = auroraCtx.createGain();
+            const now = auroraCtx.currentTime;
+            osc.frequency.setValueAtTime(600 + Math.random() * 300, now);
+            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+            g.gain.setValueAtTime(0.08, now);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+            osc.connect(g); g.connect(auroraCtx.destination);
+            osc.start(); osc.stop(now + 0.22);
+          } catch (e) { }
+        }
+        $('auroraAudio').addEventListener('change', (e) => {
+          initAuroraAudio();
+          if (droneGain) droneGain.gain.setValueAtTime(e.target.checked ? 0.04 : 0, auroraCtx.currentTime);
+        });
+        $('solarFlare').addEventListener('click', () => {
+          initAuroraAudio();
+          S.uInt = 2.0;
+          S.uMet = 1;
+          S.uHue = 3.3; // 红色耀斑
+          $('inten').value = 2;
+          document.querySelectorAll('#sw button').forEach((x, i) => x.classList.toggle('on', i === 2));
+          if (auroraCtx) {
+            const osc = auroraCtx.createOscillator(), g = auroraCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(80, auroraCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(320, auroraCtx.currentTime + 1.2);
+            g.gain.setValueAtTime(0.12, auroraCtx.currentTime);
+            g.gain.linearRampToValueAtTime(0.001, auroraCtx.currentTime + 1.5);
+            osc.connect(g); g.connect(auroraCtx.destination);
+            osc.start(); osc.stop(auroraCtx.currentTime + 1.6);
+          }
+        });
+
+        cv.addEventListener('pointerdown', (e) => {
+          initAuroraAudio();
+          playWaterDrop();
+          drag = true; lx = e.clientX; try { cv.setPointerCapture(e.pointerId); } catch (_) { }
+        });
+        cv.addEventListener('pointermove', (e) => { if (drag) { S.uYaw -= (e.clientX - lx) / innerHeight * 1.3; lx = e.clientX; } });
+        for (const ev of ['pointerup', 'pointercancel']) cv.addEventListener(ev, () => { drag = false; });
+        addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') S.uYaw -= .15; if (e.key === 'ArrowRight') S.uYaw += .15; });
+        $('cycle').addEventListener('change', (e) => S.cycle = e.target.checked);
+        addEventListener('keydown', (e) => { if (e.key === 'h' || e.key === 'H') { gear.hidden = !gear.hidden; if (gear.hidden) panel.hidden = true; $('cap').style.display = gear.hidden ? 'none' : ''; } });
+        panel.addEventListener('pointermove', (e) => e.stopPropagation());
+      }
+      let scale = Math.min(devicePixelRatio || 1, 1.5), tx = .5, ty = .5, mx = .5, my = .5;
+      function resize() { cv.width = Math.floor(innerWidth * scale); cv.height = Math.floor(innerHeight * scale); gl.viewport(0, 0, cv.width, cv.height); gl.uniform2f(uR, cv.width, cv.height); }
+      addEventListener('resize', resize); resize();
+      addEventListener('pointermove', (e) => { tx = e.clientX / innerWidth; ty = 1 - e.clientY / innerHeight; });
+      let t0 = performance.now(), acc = 0, n = 0, last = t0;
+      function frame(now) {
+        const dt = (now - last) / 1000; last = now;
+        // keep it smooth: lower the resolution a little if the machine struggles
+        acc += dt; n++;
+        if (acc > 2) { const avg = acc / n; acc = 0; n = 0; if (avg > 1 / 38 && scale > .6) { scale *= .85; resize(); } }
+        const vx = Math.hypot(tx - mx, ty - my); mx += (tx - mx) * .04; my += (ty - my) * .04; S.uWob += (Math.min(1, vx * 14) - S.uWob) * .05;
+        tAcc += Math.min(dt, .1) * S.speed * (S.pause ? 0 : 1);
+        if (S.uDrift && !drag && !S.pause) S.uYaw += Math.min(dt, .1) * .1 * S.speed;
+        gl.uniform1f(uT, tAcc); gl.uniform2f(uM, mx, my);
+        if (S.cycle) { const x = .5 + .5 * Math.sin(tAcc * .03); S.uDay = Math.min(1, Math.max(0, (x - .55) / .4)); }
+        for (const k in U) gl.uniform1f(U[k], S[k]);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+  </script>
+</body>
+
+</html>

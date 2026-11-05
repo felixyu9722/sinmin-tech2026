@@ -1,0 +1,13 @@
+# OS generated files
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Temporary files & drafts
+pro (1).html
+*.tmp
+古诗/
+学生 html 作品/
+
+# Local logs
+*.log

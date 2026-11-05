@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>古诗词意境画卷教学页 · 水墨有声版</title>
+  <style>
+    /* ==========================================================================
+       1. CSS 变量与东方美学配色系统 (支持浅色宣纸与深色夜读模式)
+       ========================================================================== */
+    :root {
+      --bg-color: #f4efe6;
+      --paper-texture: #e5dec9;
+      --text-main: #22201e;
+      --text-muted: #665f57;
+      --ink-black: #181715;
+      --ink-accent: #9b2922; /* 朱砂印泥红 */
+      --ink-accent-hover: #b8322a;
+      --jade-green: #2c6e58; /* 青玉色 */
+      --gold-accent: #b58938;
+      --card-bg: rgba(250, 247, 240, 0.86);
+      --card-border: #d2c8b4;
+      --focus-ring: #9b2922;
+      --particle-color: rgba(30, 30, 30, 0.28);
+      --ink-wash-alpha: 0.08;
+      --shadow-soft: 0 10px 30px rgba(45, 38, 28, 0.08);
+      --transition-speed: 0.3s;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #12151a;
+      --paper-texture: #1b2028;
+      --text-main: #e8e4dc;
+      --text-muted: #9aa0a8;
+      --ink-black: #f2efe9;
+      --ink-accent: #e05347;
+      --ink-accent-hover: #f5695d;
+      --jade-green: #48a888;
+      --gold-accent: #deb05a;
+      --card-bg: rgba(24, 28, 36, 0.86);
+      --card-border: #303744;
+      --focus-ring: #e05347;
+      --particle-color: rgba(255, 255, 255, 0.32);
+      --ink-wash-alpha: 0.14;
+      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "STKaiti", "Kaiti SC", "KaiTi", "FangSong", "SimSun", serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.65;
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+      transition: background-color 0.4s ease, color 0.4s ease;
+      background-image: 
+        radial-gradient(var(--paper-texture) 1px, transparent 0),
+        radial-gradient(var(--paper-texture) 1px, transparent 0);
+      background-size: 32px 32px;
+      background-position: 0 0, 16px 16px;
+    }
+
+    /* 全屏动态水墨流动背景 Canvas */
+    #inkBgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* 无障碍焦点框 */
+    :focus-visible {
+      outline: 3px solid var(--focus-ring);
+      outline-offset: 3px;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 16px 24px 48px;
+    }
+
+    /* 顶部栏与全局工具条 */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 16px;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* 传统朱砂印章标志 */
+    .seal-stamp {
+      width: 44px;
+      height: 44px;
+      background-color: var(--ink-accent);
+      color: #fff;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.95rem;
+      line-height: 1.1;
+      letter-spacing: 1px;
+      text-align: center;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25), 0 3px 8px rgba(155, 41, 34, 0.3);
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .brand-title h1 {
+      font-size: 1.95rem;
+      color: var(--ink-black);
+      letter-spacing: 3px;
+    }
+
+    .brand-title p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    .global-tools {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tool-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 6px 13px;
+      border-radius: 20px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .tool-btn:hover {
+      border-color: var(--ink-accent);
+      color: var(--ink-accent);
+      transform: translateY(-1px);
+    }
+
+    .tool-btn.active {
+      background: var(--ink-accent);
+      color: #ffffff;
+      border-color: var(--ink-accent);
+    }
+
+    /* 场景导航选项卡 */
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 14px 0 18px;
+    }
+
+    .tab-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 7px 15px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--text-main);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all var(--transition-speed) ease;
+      backdrop-filter: blur(4px);
+    }
+
+    .tab-btn:hover {
+      border-color: var(--ink-accent);
+      transform: translateY(-2px);
+    }
+
+    .tab-btn.active {
+      background: var(--ink-accent);
+      color: #ffffff;
+      border-color: var(--ink-accent);
+      box-shadow: 0 4px 12px rgba(155, 41, 34, 0.28);
+    }
+
+    /* 画卷视差展示区 */
+    .scroll-stage-wrapper {
+      position: relative;
+      margin-bottom: 22px;
+    }
+
+    .scroll-stage {
+      position: relative;
+      width: 100%;
+      height: 390px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--card-border);
+      box-shadow: var(--shadow-soft);
+      background: var(--paper-texture);
+    }
+
+    /* 卷轴左右装饰画轴感 */
+    .scroll-stage::before,
+    .scroll-stage::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      background: linear-gradient(90deg, rgba(60,40,20,0.35), transparent);
+      z-index: 6;
+      pointer-events: none;
+    }
+    .scroll-stage::after {
+      right: 0;
+      background: linear-gradient(-90deg, rgba(60,40,20,0.35), transparent);
+    }
+
+    .parallax-layer {
+      position: absolute;
+      top: -4%;
+      left: -4%;
+      width: 108%;
+      height: 108%;
+      pointer-events: none;
+      transition: transform 0.15s ease-out, opacity 0.5s ease;
+    }
+
+    /* 网页精选意境配图 / 自定义上传图片层 */
+    #customImageLayer {
+      position: absolute;
+      top: -3%;
+      left: -3%;
+      width: 106%;
+      height: 106%;
+      background-size: cover;
+      background-position: center;
+      transition: transform 0.2s ease-out, opacity 0.6s ease;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* 水墨宣纸遮罩让实景照片融入水墨古风 */
+    #customImageLayer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 40%, rgba(18, 20, 24, 0.45) 100%);
+    }
+
+    #particleCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    /* 画卷内的书法水印与印章 */
+    .stage-watermark {
+      position: absolute;
+      top: 22px;
+      left: 28px;
+      z-index: 5;
+      pointer-events: none;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(250, 247, 240, 0.72);
+      padding: 10px 16px;
+      border-radius: 8px;
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(155, 41, 34, 0.2);
+      color: #1f1d1a;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .stage-watermark-text {
+      writing-mode: vertical-rl;
+      font-size: 1.25rem;
+      letter-spacing: 4px;
+      font-weight: bold;
+      max-height: 150px;
+    }
+
+    .stage-watermark-seal {
+      width: 24px;
+      height: 24px;
+      background: #9b2922;
+      color: #fff;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      margin-top: auto;
+    }
+
+    /* 画卷右下角图源切换悬浮栏 */
+    .stage-toolbar {
+      position: absolute;
+      bottom: 14px;
+      right: 16px;
+      z-index: 7;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: rgba(25, 28, 34, 0.72);
+      backdrop-filter: blur(8px);
+      padding: 6px 10px;
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .stage-mode-btn {
+      background: transparent;
+      border: none;
+      color: #e5e0d8;
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 4px 11px;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .stage-mode-btn:hover {
+      color: #ffffff;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .stage-mode-btn.active {
+      background: var(--ink-accent);
+      color: #ffffff;
+    }
+
+    /* 自定义图片抽屉栏 */
+    .custom-img-drawer {
+      display: none;
+      margin-top: 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      backdrop-filter: blur(8px);
+    }
+
+    .custom-img-drawer.show {
+      display: flex;
+    }
+
+    .img-input-group {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .img-url-input {
+      flex: 1;
+      padding: 7px 12px;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      background: var(--bg-color);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    .file-upload-label {
+      background: var(--jade-green);
+      color: #fff;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: opacity 0.2s;
+    }
+
+    .file-upload-label:hover {
+      opacity: 0.9;
+    }
+
+    /* 诗词与讲解主栅格区 */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+    }
+
+    @media (min-width: 860px) {
+      .content-grid {
+        grid-template-columns: 1.35fr 1fr;
+      }
+    }
+
+    .poem-card, .info-card, .quiz-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .poem-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+      border-bottom: 1px dashed var(--card-border);
+      padding-bottom: 12px;
+    }
+
+    .poem-title-group {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .poem-title {
+      font-size: 1.9rem;
+      color: var(--ink-black);
+      letter-spacing: 2px;
+    }
+
+    .poem-meta {
+      color: var(--ink-accent);
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    /* 诗词正文容器：支持横排与竖排古籍切换 */
+    .poem-body-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 220px;
+      padding: 12px 0;
+    }
+
+    .poem-body {
+      font-size: 1.55rem;
+      line-height: 2.3;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    /* 古籍竖排模式 */
+    .poem-body.vertical-mode {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      height: 290px;
+      line-height: 2.6;
+      text-align: start;
+      border-right: 2px solid var(--ink-accent);
+      padding-right: 16px;
+    }
+
+    .poem-line {
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .poem-body.vertical-mode .poem-line {
+      margin-bottom: 0;
+      margin-left: 18px;
+      flex-wrap: nowrap;
+      border-left: 1px dashed var(--card-border);
+      padding-left: 10px;
+    }
+
+    .word-token {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s, transform 0.2s;
+      border: 1px solid transparent;
+      position: relative;
+    }
+
+    .word-token:hover {
+      background-color: rgba(155, 41, 34, 0.12);
+      border-color: var(--ink-accent);
+      transform: translateY(-2px);
+    }
+
+    .word-token.highlight {
+      background-color: var(--ink-accent);
+      color: #ffffff;
+      transform: scale(1.08);
+      box-shadow: 0 4px 12px rgba(155, 41, 34, 0.35);
+    }
+
+    .word-token.highlight rt {
+      color: #ffe5e0;
+    }
+
+    /* 拼音注音样式 */
+    ruby {
+      ruby-align: center;
+    }
+
+    rt {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: normal;
+      letter-spacing: 0;
+      transform: translateY(-2px);
+    }
+
+    .hide-pinyin rt {
+      display: none;
+    }
+
+    .punctuation {
+      color: var(--text-muted);
+      user-select: none;
+      padding: 0 2px;
+    }
+
+    /* 朗读与音频控制区 */
+    .controls-bar {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--card-border);
+    }
+
+    .action-btn {
+      background: var(--ink-black);
+      color: var(--bg-color);
+      border: none;
+      padding: 9px 18px;
+      font-size: 0.96rem;
+      font-family: inherit;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.25s ease;
+    }
+
+    .action-btn:hover {
+      background: var(--ink-accent);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .action-btn.reading-active {
+      background: var(--ink-accent);
+      color: #ffffff;
+      animation: gentlePulse 1.5s infinite;
+    }
+
+    .action-btn.secondary {
+      background: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+    }
+
+    .action-btn.secondary:hover {
+      border-color: var(--ink-accent);
+      color: var(--ink-accent);
+      background: transparent;
+    }
+
+    @keyframes gentlePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(155, 41, 34, 0.45); }
+      50% { box-shadow: 0 0 0 8px rgba(155, 41, 34, 0); }
+    }
+
+    /* 右侧：多功能赏析卡片 */
+    .info-tabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+
+    .info-tab-btn {
+      background: transparent;
+      border: none;
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .info-tab-btn.active {
+      background: rgba(155, 41, 34, 0.12);
+      color: var(--ink-accent);
+    }
+
+    .annotation-box {
+      min-height: 110px;
+      padding: 12px 14px;
+      background: rgba(0, 0, 0, 0.025);
+      border-left: 3px solid var(--ink-accent);
+      border-radius: 0 6px 6px 0;
+    }
+
+    .speak-word-btn {
+      background: none;
+      border: 1px solid var(--card-border);
+      color: var(--ink-accent);
+      border-radius: 14px;
+      padding: 2px 9px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-left: 8px;
+      font-family: inherit;
+    }
+
+    .speak-word-btn:hover {
+      background: var(--ink-accent);
+      color: #fff;
+    }
+
+    .imagery-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .imagery-tag {
+      font-size: 0.85rem;
+      padding: 3px 10px;
+      border-radius: 14px;
+      background: rgba(44, 110, 88, 0.12);
+      color: var(--jade-green);
+      border: 1px solid rgba(44, 110, 88, 0.25);
+    }
+
+    .translation-text {
+      font-size: 1.02rem;
+      color: var(--text-main);
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--card-border);
+      line-height: 1.75;
+    }
+
+    /* 互动闯关区 */
+    .quiz-card {
+      margin-top: 22px;
+    }
+
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .quiz-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .quiz-title {
+      color: var(--ink-accent);
+      font-size: 1.25rem;
+    }
+
+    .quiz-score-badge {
+      background: rgba(181, 137, 56, 0.15);
+      color: var(--gold-accent);
+      border: 1px solid rgba(181, 137, 56, 0.35);
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      font-weight: bold;
+    }
+
+    .quiz-question {
+      font-size: 1.35rem;
+      text-align: center;
+      margin: 18px 0;
+      letter-spacing: 2px;
+      padding: 12px;
+      background: rgba(0,0,0,0.02);
+      border-radius: 8px;
+    }
+
+    .quiz-options {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .option-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 10px 24px;
+      font-size: 1.1rem;
+      font-family: inherit;
+      color: var(--text-main);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all var(--transition-speed);
+    }
+
+    .option-btn:hover {
+      border-color: var(--ink-accent);
+      background-color: var(--paper-texture);
+      transform: translateY(-2px);
+    }
+
+    .quiz-feedback {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 1.02rem;
+      font-weight: bold;
+      min-height: 26px;
+    }
+
+    /* 尊重减少动效配置 */
+    @media (prefers-reduced-motion: reduce) {
+      *, .word-token, .tab-btn, .parallax-layer {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 全屏动态水墨晕染与流云背景 Canvas -->
+  <canvas id="inkBgCanvas" aria-hidden="true"></canvas>
+
+  <!-- 隐藏的全局 SVG 滤镜库：提供水墨毛边晕染效果 -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <filter id="ink-bleed" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+      <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="6" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="container">
+    <!-- 顶部品牌与全局教学工具条 -->
+    <header class="top-bar" role="banner">
+      <div class="brand-header">
+        <div class="seal-stamp" aria-hidden="true">诗画<br>雅集</div>
+        <div class="brand-title">
+          <h1>古诗词意境画卷</h1>
+          <p>水墨流动 · 真声吟诵 · 点击字词查看注解与赏析</p>
+        </div>
+      </div>
+
+      <div class="global-tools" role="toolbar" aria-label="教学辅助工具栏">
+        <button class="tool-btn" onclick="backToHome()" style="border-color:var(--ink-accent); color:var(--ink-accent); font-weight:bold;" title="返回成果展全景大厅">
+          <span>🏠</span> 回到主页
+        </button>
+
+        <!-- 双曲古风背景音乐播放器 -->
+        <div id="bgmWidget" style="display:inline-flex; align-items:center; gap:6px; background:var(--card-bg); border:1px solid var(--card-border); border-radius:20px; padding:3px 12px; font-size:0.85rem; color:var(--text-main); box-shadow:var(--shadow-soft);">
+          <span id="bgmIcon" style="cursor:pointer;" title="播放/暂停" onclick="toggleBgm()">🎵</span>
+          <span id="bgmTitle" style="cursor:pointer; color:var(--ink-accent); font-weight:bold;" title="点击切换曲目" onclick="nextBgmTrack()">云水相望</span>
+          <button id="bgmToggleBtn" style="border:none; background:none; cursor:pointer; color:var(--text-main); font-size:0.82rem; font-family:inherit; padding:0 3px;" onclick="toggleBgm()">❚❚ 暂停</button>
+          <button id="bgmNextBtn" style="border:none; background:none; cursor:pointer; color:var(--text-muted); font-size:0.85rem; padding:0 3px;" title="切换下一首" onclick="nextBgmTrack()">⏭</button>
+        </div>
+        <button class="tool-btn active" id="togglePinyinBtn" onclick="togglePinyin()">
+          <span>拼</span> 注音显示
+        </button>
+        <button class="tool-btn" id="toggleVerticalBtn" onclick="toggleVerticalMode()">
+          <span>📜</span> 竖排古籍
+        </button>
+        <button class="tool-btn" id="toggleThemeBtn" onclick="toggleDarkMode()">
+          <span>🌙</span> 夜读模式
+        </button>
+      </div>
+    </header>
+
+    <!-- 10首古诗场景切换导航 -->
+    <nav class="nav-tabs" id="navTabs" role="tablist" aria-label="诗词场景导航"></nav>
+
+    <!-- 视差意境画卷展示区 -->
+    <div class="scroll-stage-wrapper">
+      <section class="scroll-stage" id="scrollStage" aria-label="古诗意境画卷展示区">
+        <!-- 网页古风摄影图或用户自定义图片层 -->
+        <div id="customImageLayer"></div>
+
+        <!-- 三层水墨视差 SVG 层 -->
+        <div class="parallax-layer" id="layerBg"></div>
+        <div class="parallax-layer" id="layerMid"></div>
+        <canvas id="particleCanvas"></canvas>
+        <div class="parallax-layer" id="layerFore"></div>
+
+        <!-- 左上角竖排诗句书法题跋水印 -->
+        <div class="stage-watermark" id="stageWatermark">
+          <div class="stage-watermark-text" id="watermarkText">孤舟蓑笠翁</div>
+          <div class="stage-watermark-seal">意境</div>
+        </div>
+
+        <!-- 右下角画卷图源模式切换器 -->
+        <div class="stage-toolbar" role="group" aria-label="画卷呈现模式">
+          <div class="stage-mode-btn active" style="cursor:default; pointer-events:none;">
+            ⛰️ 动态水墨画卷
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- 主交互区：左诗文、右注解与赏析 -->
+    <div class="content-grid">
+      <!-- 左侧：诗词原文与语音朗读 -->
+      <main class="poem-card">
+        <div class="poem-header">
+          <div class="poem-title-group">
+            <h2 class="poem-title" id="poemTitle">---</h2>
+            <span class="poem-meta" id="poemMeta">---</span>
+          </div>
+          <span id="voiceStatusBadge" style="font-size:0.85rem; color:var(--text-muted);">🔊 支持真声吟诵</span>
+        </div>
+
+        <div class="poem-body-wrap">
+          <div class="poem-body" id="poemBody" aria-live="polite"></div>
+        </div>
+
+        <div class="controls-bar">
+          <button class="action-btn" id="readBtn" aria-label="真声朗读古诗">
+            <span>🔊</span> 真声朗读
+          </button>
+          <button class="action-btn secondary" onclick="speakSlowFollow()" title="慢速逐句跟读模式">
+            <span>📖</span> 慢速跟读
+          </button>
+        </div>
+      </main>
+
+      <!-- 右侧：字词释义、译文与意境赏析 -->
+      <aside class="info-card">
+        <div class="info-tabs" role="tablist">
+          <button class="info-tab-btn active" id="tabNoteBtn" onclick="switchInfoTab('note')">字词与译文</button>
+          <button class="info-tab-btn" id="tabAppreciationBtn" onclick="switchInfoTab('appreciation')">创作背景与赏析</button>
+        </div>
+
+        <!-- 面板 1：字词注解与白话译文 -->
+        <div id="infoPanelNote">
+          <div class="annotation-box" id="annotationBox">
+            <p style="color: var(--text-muted);">👆 点击左侧诗句中的任意词组，即可查看详细释义并听取词语读音。</p>
+          </div>
+          <div class="imagery-tags" id="imageryTags"></div>
+          <div class="translation-text" id="translationBox"></div>
+        </div>
+
+        <!-- 面板 2：创作背景与文学赏析 -->
+        <div id="infoPanelAppreciation" style="display:none;">
+          <div class="annotation-box" style="border-left-color: var(--jade-green);">
+            <strong style="color: var(--jade-green); font-size: 1.08rem;">【创作背景与哲思赏析】</strong>
+            <p id="appreciationText" style="margin-top:8px; line-height:1.75;"></p>
+          </div>
+          <div class="translation-text" id="poetBioBox"></div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- 互动闯关区：支持字词默写与上下句接龙 -->
+    <section class="quiz-card" aria-label="古诗词互动闯关">
+      <div class="quiz-header">
+        <div class="quiz-title-wrap">
+          <h3 class="quiz-title">🎯 诗词雅集小挑战</h3>
+          <span class="quiz-score-badge" id="quizScoreBadge">连对: 0 题 | 总分: 0</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="tool-btn active" id="quizModeWordBtn" onclick="setQuizMode('word')">字词默写</button>
+          <button class="tool-btn" id="quizModeLineBtn" onclick="setQuizMode('line')">上下句接龙</button>
+          <button class="tool-btn" onclick="renderQuiz()">🔄 换一题</button>
+        </div>
+      </div>
+      <div class="quiz-question" id="quizQuestion">题目加载中...</div>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="quiz-feedback" id="quizFeedback" aria-live="assertive"></div>
+    </section>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. 10首古诗完整题库与多维教学数据 (含拼音、精选网页图、水墨画卷、赏析)
+       ========================================================================== */
+    const appData = {
+      poems: [
+        {
+          id: "jiangxue",
+          title: "江雪",
+          author: "柳宗元 〔唐〕",
+          scene: "寒江独钓",
+          particleType: "snow",
+          soundMood: "wind",
+          watermark: "孤舟蓑笠翁",
+          curatedImg: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["千山", "孤舟", "蓑笠翁", "寒江雪"],
+          appreciation: "此诗作于柳宗元被贬永州之后。诗人以二十字勾勒出一幅幽静冷峻的寒江独钓图：“千山”“万径”的广袤孤寂与“孤舟”“独钓”的清高坚毅形成强烈对比，寄托了诗人不屈服于权贵、遗世独立的孤傲气节。",
+          poetBio: "【诗人简介】柳宗元（773—819），字子厚，河东人，世称“柳河东”，唐宋八大家之一，与韩愈并称“韩柳”。",
+          lines: [
+            [
+              { text: "千山", pinyin: ["qiān", "shān"], note: "千山：四周连绵起伏的所有山峰。" },
+              { text: "鸟飞绝", pinyin: ["niǎo", "fēi", "jué"], note: "鸟飞绝：天寒地冻，飞鸟消失得无影无踪。" }
+            ],
+            [
+              { text: "万径", pinyin: ["wàn", "jìng"], note: "万径：虚指山间无数条小路。" },
+              { text: "人踪灭", pinyin: ["rén", "zōng", "miè"], note: "人踪灭：大雪覆盖，人的脚印全都消失了。" }
+            ],
+            [
+              { text: "孤舟", pinyin: ["gū", "zhōu"], note: "孤舟：江面上孤零零的一叶扁舟。" },
+              { text: "蓑笠翁", pinyin: ["suō", "lì", "wēng"], note: "蓑笠翁：身披蓑衣、头戴斗笠的渔翁。" }
+            ],
+            [
+              { text: "独钓", pinyin: ["dú", "diào"], note: "独钓：独自一人静静垂钓。" },
+              { text: "寒江雪", pinyin: ["hán", "jiāng", "xuě"], note: "寒江雪：在漫天飘雪、寒冷彻骨的江面上。" }
+            ]
+          ],
+          translation: "四周所有的山峰上飞鸟都已经绝迹，所有的道路上都不见人的踪影。江面孤舟上，一位披戴着蓑衣斗笠的老翁，独自在漫天风雪的寒冷江面上垂钓。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <defs><linearGradient id="jxSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#cfd8dc"/><stop offset="100%" stop-color="#eceff1"/></linearGradient></defs>
+            <rect width="800" height="400" fill="url(#jxSky)"/>
+            <circle cx="650" cy="85" r="32" fill="#9b2922" opacity="0.18"/>
+            <path filter="url(#ink-bleed)" d="M0 240 Q180 120 380 230 T800 180 L800 400 L0 400 Z" fill="#90a4ae" opacity="0.45"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path filter="url(#ink-bleed)" d="M-50 280 Q160 165 440 285 T850 235 L850 400 L-50 400 Z" fill="#607d8b" opacity="0.62"/>
+            <path d="M0 315 Q400 290 800 325 L800 400 L0 400 Z" fill="#cfd8dc" opacity="0.5"/>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <g transform="translate(320, 325)">
+              <path d="M0 20 Q45 32 95 16 Q65 38 0 20 Z" fill="#1e272c"/>
+              <path d="M42 18 L46 4 L54 18 Z" fill="#263238"/>
+              <polygon points="36,6 48,-2 60,6" fill="#37474f"/>
+              <path d="M54 10 Q90 -5 115 35" stroke="#37474f" stroke-width="1.2" fill="none"/>
+            </g>
+            <path filter="url(#ink-bleed)" d="M0 370 Q260 335 550 375 T800 360 L800 400 L0 400 Z" fill="#263238"/>
+          </svg>`
+        },
+        {
+          id: "yueye",
+          title: "静夜思",
+          author: "李白 〔唐〕",
+          scene: "月夜思乡",
+          particleType: "light",
+          soundMood: "night",
+          watermark: "举头望明月",
+          curatedImg: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["明月光", "地上霜", "故乡"],
+          appreciation: "《静夜思》没有奇特新颖的想象，也没有精工华美的辞藻；它只是用叙述的语气，写远客思乡之情，然而它却意味深长，耐人寻味，千百年来成为中华儿女望月怀乡的共同文化密码。",
+          poetBio: "【诗人简介】李白（701—762），字太白，号青莲居士，被后人誉为“诗仙”，盛唐浪漫主义诗歌的代表人物。",
+          lines: [
+            [
+              { text: "床前", pinyin: ["chuáng", "qián"], note: "床前：指卧榻之前，一说指庭院井栏之前。" },
+              { text: "明月光", pinyin: ["míng", "yuè", "guāng"], note: "明月光：洒落在室内的皎洁月光。" }
+            ],
+            [
+              { text: "疑是", pinyin: ["yí", "shì"], note: "疑是：恍惚怀疑是、好似。" },
+              { text: "地上霜", pinyin: ["dì", "shàng", "shuāng"], note: "地上霜：铺在地面上的一层清冷白霜。" }
+            ],
+            [
+              { text: "举头", pinyin: ["jǔ", "tóu"], note: "举头：抬起头来。" },
+              { text: "望明月", pinyin: ["wàng", "míng", "yuè"], note: "望明月：遥望天空中那一轮圆月。" }
+            ],
+            [
+              { text: "低头", pinyin: ["dī", "tóu"], note: "低头：缓缓垂下头。" },
+              { text: "思故乡", pinyin: ["sī", "gù", "xiāng"], note: "思故乡：深深思念起远方的故乡与亲人。" }
+            ]
+          ],
+          translation: "皎洁的月光洒在床前，让人恍惚以为是地上铺了一层白霜。抬起头来凝望天边那轮明月，不由得低下头深深思念起遥远的故乡。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <rect width="800" height="400" fill="#0d172a"/>
+            <circle cx="640" cy="95" r="56" fill="#fff9d6" opacity="0.22" filter="url(#soft-glow)"/>
+            <circle cx="640" cy="95" r="38" fill="#fffbe6" opacity="0.95"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path filter="url(#ink-bleed)" d="M0 300 Q250 205 520 310 T800 265 L800 400 L0 400 Z" fill="#1b2a47" opacity="0.82"/>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path d="M0 355 Q400 320 800 355 L800 400 L0 400 Z" fill="#080e1a"/>
+            <path d="M120 260 L210 230 L210 360 L120 360 Z" fill="#0e1726"/>
+            <rect x="150" y="275" width="28" height="36" fill="#ffdfa0" opacity="0.65"/>
+          </svg>`
+        },
+        {
+          id: "chunshan",
+          title: "鸟鸣涧",
+          author: "王维 〔唐〕",
+          scene: "春山空灵",
+          particleType: "petal",
+          soundMood: "stream",
+          watermark: "月出惊山鸟",
+          curatedImg: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["桂花落", "春山空", "月出", "春涧"],
+          appreciation: "王维在《鸟鸣涧》中以动写静，以花落、月出、鸟鸣这些极细微的动景，反衬出春山夜晚的幽深与空寂，完美诠释了“鸟鸣山更幽”的禅意美学。",
+          poetBio: "【诗人简介】王维（701—761），字摩诘，世称“王右丞”，有“诗佛”之称。苏轼赞其“诗中有画，画中有诗”。",
+          lines: [
+            [
+              { text: "人闲", pinyin: ["rén", "xián"], note: "人闲：人的心境闲适宁静。" },
+              { text: "桂花落", pinyin: ["guì", "huā", "luò"], note: "桂花落：春桂的细小花瓣悄然飘落。" }
+            ],
+            [
+              { text: "夜静", pinyin: ["yè", "jìng"], note: "夜静：夜色万籁俱寂。" },
+              { text: "春山空", pinyin: ["chūn", "shān", "kōng"], note: "春山空：春日的山林显得空旷幽远。" }
+            ],
+            [
+              { text: "月出", pinyin: ["yuè", "chū"], note: "月出：皎洁的月亮从山间升起。" },
+              { text: "惊山鸟", pinyin: ["jīng", "shān", "niǎo"], note: "惊山鸟：月光惊动了宿于林间的山鸟。" }
+            ],
+            [
+              { text: "时鸣", pinyin: ["shí", "míng"], note: "时鸣：偶尔发出一两声清脆啼叫。" },
+              { text: "春涧中", pinyin: ["chūn", "jiàn", "zhōng"], note: "春涧中：回荡在春天的山涧溪谷里。" }
+            ]
+          ],
+          translation: "人们心境闲适，能感受到桂花悄然飘落；夜色宁静，更显出春山的空旷幽深。皓月升起惊动了林间宿鸟，它们在春天的山涧中不时发出清脆的啼鸣。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <rect width="800" height="400" fill="#182c22"/>
+            <circle cx="580" cy="100" r="42" fill="#f7f4d9" opacity="0.85"/>
+            <path filter="url(#ink-bleed)" d="M0 220 Q300 130 600 230 T800 190 L800 400 L0 400 Z" fill="#284636" opacity="0.65"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path filter="url(#ink-bleed)" d="M-50 270 Q200 180 550 300 T850 240 L850 400 L-50 400 Z" fill="#1b3628" opacity="0.85"/>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path d="M0 350 Q400 310 800 350 L800 400 L0 400 Z" fill="#0b1710"/>
+            <path d="M620 40 Q520 90 460 65" stroke="#0b1710" stroke-width="5" fill="none"/>
+          </svg>`
+        },
+        {
+          id: "luchai",
+          title: "鹿柴",
+          author: "王维 〔唐〕",
+          scene: "深林返照",
+          particleType: "cloud",
+          soundMood: "wind",
+          watermark: "返景入深林",
+          curatedImg: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["空山", "人语响", "返景", "青苔"],
+          appreciation: "《鹿柴》是王维《辋川集》中的名篇。全诗描绘的是鹿柴附近的空山深林在傍晚时分的幽静景色，以短暂的人语回响和一抹夕阳余晖，烘托出深林的幽暗与清冷。",
+          poetBio: "【诗人简介】王维晚年居于蓝田辋川别业，寄情山水禅理，创作了著名的《辋川集》二十首。",
+          lines: [
+            [
+              { text: "空山", pinyin: ["kōng", "shān"], note: "空山：幽静空旷的山林。" },
+              { text: "不见人", pinyin: ["bú", "jiàn", "rén"], note: "不见人：林木茂密，看不见人影。" }
+            ],
+            [
+              { text: "但闻", pinyin: ["dàn", "wén"], note: "但闻：只听见。" },
+              { text: "人语响", pinyin: ["rén", "yǔ", "xiǎng"], note: "人语响：远处隐约传来人说话的回音。" }
+            ],
+            [
+              { text: "返景", pinyin: ["fǎn", "yǐng"], note: "返景（yǐng）：同“返影”，夕阳返照的光辉。" },
+              { text: "入深林", pinyin: ["rù", "shēn", "lín"], note: "入深林：穿透幽暗茂密的树林。" }
+            ],
+            [
+              { text: "复照", pinyin: ["fù", "zhào"], note: "复照：又一次映照。" },
+              { text: "青苔上", pinyin: ["qīng", "tái", "shàng"], note: "青苔上：石上幽绿的青苔之上。" }
+            ]
+          ],
+          translation: "幽静空旷的山林里看不见人影，只能听到远处隐约传来的说话回声。傍晚夕阳的余晖射入幽深的林间，又洒落在翠绿的青苔上面。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <rect width="800" height="400" fill="#223029"/>
+            <polygon points="0,0 180,0 450,400 220,400" fill="#f3c677" opacity="0.18"/>
+            <path d="M120 0 L160 400 M320 0 L340 400 M580 0 L560 400" stroke="#304239" stroke-width="34" opacity="0.5"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path filter="url(#ink-bleed)" d="M0 270 Q350 190 800 280 L800 400 L0 400 Z" fill="#174a42" opacity="0.7"/>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path d="M0 360 Q400 320 800 360 L800 400 L0 400 Z" fill="#0a241f"/>
+            <ellipse cx="340" cy="368" rx="85" ry="16" fill="#4e8c57" opacity="0.55"/>
+          </svg>`
+        },
+        {
+          id: "baidicheng",
+          title: "早发白帝城",
+          author: "李白 〔唐〕",
+          scene: "轻舟万山",
+          particleType: "cloud",
+          soundMood: "stream",
+          watermark: "轻舟已过万重山",
+          curatedImg: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["白帝彩云", "千里江陵", "猿声", "轻舟"],
+          appreciation: "唐肃宗乾元二年春，李白流放夜郎途中行至白帝城忽遇大赦，惊喜交加，旋即放舟东下江陵。全诗气势奔放，将遇赦后无比欢快轻捷的心情融于三峡奇丽雄伟的山水之中。",
+          poetBio: "【背景轶事】此诗又称《下江陵》，被誉为盛唐七绝压卷之作，与王之涣《凉州词》并称。",
+          lines: [
+            [
+              { text: "朝辞", pinyin: ["zhāo", "cí"], note: "朝辞：清晨告别。" },
+              { text: "白帝彩云间", pinyin: ["bái", "dì", "cǎi", "yún", "jiān"], note: "白帝彩云间：白帝城高耸入云，仿佛在朝霞彩云之间。" }
+            ],
+            [
+              { text: "千里江陵", pinyin: ["qiān", "lǐ", "jiāng", "líng"], note: "千里江陵：从白帝城到江陵水路遥远。" },
+              { text: "一日还", pinyin: ["yī", "rì", "huán"], note: "一日还：顺流疾驰，一天之内便能抵达。" }
+            ],
+            [
+              { text: "两岸猿声", pinyin: ["liǎng", "àn", "yuán", "shēng"], note: "两岸猿声：三峡两岸猿猴的啼叫声。" },
+              { text: "啼不住", pinyin: ["tí", "bú", "zhù"], note: "啼不住：啼叫声还在耳畔连续不断。" }
+            ],
+            [
+              { text: "轻舟已过", pinyin: ["qīng", "zhōu", "yǐ", "guò"], note: "轻舟：轻快飞驰的小船。" },
+              { text: "万重山", pinyin: ["wàn", "chóng", "shān"], note: "万重山：层层叠叠的万座高山。" }
+            ]
+          ],
+          translation: "清晨告别高入彩云间的白帝城，千里之外的江陵一天之内便能到达。两岸猿猴的啼叫声还在耳边响个不停，轻快的小船早已飞驰过重重叠叠的万座高山。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <rect width="800" height="400" fill="#f7e6d4"/>
+            <circle cx="140" cy="85" r="46" fill="#e86f52" opacity="0.45"/>
+            <path filter="url(#ink-bleed)" d="M0 170 Q220 80 520 190 T800 130 L800 400 L0 400 Z" fill="#d9a589" opacity="0.6"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path filter="url(#ink-bleed)" d="M-50 240 Q250 140 600 270 T850 190 L850 400 L-50 400 Z" fill="#a86d54" opacity="0.75"/>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path d="M0 355 Q400 315 800 355 L800 400 L0 400 Z" fill="#593529"/>
+            <path d="M450 335 Q490 345 535 330 Q510 352 450 335 Z" fill="#2b1810"/>
+            <polygon points="495,335 495,295 520,328" fill="#efe6dd"/>
+          </svg>`
+        },
+        {
+          id: "lushanpubu",
+          title: "望庐山瀑布",
+          author: "李白 〔唐〕",
+          scene: "庐山飞瀑",
+          particleType: "cloud",
+          soundMood: "stream",
+          watermark: "飞流直下三千尺",
+          curatedImg: "https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["香炉紫烟", "瀑布", "飞流", "银河九天"],
+          appreciation: "李白以极其浪漫雄奇的想象力，将庐山瀑布比作从九天倾泻而下的璀璨银河，“生”“挂”二字化静为动，“飞流直下三千尺”更展现出盛唐气象的豪迈与壮阔。",
+          poetBio: "【文化地理】庐山香炉峰位于江西九江，峰形尖圆，云烟缭绕，如香炉生烟。",
+          lines: [
+            [
+              { text: "日照", pinyin: ["rì", "zhào"], note: "日照：灿烂的阳光映照。" },
+              { text: "香炉生紫烟", pinyin: ["xiāng", "lú", "shēng", "zǐ", "yān"], note: "香炉生紫烟：香炉峰上升腾起紫色的云霞雾气。" }
+            ],
+            [
+              { text: "遥看", pinyin: ["yáo", "kàn"], note: "遥看：从远处遥望。" },
+              { text: "瀑布挂前川", pinyin: ["pù", "bù", "guà", "qián", "chuān"], note: "挂前川：瀑布好似一条巨大的白练悬挂在山前。" }
+            ],
+            [
+              { text: "飞流", pinyin: ["fēi", "liú"], note: "飞流：凌空飞泻的湍急水流。" },
+              { text: "直下三千尺", pinyin: ["zhí", "xià", "sān", "qiān", "chǐ"], note: "三千尺：极言瀑布落差之高、气势之猛。" }
+            ],
+            [
+              { text: "疑是", pinyin: ["yí", "shì"], note: "疑是：让人惊叹怀疑是。" },
+              { text: "银河落九天", pinyin: ["yín", "hé", "luò", "jiǔ", "tiān"], note: "落九天：天上的银河从最高处倾泻到人间。" }
+            ]
+          ],
+          translation: "阳光照射在香炉峰上，升腾起袅袅紫色的云烟；远远望去，瀑布像一条洁白的长练悬挂在山前。湍急的水流从三千尺高处飞泻直下，让人怀疑是璀璨的银河从九天落入人间。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <rect width="800" height="400" fill="#2d3a4b"/>
+            <circle cx="260" cy="80" r="55" fill="#d4899a" opacity="0.35" filter="url(#soft-glow)"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path filter="url(#ink-bleed)" d="M-50 180 Q200 80 500 200 T850 160 L850 400 L-50 400 Z" fill="#1e2733" opacity="0.85"/>
+            <rect x="395" y="40" width="34" height="340" fill="#e8f4fc" opacity="0.88" rx="14"/>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path d="M0 345 Q400 305 800 345 L800 400 L0 400 Z" fill="#0f141c"/>
+            <ellipse cx="412" cy="345" rx="65" ry="22" fill="#d9ecfa" opacity="0.65" filter="url(#soft-glow)"/>
+          </svg>`
+        },
+        {
+          id: "yinhushang",
+          title: "饮湖上初晴后雨",
+          author: "苏轼 〔宋〕",
+          scene: "西湖晴雨",
+          particleType: "snow",
+          soundMood: "stream",
+          watermark: "淡妆浓抹总相宜",
+          curatedImg: "https://images.unsplash.com/photo-1528164344705-475426879c0d?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["水光潋滟", "山色空蒙", "西湖", "西子"],
+          appreciation: "苏轼任杭州通判时写下此诗。他以绝代佳人西施妙喻西湖，无论晴日的水波潋滟还是雨天的山色空蒙，皆有天然神韵。从此西湖又得名“西子湖”。",
+          poetBio: "【诗人简介】苏轼（1037—1101），字子瞻，号东坡居士，北宋文坛领袖，诗词文书画俱臻极品。",
+          lines: [
+            [
+              { text: "水光潋滟", pinyin: ["shuǐ", "guāng", "liàn", "yàn"], note: "水光潋滟：湖水波光闪动、明丽动人的样子。" },
+              { text: "晴方好", pinyin: ["qíng", "fāng", "hǎo"], note: "晴方好：天晴的时候显得格外美好。" }
+            ],
+            [
+              { text: "山色空蒙", pinyin: ["shān", "sè", "kōng", "méng"], note: "山色空蒙：云雨迷茫中群山若隐若现。" },
+              { text: "雨亦奇", pinyin: ["yǔ", "yì", "qí"], note: "雨亦奇：下雨的时候景致也别有一番奇特韵味。" }
+            ],
+            [
+              { text: "欲把西湖", pinyin: ["yù", "bǎ", "xī", "hú"], note: "西湖：杭州西湖。" },
+              { text: "比西子", pinyin: ["bǐ", "xī", "zǐ"], note: "西子：春秋越国绝世美女西施。" }
+            ],
+            [
+              { text: "淡妆浓抹", pinyin: ["dàn", "zhuāng", "nóng", "mǒ"], note: "淡妆浓抹：无论素雅淡妆还是艳丽浓妆。" },
+              { text: "总相宜", pinyin: ["zǒng", "xiāng", "yí"], note: "总相宜：总是恰到好处、美不胜收。" }
+            ]
+          ],
+          translation: "晴天里西湖水波荡漾、波光闪闪，风景正好；雨天时群山云雾迷茫、若隐若现，景致也同样奇妙。如果把西湖比作绝代佳人西施，那么不管是淡雅妆容还是浓艳装扮，都总是如此恰到好处。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <rect width="800" height="400" fill="#cfded7"/>
+            <path filter="url(#ink-bleed)" d="M0 240 Q300 160 600 250 T800 220 L800 400 L0 400 Z" fill="#95b3a6" opacity="0.6"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path filter="url(#ink-bleed)" d="M-50 280 Q220 190 520 300 T850 250 L850 400 L-50 400 Z" fill="#638778" opacity="0.75"/>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path d="M0 360 Q400 320 800 360 L800 400 L0 400 Z" fill="#2e453b"/>
+            <path d="M180 355 Q240 330 300 355" stroke="#e6f0ec" stroke-width="3" fill="none"/>
+          </svg>`
+        },
+        {
+          id: "jueju",
+          title: "绝句",
+          author: "杜甫 〔唐〕",
+          scene: "春日草堂",
+          particleType: "petal",
+          soundMood: "stream",
+          watermark: "一行白鹭上青天",
+          curatedImg: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["黄鹂翠柳", "白鹭青天", "西岭雪", "万里船"],
+          appreciation: "此诗作于成都浣花溪草堂。杜甫连用黄、翠、白、青四种鲜明色彩，上联写近景灵动之春，下联写远景跨越时空之阔，句句如画，展现出一派明媚生机的春日气象。",
+          poetBio: "【诗人简介】杜甫（712—770），字子美，自号少陵野老，被尊为“诗圣”，其诗被称为“诗史”。",
+          lines: [
+            [
+              { text: "两个黄鹂", pinyin: ["liǎng", "gè", "huáng", "lí"], note: "黄鹂：羽毛鲜黄、鸣声婉转的黄莺鸟。" },
+              { text: "鸣翠柳", pinyin: ["míng", "cuì", "liǔ"], note: "鸣翠柳：在翠绿的新柳枝头欢快鸣叫。" }
+            ],
+            [
+              { text: "一行白鹭", pinyin: ["yī", "háng", "bái", "lù"], note: "白鹭：羽毛洁白的水鸟。" },
+              { text: "上青天", pinyin: ["shàng", "qīng", "tiān"], note: "上青天：排成一行飞向蔚蓝高远的天空。" }
+            ],
+            [
+              { text: "窗含西岭", pinyin: ["chuāng", "hán", "xī", "lǐng"], note: "窗含西岭：西岭雪山好似镶嵌在窗框之中。" },
+              { text: "千秋雪", pinyin: ["qiān", "qiū", "xuě"], note: "千秋雪：山顶终年不化、积聚千年的白雪。" }
+            ],
+            [
+              { text: "门泊东吴", pinyin: ["mén", "bó", "dōng", "wú"], note: "门泊：草堂门前的江岸停泊着。" },
+              { text: "万里船", pinyin: ["wàn", "lǐ", "chuán"], note: "万里船：即将顺江东下直达万里外东吴的船只。" }
+            ]
+          ],
+          translation: "两只黄鹂在翠绿的柳枝间婉转地鸣叫，一行白鹭排着队飞向湛蓝的天空。推窗望去，西岭山巅那千年不化的积雪仿佛镶嵌在窗框里；门前江边停泊着从万里外东吴远航而来的船只。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <rect width="800" height="400" fill="#d9e8d2"/>
+            <polygon points="400,105 495,260 305,260" fill="#ffffff" opacity="0.9"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path filter="url(#ink-bleed)" d="M0 260 Q250 170 550 280 T800 240 L800 400 L0 400 Z" fill="#7da66d" opacity="0.72"/>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path d="M0 350 Q400 310 800 350 L800 400 L0 400 Z" fill="#2d4223"/>
+            <path d="M60 0 Q100 120 40 260 M110 0 Q140 100 90 230" stroke="#456b33" stroke-width="3.5" fill="none"/>
+          </svg>`
+        },
+        {
+          id: "zhuliguan",
+          title: "竹里馆",
+          author: "王维 〔唐〕",
+          scene: "竹林琴月",
+          particleType: "light",
+          soundMood: "night",
+          watermark: "明月来相照",
+          curatedImg: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["幽篁", "弹琴长啸", "深林", "明月"],
+          appreciation: "《竹里馆》写诗人在竹林深处独坐弹琴长啸的隐逸生活。全诗不用一字雕琢，却将清幽澄净的竹林月夜与诗人物我两忘、与明月相知相伴的禅心展现得淋漓尽致。",
+          poetBio: "【古琴意境】古人常于茂林修竹之下抚琴长啸，追求“独与天地精神往来”之境。",
+          lines: [
+            [
+              { text: "独坐", pinyin: ["dú", "zuò"], note: "独坐：独自一人安然端坐。" },
+              { text: "幽篁里", pinyin: ["yōu", "huáng", "lǐ"], note: "幽篁（huáng）：幽深茂密的竹林。" }
+            ],
+            [
+              { text: "弹琴", pinyin: ["tán", "qín"], note: "弹琴：轻抚古琴。" },
+              { text: "复长啸", pinyin: ["fù", "cháng", "xiào"], note: "复长啸：又放声拉长腔调吟啸。" }
+            ],
+            [
+              { text: "深林", pinyin: ["shēn", "lín"], note: "深林：幽深僻静的竹林。" },
+              { text: "人不知", pinyin: ["rén", "bù", "zhī"], note: "人不知：世人无人知晓这番自在心境。" }
+            ],
+            [
+              { text: "明月", pinyin: ["míng", "yuè"], note: "明月：天边皎洁的圆月。" },
+              { text: "来相照", pinyin: ["lái", "xiāng", "zhào"], note: "来相照：洒下清辉，如同知己般赶来相伴。" }
+            ]
+          ],
+          translation: "独自一人坐在幽深茂密的竹林里，一边弹奏古琴，一边放声长啸。竹林深处静谧无人知晓，只有天边那轮皎洁的明月洒下清辉，静静地陪伴映照着我。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <rect width="800" height="400" fill="#0d1f18"/>
+            <circle cx="420" cy="85" r="42" fill="#fffbe6" opacity="0.92"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <g stroke="#1b4031" stroke-width="7" opacity="0.8">
+              <line x1="110" y1="0" x2="120" y2="400"/><line x1="250" y1="0" x2="238" y2="400"/>
+              <line x1="600" y1="0" x2="615" y2="400"/><line x1="720" y1="0" x2="705" y2="400"/>
+            </g>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path d="M0 360 Q400 320 800 360 L800 400 L0 400 Z" fill="#050d0a"/>
+            <g stroke="#295c47" stroke-width="12">
+              <line x1="180" y1="0" x2="192" y2="400"/><line x1="510" y1="0" x2="495" y2="400"/>
+            </g>
+          </svg>`
+        },
+        {
+          id: "fengqiaoyepo",
+          title: "枫桥夜泊",
+          author: "张继 〔唐〕",
+          scene: "姑苏夜钟",
+          particleType: "cloud",
+          soundMood: "night",
+          watermark: "夜半钟声到客船",
+          curatedImg: "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=1400&q=80",
+          imagery: ["月落乌啼", "江枫渔火", "寒山寺", "夜半钟声"],
+          appreciation: "张继在安史之乱后途经苏州寒山寺时写下此诗。诗人将月落、乌啼、霜天、江枫、渔火与回荡在夜空中的寒山寺钟声融为一体，令千年后的读者依然能听见那悠远孤寂的客船钟声。",
+          poetBio: "【名胜古迹】寒山寺位于今江苏苏州姑苏区枫桥镇，因张继这首诗而名扬天下。",
+          lines: [
+            [
+              { text: "月落乌啼", pinyin: ["yuè", "luò", "wū", "tí"], note: "月落乌啼：残月西沉，寒鸦在枝头啼叫。" },
+              { text: "霜满天", pinyin: ["shuāng", "mǎn", "tiān"], note: "霜满天：清冷的寒霜之气弥漫整个夜空。" }
+            ],
+            [
+              { text: "江枫渔火", pinyin: ["jiāng", "fēng", "yú", "huǒ"], note: "江枫渔火：岸边的枫树与江面渔船上的点点灯火。" },
+              { text: "对愁眠", pinyin: ["duì", "chóu", "mián"], note: "对愁眠：伴着羁旅乡愁难以入眠。" }
+            ],
+            [
+              { text: "姑苏城外", pinyin: ["gū", "sū", "chéng", "wài"], note: "姑苏城：苏州城的古称。" },
+              { text: "寒山寺", pinyin: ["hán", "shān", "sì"], note: "寒山寺：枫桥附近的千年古刹。" }
+            ],
+            [
+              { text: "夜半钟声", pinyin: ["yè", "bàn", "zhōng", "shēng"], note: "夜半钟声：寺院半夜敲响的悠远钟声（唐代寺院有敲“分夜钟”习俗）。" },
+              { text: "到客船", pinyin: ["dào", "kè", "chuán"], note: "到客船：穿过夜雾远远传到游子的客船上。" }
+            ]
+          ],
+          translation: "月亮缓缓西沉，乌鸦凄清啼叫，满天弥漫着凛冽寒霜；面对着岸边的江枫与点点渔火，游子怀着满腔愁绪难以入眠。姑苏城外那寂静的寒山寺，半夜敲响的悠远钟声穿过夜色传到了客船之上。",
+          svgBg: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <rect width="800" height="400" fill="#141923"/>
+            <circle cx="180" cy="145" r="28" fill="#e8ecf2" opacity="0.38"/>
+          </svg>`,
+          svgMid: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path filter="url(#ink-bleed)" d="M0 290 Q300 200 600 300 T800 270 L800 400 L0 400 Z" fill="#20293a" opacity="0.85"/>
+          </svg>`,
+          svgFore: `<svg width="100%" height="100%" viewBox="0 0 800 400" preserveAspectRatio="none">
+            <path d="M0 365 Q400 325 800 365 L800 400 L0 400 Z" fill="#0b0e14"/>
+            <path d="M470 350 Q515 362 560 348 Z" fill="#1a2230"/>
+            <circle cx="520" cy="344" r="4.5" fill="#ffaa44" filter="url(#soft-glow)"/>
+          </svg>`
+        }
+      ]
+    };
+
+    /* ==========================================================================
+       2. 状态管理区 (State Management)
+       ========================================================================== */
+    const state = {
+      currentIndex: 0,
+      isReading: false,
+      readTimer: null,
+      showPinyin: true,
+      isVertical: false,
+      visualMode: 'ink', // 'ink' | 'curated' | 'custom'
+      customImages: {},  // 保存用户按诗定制的图片 URL/DataURL
+      autoInkTimer: null,
+      lastMouseInkTime: 0,
+      particles: [],
+      inkBlots: [],
+      inkClouds: [],
+      quizMode: 'word',  // 'word' | 'line'
+      quizAnswer: '',
+      quizStreak: 0,
+      quizScore: 0
+    };
+
+    /* ==========================================================================
+       3. 全屏动态水墨画流动背景引擎 (#inkBgCanvas) - 全自动点墨晕染
+       ========================================================================== */
+    const inkBgCanvas = document.getElementById('inkBgCanvas');
+    const inkCtx = inkBgCanvas.getContext('2d');
+
+    function initInkBg() {
+      inkBgCanvas.width = window.innerWidth;
+      inkBgCanvas.height = window.innerHeight;
+
+      // 初始化流动水墨云气与墨团
+      state.inkClouds = [];
+      for (let i = 0; i < 10; i++) {
+        state.inkClouds.push({
+          x: Math.random() * inkBgCanvas.width,
+          y: Math.random() * inkBgCanvas.height,
+          radius: Math.random() * 240 + 150,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.2,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+
+      // 初始自动晕开3处水墨
+      for (let i = 0; i < 3; i++) {
+        spawnInkBlot();
+      }
+
+      // 开启全自动定时点墨晕染（无需手动点击，自然间隔滴落浓淡墨滴）
+      if (state.autoInkTimer) clearInterval(state.autoInkTimer);
+      state.autoInkTimer = setInterval(() => {
+        if (!document.hidden) {
+          spawnInkBlot();
+          // 偶发双墨交融效果
+          if (Math.random() > 0.55) {
+            setTimeout(() => spawnInkBlot(), 700);
+          }
+        }
+      }, 2800);
+    }
+
+    // 触发一滴水墨在宣纸上自然多层晕染散开
+    function spawnInkBlot(x, y, maxRadius = 135) {
+      const targetX = x ?? (Math.random() * inkBgCanvas.width * 0.86 + inkBgCanvas.width * 0.07);
+      const targetY = y ?? (Math.random() * inkBgCanvas.height * 0.86 + inkBgCanvas.height * 0.07);
+
+      state.inkBlots.push({
+        x: targetX,
+        y: targetY,
+        r: 5,
+        maxR: maxRadius + Math.random() * 75,
+        alpha: 0.13 + Math.random() * 0.05,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.002,
+        lobes: Array.from({ length: 9 }, () => Math.random() * 0.34 + 0.82)
+      });
+      if (state.inkBlots.length > 14) state.inkBlots.shift();
+    }
+
+    function animateInkBackground() {
+      inkCtx.clearRect(0, 0, inkBgCanvas.width, inkBgCanvas.height);
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const inkRGB = isDark ? '200, 210, 225' : '32, 35, 40';
+
+      // 1. 绘制远山双层流动水墨气韵
+      const time = Date.now() * 0.00045;
+      inkCtx.save();
+      inkCtx.beginPath();
+      inkCtx.moveTo(0, inkBgCanvas.height);
+      for (let x = 0; x <= inkBgCanvas.width; x += 36) {
+        const y = inkBgCanvas.height * 0.76 +
+          Math.sin(x * 0.0028 + time) * 48 +
+          Math.cos(x * 0.0065 - time * 0.8) * 30;
+        inkCtx.lineTo(x, y);
+      }
+      inkCtx.lineTo(inkBgCanvas.width, inkBgCanvas.height);
+      inkCtx.closePath();
+      const gradMountain = inkCtx.createLinearGradient(0, inkBgCanvas.height * 0.62, 0, inkBgCanvas.height);
+      gradMountain.addColorStop(0, `rgba(${inkRGB}, 0.055)`);
+      gradMountain.addColorStop(1, `rgba(${inkRGB}, 0.012)`);
+      inkCtx.fillStyle = gradMountain;
+      inkCtx.fill();
+      inkCtx.restore();
+
+      // 2. 绘制缓缓流动的水墨云烟
+      state.inkClouds.forEach(c => {
+        c.x += c.vx;
+        c.y += c.vy;
+        c.phase += 0.005;
+
+        if (c.x < -c.radius) c.x = inkBgCanvas.width + c.radius;
+        if (c.x > inkBgCanvas.width + c.radius) c.x = -c.radius;
+        if (c.y < -c.radius) c.y = inkBgCanvas.height + c.radius;
+        if (c.y > inkBgCanvas.height + c.radius) c.y = -c.radius;
+
+        const pulseR = c.radius + Math.sin(c.phase) * 24;
+        const g = inkCtx.createRadialGradient(c.x, c.y, pulseR * 0.1, c.x, c.y, pulseR);
+        g.addColorStop(0, `rgba(${inkRGB}, 0.048)`);
+        g.addColorStop(0.6, `rgba(${inkRGB}, 0.02)`);
+        g.addColorStop(1, `rgba(${inkRGB}, 0)`);
+
+        inkCtx.fillStyle = g;
+        inkCtx.beginPath();
+        inkCtx.arc(c.x, c.y, pulseR, 0, Math.PI * 2);
+        inkCtx.fill();
+      });
+
+      // 3. 绘制自动扩散的水墨晕染墨滴
+      for (let i = state.inkBlots.length - 1; i >= 0; i--) {
+        const b = state.inkBlots[i];
+        b.r += (b.maxR - b.r) * 0.018;
+        b.alpha *= 0.995;
+        b.rotation += b.rotSpeed;
+
+        if (b.alpha < 0.003) {
+          state.inkBlots.splice(i, 1);
+          continue;
+        }
+
+        inkCtx.save();
+        inkCtx.translate(b.x, b.y);
+        inkCtx.rotate(b.rotation);
+        const g = inkCtx.createRadialGradient(0, 0, b.r * 0.08, 0, 0, b.r);
+        g.addColorStop(0, `rgba(${inkRGB}, ${b.alpha})`);
+        g.addColorStop(0.65, `rgba(${inkRGB}, ${b.alpha * 0.55})`);
+        g.addColorStop(0.9, `rgba(${inkRGB}, ${b.alpha * 0.25})`);
+        g.addColorStop(1, `rgba(${inkRGB}, 0)`);
+        inkCtx.fillStyle = g;
+
+        inkCtx.beginPath();
+        const steps = 32;
+        for (let s = 0; s <= steps; s++) {
+          const angle = (s / steps) * Math.PI * 2;
+          const lobeFactor = b.lobes[s % b.lobes.length];
+          const rad = b.r * lobeFactor;
+          const px = Math.cos(angle) * rad;
+          const py = Math.sin(angle) * rad;
+          if (s === 0) inkCtx.moveTo(px, py);
+          else inkCtx.lineTo(px, py);
+        }
+        inkCtx.closePath();
+        inkCtx.fill();
+        inkCtx.restore();
+      }
+
+      requestAnimationFrame(animateInkBackground);
+    }
+
+    /* ==========================================================================
+       4. 画卷前景意境粒子渲染 (#particleCanvas)
+       ========================================================================== */
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const stage = document.getElementById('scrollStage');
+      canvas.width = stage.clientWidth;
+      canvas.height = stage.clientHeight;
+      inkBgCanvas.width = window.innerWidth;
+      inkBgCanvas.height = window.innerHeight;
+    }
+
+    function initParticles(type) {
+      state.particles = [];
+      const count = type === 'snow' ? 60 : (type === 'petal' ? 32 : 24);
+      for (let i = 0; i < count; i++) {
+        state.particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 3.2 + 1.2,
+          vx: (Math.random() - 0.5) * 1.1,
+          vy: type === 'light' ? -(Math.random() * 0.6 + 0.2) : (Math.random() * 1.1 + 0.4),
+          alpha: Math.random() * 0.65 + 0.25,
+          angle: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const currentPoem = appData.poems[state.currentIndex];
+
+      state.particles.forEach(p => {
+        ctx.save();
+        ctx.beginPath();
+        if (currentPoem.particleType === 'petal') {
+          ctx.fillStyle = `rgba(245, 195, 190, ${p.alpha})`;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          ctx.ellipse(0, 0, p.radius * 2.1, p.radius, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (currentPoem.particleType === 'light') {
+          ctx.fillStyle = `rgba(255, 245, 190, ${p.alpha})`;
+          ctx.arc(p.x, p.y, p.radius * 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (currentPoem.particleType === 'snow') {
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha + 0.15})`;
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillStyle = `rgba(235, 240, 245, ${p.alpha * 0.5})`;
+          ctx.arc(p.x, p.y, p.radius * 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.angle += 0.02;
+
+        if (p.y > canvas.height + 10) p.y = -10;
+        if (p.y < -10) p.y = canvas.height + 10;
+        if (p.x > canvas.width + 10) p.x = -10;
+        if (p.x < -10) p.x = canvas.width + 10;
+      });
+
+      requestAnimationFrame(animateParticles);
+    }
+
+    /* ==========================================================================
+       5. 真声朗读引擎 (Web Speech API)
+       ========================================================================== */
+    // 获取最佳中文语音包
+    function getChineseVoice() {
+      if (!('speechSynthesis' in window)) return null;
+      const voices = window.speechSynthesis.getVoices();
+      return voices.find(v => v.lang.includes('zh-CN') && (v.name.includes('Xiaoxiao') || v.name.includes('Ting') || v.name.includes('Google')))
+        || voices.find(v => v.lang.includes('zh'))
+        || null;
+    }
+
+    // 单独朗读某个词语
+    function speakSingleWord(wordText) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(wordText);
+      utter.lang = 'zh-CN';
+      utter.rate = 0.85;
+      const zhVoice = getChineseVoice();
+      if (zhVoice) utter.voice = zhVoice;
+      window.speechSynthesis.speak(utter);
+    }
+
+    // 真声朗读整首古诗并同步高亮字词
+    function startReading(rate = 0.8) {
+      duckBgmVolume(); // 朗读开始：配乐自动调小声
+      stopReading();
+      state.isReading = true;
+
+      const readBtn = document.getElementById('readBtn');
+      readBtn.classList.add('reading-active');
+      readBtn.innerHTML = "<span>⏹</span> 停止朗读";
+
+      const poem = appData.poems[state.currentIndex];
+      const tokens = Array.from(document.querySelectorAll('.word-token'));
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const zhVoice = getChineseVoice();
+
+        // 构建分段语音队列：先读标题作者，再逐词/逐句高亮朗读
+        const headerUtter = new SpeechSynthesisUtterance(`${poem.title}，${poem.author.replace(/[〔〕]/g, '')}`);
+        headerUtter.lang = 'zh-CN';
+        headerUtter.rate = rate;
+        if (zhVoice) headerUtter.voice = zhVoice;
+
+        let tokenCursor = 0;
+
+        headerUtter.onend = () => {
+          if (!state.isReading) return;
+          speakNextToken();
+        };
+
+        function speakNextToken() {
+          if (!state.isReading || tokenCursor >= tokens.length) {
+            stopReading();
+            return;
+          }
+          tokens.forEach(t => t.classList.remove('highlight'));
+          const currentEl = tokens[tokenCursor];
+          currentEl.classList.add('highlight');
+
+          const textToRead = currentEl.getAttribute('data-word');
+          const noteToDisplay = currentEl.getAttribute('data-note');
+          showAnnotation(textToRead, noteToDisplay, false);
+
+          const u = new SpeechSynthesisUtterance(textToRead);
+          u.lang = 'zh-CN';
+          u.rate = rate;
+          u.pitch = 0.96;
+          if (zhVoice) u.voice = zhVoice;
+
+          u.onend = () => {
+            if (!state.isReading) return;
+            tokenCursor++;
+            // 每句结尾稍微停顿更有抑扬顿挫感
+            const pause = tokenCursor % 2 === 0 ? 420 : 140;
+            state.readTimer = setTimeout(speakNextToken, pause);
+          };
+
+          u.onerror = () => {
+            stopReading();
+          };
+
+          window.speechSynthesis.speak(u);
+        }
+
+        window.speechSynthesis.speak(headerUtter);
+      } else {
+        // 降级节奏高亮
+        let index = 0;
+        state.readTimer = setInterval(() => {
+          tokens.forEach(t => t.classList.remove('highlight'));
+          if (index < tokens.length) {
+            tokens[index].classList.add('highlight');
+            index++;
+          } else {
+            stopReading();
+          }
+        }, 900);
+      }
+    }
+
+    function speakSlowFollow() {
+      startReading(0.62);
+    }
+
+    function stopReading() {
+      restoreBgmVolume(); // 朗读停止/结束：配乐平滑恢复正常音量
+      state.isReading = false;
+      clearTimeout(state.readTimer);
+      clearInterval(state.readTimer);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      document.querySelectorAll('.word-token').forEach(t => t.classList.remove('highlight'));
+      const readBtn = document.getElementById('readBtn');
+      readBtn.classList.remove('reading-active');
+      readBtn.innerHTML = "<span>🔊</span> 真声朗读";
+    }
+
+    /* ==========================================================================
+       6. 画卷图源管理 (动态水墨 / 网页精选古风图 / 用户自定义上传或URL)
+       ========================================================================== */
+    function setVisualMode(mode) {
+      state.visualMode = mode;
+      const inkBtn = document.getElementById('modeInkBtn'); if (inkBtn) inkBtn.classList.toggle('active', mode === 'ink');
+      const photoBtn = document.getElementById('modePhotoBtn'); if (photoBtn) photoBtn.classList.toggle('active', mode === 'curated');
+      const customBtn = document.getElementById('modeCustomBtn'); if (customBtn) customBtn.classList.toggle('active', mode === 'custom');
+
+      const drawer = document.getElementById('customImgDrawer');
+      if (drawer) drawer.classList.toggle('show', mode === 'custom');
+
+      updateStageVisuals();
+    }
+
+    // 诗词与用户提供的 9 张精选国风高清画卷精准匹配
+    const POEM_BG_IMAGES = {
+      jiangxue: "images/1793760022.png",      // 《江雪》 - 寒江独钓
+      yueye: "images/1793759606.png",         // 《静夜思》 - 明月清辉
+      chunshan: "images/1793759606.png",      // 《鸟鸣涧》 - 月出惊山鸟
+      luchai: "images/1793760258.png",        // 《鹿柴》 - 空山返景
+      baidicheng: "images/1793759780.png",    // 《早发白帝城》 - 轻舟万重山
+      lushanpubu: "images/1793759696.png",    // 《望庐山瀑布》 - 飞流三千尺
+      yinhushang: "images/1793760176.png",    // 《饮湖上初晴后雨》 - 西湖水光山色
+      jueju: "images/1793760099.png",         // 《绝句》 - 翠柳黄鹂春意
+      zhuliguan: "images/1793759874.png",     // 《竹里馆》 - 幽篁弹琴长啸
+      fengqiaoyepo: "images/1793760910.png"   // 《枫桥夜泊》 - 姑苏夜半钟声到客船
+    };
+
+    function updateStageVisuals() {
+      const poem = appData.poems[state.currentIndex];
+      const customLayer = document.getElementById("customImageLayer");
+      const layerBg = document.getElementById("layerBg");
+      const layerMid = document.getElementById("layerMid");
+      const layerFore = document.getElementById("layerFore");
+
+      document.getElementById("watermarkText").innerText = poem.watermark;
+
+      // 背景直接替换为用户提供的本地高清国风大图！
+      const bgImg = POEM_BG_IMAGES[poem.id] || "images/1793760910.png";
+      customLayer.style.backgroundImage = `url("${bgImg}")`;
+      customLayer.style.opacity = "1";
+      customLayer.style.backgroundSize = "cover";
+      customLayer.style.backgroundPosition = "center";
+
+      // 隐藏生硬的灰色矢量层，保留最上层灵动的粒子动态效果
+      layerBg.style.opacity = "0";
+      layerMid.style.opacity = "0";
+      layerFore.style.opacity = "0.2";
+    }
+    function applyCustomUrlImage() {
+      const input = document.getElementById('customImgUrlInput');
+      const url = input.value.trim();
+      if (!url) return;
+      const poem = appData.poems[state.currentIndex];
+      state.customImages[poem.id] = url;
+      setVisualMode('custom');
+    }
+
+    function handleLocalImageUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const poem = appData.poems[state.currentIndex];
+        state.customImages[poem.id] = e.target.result;
+        setVisualMode('custom');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    /* ==========================================================================
+       7. 界面渲染与交互逻辑 (导航、诗文带拼音、赏析、闯关)
+       ========================================================================== */
+    function renderNav() {
+      const navContainer = document.getElementById('navTabs');
+      navContainer.innerHTML = appData.poems.map((poem, index) => `
+        <button class="tab-btn ${index === state.currentIndex ? 'active' : ''}" 
+                role="tab" 
+                aria-selected="${index === state.currentIndex}"
+                onclick="switchPoem(${index})">
+          ${poem.scene} · 《${poem.title}》
+        </button>
+      `).join('');
+    }
+
+    function renderScene() {
+      const poem = appData.poems[state.currentIndex];
+      document.getElementById('layerBg').innerHTML = poem.svgBg;
+      document.getElementById('layerMid').innerHTML = poem.svgMid;
+      document.getElementById('layerFore').innerHTML = poem.svgFore;
+      initParticles(poem.particleType);
+      updateStageVisuals();
+      spawnInkBlot(); // 切换古诗时背景自然晕开一滴新墨
+    }
+
+    // 将词语与对应拼音组装成 <ruby> 标签
+    function buildRubyHtml(text, pinyinArr) {
+      const chars = Array.from(text);
+      return chars.map((ch, idx) => {
+        const py = pinyinArr && pinyinArr[idx] ? pinyinArr[idx] : '';
+        return `<ruby>${ch}<rt>${py}</rt></ruby>`;
+      }).join('');
+    }
+
+    function renderPoem() {
+      const poem = appData.poems[state.currentIndex];
+      document.getElementById('poemTitle').innerText = poem.title;
+      document.getElementById('poemMeta').innerText = poem.author;
+      document.getElementById('translationBox').innerHTML = `<strong>【白话译文】</strong>${poem.translation}`;
+      document.getElementById('appreciationText').innerText = poem.appreciation;
+      document.getElementById('poetBioBox').innerText = poem.poetBio;
+
+      // 渲染核心意象标签
+      const tagsContainer = document.getElementById('imageryTags');
+      tagsContainer.innerHTML = poem.imagery.map(tag => `
+        <span class="imagery-tag">✦ 意象：${tag}</span>
+      `).join('');
+
+      const bodyContainer = document.getElementById('poemBody');
+      bodyContainer.className = `poem-body ${state.showPinyin ? '' : 'hide-pinyin'} ${state.isVertical ? 'vertical-mode' : ''}`;
+
+      bodyContainer.innerHTML = poem.lines.map((line, lineIdx) => {
+        const punc = lineIdx % 2 === 0 ? '，' : '。';
+        const tokensHtml = line.map(token => `
+          <span class="word-token" 
+                tabindex="0" 
+                role="button"
+                data-word="${token.text}"
+                data-note="${token.note}"
+                aria-label="${token.text}，点击查看释义并朗读"
+                onclick="showAnnotation('${token.text}', '${token.note}', true)"
+                onkeydown="if(event.key==='Enter'||event.key===' ') showAnnotation('${token.text}', '${token.note}', true)">
+            ${buildRubyHtml(token.text, token.pinyin)}
+          </span>
+        `).join('');
+        return `<div class="poem-line">${tokensHtml}<span class="punctuation">${punc}</span></div>`;
+      }).join('');
+
+      document.getElementById('annotationBox').innerHTML = `
+        <p style="color: var(--text-muted);">👆 点击左侧诗句中的任意词组，即可查看详细释义并听取读音。</p>
+      `;
+    }
+
+    function showAnnotation(text, note, autoSpeak = false) {
+      document.getElementById('annotationBox').innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <strong style="font-size: 1.3rem; color: var(--ink-accent);">【${text}】</strong>
+          <button class="speak-word-btn" onclick="speakSingleWord('${text}')">🔊 读音</button>
+        </div>
+        <p style="margin-top: 8px; font-size: 1.05rem;">${note}</p>
+      `;
+      if (autoSpeak && !state.isReading) {
+        speakSingleWord(text);
+      }
+    }
+
+    function switchInfoTab(tab) {
+      const isNote = tab === 'note';
+      document.getElementById('tabNoteBtn').classList.toggle('active', isNote);
+      document.getElementById('tabAppreciationBtn').classList.toggle('active', !isNote);
+      document.getElementById('infoPanelNote').style.display = isNote ? 'block' : 'none';
+      document.getElementById('infoPanelAppreciation').style.display = isNote ? 'none' : 'block';
+    }
+
+    function togglePinyin() {
+      state.showPinyin = !state.showPinyin;
+      document.getElementById('togglePinyinBtn').classList.toggle('active', state.showPinyin);
+      document.getElementById('poemBody').classList.toggle('hide-pinyin', !state.showPinyin);
+    }
+
+    function toggleVerticalMode() {
+      state.isVertical = !state.isVertical;
+      document.getElementById('toggleVerticalBtn').classList.toggle('active', state.isVertical);
+      document.getElementById('poemBody').classList.toggle('vertical-mode', state.isVertical);
+    }
+
+    function toggleDarkMode() {
+      const root = document.documentElement;
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        root.removeAttribute('data-theme');
+        document.getElementById('toggleThemeBtn').innerHTML = `<span>🌙</span> 夜读模式`;
+      } else {
+        root.setAttribute('data-theme', 'dark');
+        document.getElementById('toggleThemeBtn').innerHTML = `<span>☀️</span> 宣纸模式`;
+      }
+    }
+
+    /* ==========================================================================
+       8. 诗词闯关测试系统 (字词默写 + 上下句接龙)
+       ========================================================================== */
+    function setQuizMode(mode) {
+      state.quizMode = mode;
+      document.getElementById('quizModeWordBtn').classList.toggle('active', mode === 'word');
+      document.getElementById('quizModeLineBtn').classList.toggle('active', mode === 'line');
+      renderQuiz();
+    }
+
+    function renderQuiz() {
+      const poem = appData.poems[state.currentIndex];
+      document.getElementById('quizFeedback').innerText = "";
+
+      if (state.quizMode === 'word') {
+        const allTokens = poem.lines.flat();
+        const randomToken = allTokens[Math.floor(Math.random() * allTokens.length)];
+        state.quizAnswer = randomToken.text;
+
+        const otherTokens = appData.poems.flatMap(p => p.lines.flat())
+          .map(t => t.text)
+          .filter(t => t !== randomToken.text && t.length === randomToken.text.length);
+
+        const shuffledOthers = otherTokens.sort(() => Math.random() - 0.5);
+        const options = [randomToken.text, shuffledOthers[0] || "明月", shuffledOthers[1] || "清风"]
+          .sort(() => Math.random() - 0.5);
+
+        const fullText = poem.lines.map((l, idx) => l.map(t => t.text).join('') + (idx % 2 === 0 ? '，' : '。')).join('');
+        const questionText = fullText.replace(randomToken.text, "（ ？ ）");
+
+        document.getElementById('quizQuestion').innerText = questionText;
+        renderQuizOptions(options);
+      } else {
+        // 上下句接龙模式
+        const fullLines = poem.lines.map(l => l.map(t => t.text).join(''));
+        const pairIdx = Math.random() > 0.5 ? 0 : 2;
+        const promptLine = fullLines[pairIdx];
+        const answerLine = fullLines[pairIdx + 1];
+        state.quizAnswer = answerLine;
+
+        const otherLines = appData.poems.flatMap(p => p.lines.map(l => l.map(t => t.text).join('')))
+          .filter(l => l !== answerLine);
+        const shuffledLines = otherLines.sort(() => Math.random() - 0.5);
+        const options = [answerLine, shuffledLines[0], shuffledLines[1]].sort(() => Math.random() - 0.5);
+
+        document.getElementById('quizQuestion').innerText = `“${promptLine}” 的下一句是？`;
+        renderQuizOptions(options);
+      }
+    }
+
+    function renderQuizOptions(options) {
+      const optionsContainer = document.getElementById('quizOptions');
+      optionsContainer.innerHTML = options.map(opt => `
+        <button class="option-btn" onclick="checkAnswer('${opt}')">${opt}</button>
+      `).join('');
+    }
+
+    function checkAnswer(selected) {
+      const feedback = document.getElementById('quizFeedback');
+      if (selected === state.quizAnswer) {
+        state.quizStreak++;
+        state.quizScore += 10;
+        feedback.style.color = "var(--jade-green)";
+        feedback.innerText = "✓ 回答正确！胸藏文墨怀若谷，意境相融。";
+        spawnInkBlot();
+      } else {
+        state.quizStreak = 0;
+        feedback.style.color = "var(--ink-accent)";
+        feedback.innerText = `× 差一点点，正确答案是：“${state.quizAnswer}”`;
+      }
+      document.getElementById('quizScoreBadge').innerText = `连对: ${state.quizStreak} 题 | 总分: ${state.quizScore}`;
+    }
+
+    /* ==========================================================================
+       9. 事件监听与初始化
+       ========================================================================== */
+    function switchPoem(index) {
+      if (state.isReading) stopReading();
+      state.currentIndex = index;
+      renderNav();
+      renderScene();
+      renderPoem();
+      renderQuiz();
+    }
+
+    document.getElementById('readBtn').addEventListener('click', () => {
+      if (state.isReading) {
+        stopReading();
+      } else {
+        startReading(0.8);
+      }
+    });
+
+    // 回车应用自定义图片 URL
+    const customImgInput = document.getElementById('customImgUrlInput');
+    if (customImgInput) customImgInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyCustomUrlImage();
+    });
+
+    // 画卷多层鼠标视差交互
+    document.getElementById('scrollStage').addEventListener('mousemove', (e) => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const offsetX = (e.clientX - rect.left) / rect.width - 0.5;
+      const offsetY = (e.clientY - rect.top) / rect.height - 0.5;
+
+      document.getElementById('layerBg').style.transform = `translate(${offsetX * 14}px, ${offsetY * 8}px)`;
+      document.getElementById('layerMid').style.transform = `translate(${offsetX * 26}px, ${offsetY * 14}px)`;
+      document.getElementById('layerFore').style.transform = `translate(${offsetX * 42}px, ${offsetY * 20}px)`;
+      document.getElementById('customImageLayer').style.transform = `translate(${offsetX * 12}px, ${offsetY * 8}px)`;
+    });
+
+    // 鼠标在页面移动时，背景宣纸也会随光标自动泛起淡淡的水墨晕染
+    window.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - state.lastMouseInkTime > 1600) {
+        state.lastMouseInkTime = now;
+        spawnInkBlot(e.clientX, e.clientY, 85);
+      }
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initInkBg();
+      resizeCanvas();
+      renderNav();
+      renderScene();
+      renderPoem();
+      renderQuiz();
+      animateParticles();
+      animateInkBackground();
+
+      // 预加载语音包列表
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          getChineseVoice();
+        };
+      }
+    });
+  
+// ==================== 古风背景音乐自动播放与朗读智能闪避系统 ====================
+const bgmTracks = [
+  { name: '云水相望', src: 'audio/bgm_track1.mp3' },
+  { name: '松间风起', src: 'audio/bgm_track2.mp3' }
+];
+let currentBgmIndex = 0;
+let bgmAudio = new Audio();
+bgmAudio.src = bgmTracks[0].src;
+bgmAudio.loop = false;
+const NORMAL_BGM_VOL = 0.55;
+const DUCK_BGM_VOL = 0.12; // 朗读时配乐自动调小声
+bgmAudio.volume = NORMAL_BGM_VOL;
+
+let bgmFadeTimer = null;
+function setBgmVolumeSmooth(targetVol, duration = 380) {
+  if (!bgmAudio) return;
+  clearInterval(bgmFadeTimer);
+  const startVol = bgmAudio.volume;
+  const startTime = performance.now();
+  bgmFadeTimer = setInterval(() => {
+    const elapsed = performance.now() - startTime;
+    const p = Math.min(1, elapsed / duration);
+    bgmAudio.volume = Math.max(0, Math.min(1, startVol + (targetVol - startVol) * p));
+    if (p >= 1) {
+      clearInterval(bgmFadeTimer);
+      bgmAudio.volume = targetVol;
+    }
+  }, 25);
+}
+
+function duckBgmVolume() {
+  setBgmVolumeSmooth(DUCK_BGM_VOL, 350);
+}
+
+function restoreBgmVolume() {
+  setBgmVolumeSmooth(NORMAL_BGM_VOL, 450);
+}
+
+function updateBgmUI(isPlaying) {
+  const icon = document.getElementById('bgmIcon');
+  const title = document.getElementById('bgmTitle');
+  const btn = document.getElementById('bgmToggleBtn');
+  if (title) title.textContent = bgmTracks[currentBgmIndex].name;
+  if (btn) btn.textContent = isPlaying ? '❚❚ 暂停' : '▶ 播放';
+  if (icon) icon.style.opacity = isPlaying ? '1' : '0.5';
+}
+
+function playBgmTrack(index) {
+  currentBgmIndex = index % bgmTracks.length;
+  bgmAudio.src = bgmTracks[currentBgmIndex].src;
+  bgmAudio.play().then(() => {
+    updateBgmUI(true);
+  }).catch(err => {
+    console.log('Autoplay deferred:', err);
+    updateBgmUI(false);
+  });
+}
+
+bgmAudio.onended = () => {
+  playBgmTrack((currentBgmIndex + 1) % bgmTracks.length); // 自动连续循环播放
+};
+
+function tryAutoPlayBgm() {
+  bgmAudio.play().then(() => {
+    updateBgmUI(true);
+  }).catch(() => {
+    updateBgmUI(false);
+    const resumeOnInteraction = () => {
+      bgmAudio.play().then(() => updateBgmUI(true)).catch(e => console.log(e));
+      window.removeEventListener('click', resumeOnInteraction);
+      window.removeEventListener('keydown', resumeOnInteraction);
+      window.removeEventListener('touchstart', resumeOnInteraction);
+    };
+    window.addEventListener('click', resumeOnInteraction, { once: true });
+    window.addEventListener('keydown', resumeOnInteraction, { once: true });
+    window.addEventListener('touchstart', resumeOnInteraction, { once: true });
+  });
+}
+
+window.addEventListener('DOMContentLoaded', tryAutoPlayBgm);
+
+function toggleBgm() {
+  if (bgmAudio.paused) {
+    bgmAudio.play();
+    updateBgmUI(true);
+  } else {
+    bgmAudio.pause();
+    updateBgmUI(false);
+  }
+}
+
+function nextBgmTrack() {
+  playBgmTrack((currentBgmIndex + 1) % bgmTracks.length);
+}
+
+function backToHome() {
+  if (window.parent && window.parent.closeModal) {
+    window.parent.closeModal();
+  } else {
+    location.href = '../../index.html';
+  }
+}
+</script>
+</body>
+</html>
