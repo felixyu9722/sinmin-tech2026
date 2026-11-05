@@ -373,9 +373,14 @@ class AssemblyWorkbench {
         slots.forEach(slot => {
             const el = document.getElementById(slot.id);
             if (el) {
-                el.addEventListener('click', () => {
+                const triggerAction = (e) => {
+                    if (e && e.type === 'touchend') {
+                        e.preventDefault();
+                    }
                     slot.action();
-                });
+                };
+                el.addEventListener('click', triggerAction);
+                el.addEventListener('touchend', triggerAction, { passive: false });
             }
         });
 
@@ -545,6 +550,22 @@ class AssemblyWorkbench {
         }, 1000);
     }
 
+    // è‡ªåŠ¨å¹³æ»‘æ»šåŠ¨åˆ°ä¸»æœºæ¿è£…é…å°
+    scrollToMotherboard() {
+        const stage = document.querySelector('.workbench-stage-card');
+        if (!stage) return;
+        const rect = stage.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const targetY = rect.top + scrollTop - 65;
+        // æ‰‹æœºç«¯æˆ–å±å¹•æ»šåŠ¨åŽï¼Œå¹³æ»‘å®šä½åˆ°ä¸»æ¿
+        if (rect.top < 40 || rect.top > 260) {
+            window.scrollTo({
+                top: Math.max(0, targetY),
+                behavior: 'smooth'
+            });
+        }
+    }
+
     selectPart(partId) {
         if (window.soundEngine) window.soundEngine.playClick();
         this.selectedPart = partId;
@@ -554,6 +575,7 @@ class AssemblyWorkbench {
         });
 
         this.highlightActiveSlot();
+        this.scrollToMotherboard();
     }
 
     highlightActiveSlot() {
@@ -561,17 +583,42 @@ class AssemblyWorkbench {
             el.classList.remove('highlight-valid');
         });
 
-        if (!this.selectedPart) return;
+        const promptEl = document.getElementById('mb-target-prompt');
+        const promptTxt = document.getElementById('mb-prompt-text');
+
+        if (!this.selectedPart) {
+            if (promptEl) promptEl.style.display = 'none';
+            return;
+        }
 
         let targetSlotId = null;
-        if (this.selectedPart === 'cpu' && !this.state.cpu) targetSlotId = 'slot-cpu';
-        else if (this.selectedPart === 'paste' && this.state.cpu && !this.state.paste) targetSlotId = 'slot-paste';
-        else if (this.selectedPart === 'cooler' && this.state.paste && !this.state.cooler) targetSlotId = 'slot-cooler';
-        else if (this.selectedPart === 'ram1' && !this.state.ram1) targetSlotId = 'slot-ram2';
-        else if (this.selectedPart === 'ram2' && this.state.ram1 && !this.state.ram2) targetSlotId = 'slot-ram4';
-        else if (this.selectedPart === 'ssd' && !this.state.ssd) targetSlotId = 'slot-ssd';
-        else if (this.selectedPart === 'gpu' && !this.state.gpu) targetSlotId = 'slot-gpu';
-        else if (this.selectedPart === 'pwr' && !this.state.powerCables) targetSlotId = 'slot-pwr';
+        let hintText = '';
+
+        if (this.selectedPart === 'cpu' && !this.state.cpu) {
+            targetSlotId = 'slot-cpu';
+            hintText = '\ud83c\udfaf \u8bf7\u70b9\u51fb\u4e3b\u677f\u4e2d\u592e\u95ea\u70c1\u7684 LGA 1700 \u63d2\u69fd\u5b89\u88c5 CPU\uff01';
+        } else if (this.selectedPart === 'paste' && this.state.cpu && !this.state.paste) {
+            targetSlotId = 'slot-paste';
+            hintText = '\ud83c\udfaf \u8bf7\u70b9\u51fb CPU \u9876\u76d6\u4e2d\u592e\u95ea\u70c1\u533a\u57df\u5747\u5300\u6d82\u62b9\u5bfc\u70ed\u7845\u8102\uff01';
+        } else if (this.selectedPart === 'cooler' && this.state.paste && !this.state.cooler) {
+            targetSlotId = 'slot-cooler';
+            hintText = '\ud83c\udfaf \u8bf7\u70b9\u51fb\u95ea\u70c1\u533a\u57df\u5b89\u88c5\u516d\u70ed\u7ba1 CPU \u53cc\u5854\u6563\u70ed\u5668\uff01';
+        } else if (this.selectedPart === 'ram1' && !this.state.ram1) {
+            targetSlotId = 'slot-ram2';
+            hintText = '\ud83c\udfaf \u8bf7\u70b9\u51fb\u95ea\u70c1\u7684\u7b2c 2 \u5185\u5b58\u63d2\u69fd (DIMM A2\u2605) \u5b89\u88c5\u9996\u6839\u5185\u5b58\uff01';
+        } else if (this.selectedPart === 'ram2' && this.state.ram1 && !this.state.ram2) {
+            targetSlotId = 'slot-ram4';
+            hintText = '\ud83c\udfaf \u8bf7\u70b9\u51fb\u95ea\u70c1\u7684\u7b2c 4 \u5185\u5b58\u63d2\u69fd (DIMM B2\u2605) \u7ec4\u5efa\u53cc\u901a\u9053\uff01';
+        } else if (this.selectedPart === 'ssd' && !this.state.ssd) {
+            targetSlotId = 'slot-ssd';
+            hintText = '\ud83c\udfaf \u8bf7\u70b9\u51fb\u95ea\u70c1\u7684 PCIe 4.0 M.2 \u56fa\u6001\u786c\u76d8\u63d2\u69fd\uff01';
+        } else if (this.selectedPart === 'gpu' && !this.state.gpu) {
+            targetSlotId = 'slot-gpu';
+            hintText = '\ud83c\udfaf \u8bf7\u70b9\u51fb\u95ea\u70c1\u7684\u91d1\u5c5e\u52a0\u56fa PCIe 4.0 x16 \u663e\u5361\u63d2\u69fd\uff01';
+        } else if (this.selectedPart === 'pwr' && !this.state.powerCables) {
+            targetSlotId = 'slot-pwr';
+            hintText = '\ud83c\udfaf \u8bf7\u70b9\u51fb\u4e3b\u677f\u53f3\u4fa7\u95ea\u70c1\u7684 24-Pin \u4e3b\u4f9b\u7535\u63d2\u5ea7\u63a5\u901a\u7ebf\u7f06\uff01';
+        }
 
         if (targetSlotId) {
             const slotEl = document.getElementById(targetSlotId);
@@ -579,6 +626,12 @@ class AssemblyWorkbench {
                 slotEl.style.display = 'block';
                 slotEl.classList.add('highlight-valid');
             }
+            if (promptEl && promptTxt) {
+                promptTxt.textContent = hintText;
+                promptEl.style.display = 'flex';
+            }
+        } else {
+            if (promptEl) promptEl.style.display = 'none';
         }
     }
 
@@ -709,6 +762,7 @@ class AssemblyWorkbench {
     }
 
     updateUI() {
+        this.highlightActiveSlot();
         if (this.isDiagMode) return;
 
         const totalItems = 8;
@@ -850,6 +904,9 @@ class AssemblyWorkbench {
         };
         this.stepIndex = 0;
         this.selectedPart = null;
+
+        const promptEl = document.getElementById('mb-target-prompt');
+        if (promptEl) promptEl.style.display = 'none';
 
         const banner = document.getElementById('diag-alert-banner');
         if (banner) banner.style.display = 'none';

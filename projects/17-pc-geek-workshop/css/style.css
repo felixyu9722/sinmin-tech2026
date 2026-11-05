@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    独中高中资讯科技 - 电脑硬件互动教育游戏 Design System
    Cyber-Lab Dark Aesthetic & 2.5D Interactive Workbench
    ========================================================================== */
@@ -316,16 +316,92 @@ body {
     filter: drop-shadow(0 0 8px var(--cyan-glow));
 }
 
+/* å¼ºæ•ˆé«˜äº®è„‰å†²é—ªçƒä¸ŽæµåŠ¨å…‰è™šçº¿è¾¹æ¡†ï¼ˆä¸“ä¸ºç§»åŠ¨ç«¯ä¸Žæ¡Œé¢ç«¯è£…æœºæŒ‡å¼•æ‰“é€ ï¼‰ */
 .slot-target.highlight-valid {
-    stroke: var(--green-success);
-    stroke-width: 3;
-    fill: rgba(0, 245, 155, 0.22);
-    animation: slotPulse 1.2s infinite alternate;
+    display: block !important;
+    stroke: #ffea00 !important;
+    stroke-width: 4px !important;
+    stroke-linecap: round !important;
+    stroke-dasharray: 8 5 !important;
+    cursor: pointer !important;
+    pointer-events: all !important;
+    touch-action: manipulation !important;
+    animation: slotBlinkGlow 0.55s infinite alternate, slotDashFlow 1.2s linear infinite !important;
 }
 
-@keyframes slotPulse {
-    from { stroke-opacity: 0.5; filter: drop-shadow(0 0 4px var(--green-glow)); }
-    to { stroke-opacity: 1; filter: drop-shadow(0 0 14px var(--green-glow)); }
+@keyframes slotBlinkGlow {
+    0% {
+        stroke: #ffea00;
+        fill: rgba(255, 234, 0, 0.42);
+        filter: drop-shadow(0 0 10px #ffea00) drop-shadow(0 0 22px rgba(255, 234, 0, 0.9));
+    }
+    50% {
+        stroke: #00f5ff;
+        fill: rgba(0, 245, 255, 0.35);
+        filter: drop-shadow(0 0 16px #00f5ff) drop-shadow(0 0 30px rgba(0, 245, 255, 0.9));
+    }
+    100% {
+        stroke: #00f59b;
+        fill: rgba(0, 245, 155, 0.55);
+        filter: drop-shadow(0 0 14px #00f59b) drop-shadow(0 0 28px rgba(0, 245, 155, 0.95));
+    }
+}
+
+@keyframes slotDashFlow {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -26; }
+}
+
+/* ä¸»æ¿æ‚¬æµ®åŠ¨æ€ä½ç½®æç¤ºèƒ¶å›Š */
+.motherboard-target-prompt {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    background: rgba(15, 23, 42, 0.94);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 2px solid #ffea00;
+    box-shadow: 0 0 20px rgba(255, 234, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.7);
+    padding: 0.5rem 1.1rem;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: 92%;
+    animation: promptFloat 2s ease-in-out infinite alternate;
+}
+
+.motherboard-target-prompt .prompt-ping {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ffea00;
+    box-shadow: 0 0 10px #ffea00;
+    animation: pingDot 1s infinite;
+    flex-shrink: 0;
+}
+
+.motherboard-target-prompt .prompt-text {
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes pingDot {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 14px #00f5ff; }
+    100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+@keyframes promptFloat {
+    0% { transform: translate(-50%, 0); }
+    100% { transform: translate(-50%, -4px); }
 }
 
 .fan-spinning {
