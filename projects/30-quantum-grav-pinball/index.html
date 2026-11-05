@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -25,7 +25,92 @@ html, body {
   color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif;
 }
 
-canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
+canvas#c {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ç§»åŠ¨ç«¯ä¸Žå¹³æ¿ç«¯å…¨æ–¹ä½å“åº”å¼ */
+@media (max-width: 880px) {
+  header {
+    padding: 0 10px;
+    height: 52px;
+  }
+  .logo-text h1 {
+    font-size: 13px;
+  }
+  .logo-text p {
+    display: none;
+  }
+  .top-btns {
+    gap: 4px;
+  }
+  .btn {
+    padding: 5px 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .deck {
+    left: 10px;
+    right: 10px;
+    top: auto;
+    bottom: 12px;
+    width: auto;
+    max-height: 200px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    gap: 8px;
+    overflow-y: auto;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+  }
+  .mode-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .mode-btn {
+    padding: 5px 2px;
+    font-size: 10.5px;
+  }
+  .hint-bar {
+    bottom: 220px;
+    padding: 6px 14px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-text h1 span {
+    display: none;
+  }
+  .deck {
+    max-height: 175px;
+    padding: 8px 10px;
+  }
+  .score-box {
+    padding: 4px 2px;
+  }
+  .score-val {
+    font-size: 15px;
+  }
+  .score-lbl {
+    font-size: 9.5px;
+  }
+  .mode-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .hint-bar {
+    bottom: 195px;
+    max-width: 90%;
+    text-align: center;
+  }
+}
 
 /* 顶栏 */
 header {
@@ -376,13 +461,27 @@ function resize() {
   cv.width = W * dpr; cv.height = H * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const availW = W - 340, availH = H - 120;
-  let tw = Math.min(availW, 900);
-  let th = tw / 1.78;
-  if (th > availH) { th = availH; tw = th * 1.78; }
-  table.w = tw; table.h = th;
-  table.x = (W - 305 - tw) / 2 + 305;
-  table.y = (H - 58 - th) / 2 + 58;
+  if (W >= 880) {
+    // æ¡Œé¢å®½å± PC å¸ƒå±€ï¼šå·¦ä¾§æŽ§åˆ¶å°ï¼Œå³ä¾§çƒå°
+    const availW = W - 340, availH = H - 120;
+    let tw = Math.min(availW, 900);
+    let th = tw / 1.78;
+    if (th > availH) { th = availH; tw = th * 1.78; }
+    table.w = tw; table.h = th;
+    table.x = (W - 305 - tw) / 2 + 305;
+    table.y = (H - 58 - th) / 2 + 58;
+  } else {
+    // ç§»åŠ¨ç«¯ / å¹³æ¿ç«–å±è‡ªé€‚åº”ï¼šçƒå°å±…ä¸­ï¼Œä¸‹æ–¹ç•™å‡ºæŽ§åˆ¶å°ç©ºé—´
+    const bottomDeckHeight = W <= 480 ? 180 : 210;
+    const availW = W - 24;
+    const availH = H - 56 - bottomDeckHeight;
+    let tw = Math.min(availW, 640);
+    let th = tw / 1.78;
+    if (th > availH) { th = Math.max(140, availH); tw = th * 1.78; }
+    table.w = tw; table.h = th;
+    table.x = (W - tw) / 2;
+    table.y = 56 + Math.max(4, (availH - th) / 2);
+  }
 }
 window.addEventListener('resize', resize);
 resize();

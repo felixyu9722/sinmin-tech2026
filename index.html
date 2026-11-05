@@ -478,36 +478,47 @@ h1.hero-title {
   padding: 12px 20px;
   background: rgba(15, 23, 42, 0.95);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 52px;
+  gap: 12px;
 }
 
 .modal-title-wrap {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 .modal-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .modal-btns {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .modal-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 7px 14px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.15);
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .home-btn {
@@ -521,6 +532,40 @@ h1.hero-title {
   border-color: #f43f5e;
   color: #fff;
   box-shadow: 0 0 16px rgba(244, 63, 94, 0.45);
+}
+
+@media (max-width: 768px) {
+  .modal-header {
+    padding: 8px 12px;
+    min-height: 46px;
+    gap: 8px;
+  }
+  .modal-title-wrap {
+    gap: 6px;
+  }
+  .modal-title {
+    font-size: 13px;
+    max-width: 58vw;
+  }
+  .modal-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .modal-header {
+    padding: 6px 10px;
+  }
+  .modal-title {
+    font-size: 12px;
+    max-width: 50vw;
+  }
+  .modal-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
 }
 
 #game-frame {

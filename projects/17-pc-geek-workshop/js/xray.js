@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 独中高中资讯科技 - 电脑硬件互动教育游戏
  * 微观原理透视与存储层次速度天梯引擎 (X-Ray & Speed Ladder)
  * 1. 冯·诺依曼指令周期 (Fetch ➔ Decode ➔ Execute ➔ Store) 完整数据路线重构：
@@ -1164,7 +1164,7 @@ class XRayEngine {
                 </button>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+            <div class="cpu-gpu-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
                 
                 <!-- CPU 卡片 -->
                 <div style="background:#090d16; border:1px solid #334155; border-radius:var(--radius-lg); padding:1.25rem; display:flex; flex-direction:column; gap:1rem;">

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -429,6 +429,47 @@
     @media (min-width: 860px) {
       .content-grid {
         grid-template-columns: 1.35fr 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px 12px !important;
+      }
+      .scroll-stage {
+        height: 240px !important;
+      }
+      .nav-tabs {
+        padding: 4px 2px !important;
+        gap: 6px !important;
+      }
+      .tab-btn {
+        padding: 5px 9px !important;
+        font-size: 0.78rem !important;
+      }
+      .poem-card, .info-card, .quiz-card {
+        padding: 15px !important;
+      }
+      .stage-watermark {
+        font-size: 13px !important;
+        top: 10px !important;
+        left: 12px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .scroll-stage {
+        height: 195px !important;
+      }
+      .logo-title {
+        font-size: 1.15rem !important;
+      }
+      .logo-subtitle {
+        font-size: 0.7rem !important;
+      }
+      .header-controls .btn-sound, .header-controls .home-btn {
+        padding: 5px 8px !important;
+        font-size: 0.75rem !important;
       }
     }
 

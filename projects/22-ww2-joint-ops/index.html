@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -48,7 +48,41 @@ canvas#gameCanvas{display:block;width:100%;height:100%;position:fixed;inset:0}
 .keys-tag{display:inline-block;padding:1px 5px;background:rgba(255,255,255,0.1);border-radius:4px;font-family:monospace;font-size:11px;color:#fff;margin:0 2px}
 
 /* 移动端触屏按键 */
-#mobile-controls{display:none;position:fixed;inset:0;pointer-events:none;z-index:20}
+canvas#gameCanvas {
+  touch-action: none;
+}
+
+#mobile-controls {
+  display: none;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  #mobile-controls {
+    display: block;
+  }
+  #help {
+    display: none;
+  }
+  .hud-actions {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .hud-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  .stat-panel {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  .top-metrics {
+    display: none;
+  }
+}
 .stick-zone{position:absolute;left:20px;bottom:20px;width:120px;height:120px;background:rgba(255,255,255,0.06);border:2px dashed rgba(255,255,255,0.25);border-radius:50%;pointer-events:auto}
 .stick-knob{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;background:var(--acc);border-radius:50%;opacity:0.75}
 .action-btns{position:absolute;right:20px;bottom:20px;display:flex;flex-direction:column;gap:12px;pointer-events:auto}
@@ -712,6 +746,80 @@ nextWave();
 
 // 主循环
 const clock = new THREE.Clock();
+// ==================== ç§»åŠ¨ç«¯è§¦å±è™šæ‹Ÿæ‘‡æ†ä¸ŽåŠ¨ä½œæŽ§åˆ¶ ====================
+(function initTouchControls() {
+  const stick = document.getElementById('v-stick');
+  const knob = document.getElementById('v-knob');
+  const btnFire = document.getElementById('m-fire');
+  const btnBomb = document.getElementById('m-bomb');
+  const btnCall = document.getElementById('m-call');
+  if (!stick || !knob) return;
+
+  let touchId = null;
+  let center = { x: 0, y: 0 };
+  const maxR = 45;
+
+  stick.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    touchId = t.identifier;
+    const r = stick.getBoundingClientRect();
+    center = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }, { passive: false });
+
+  stick.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (t.identifier === touchId) {
+        let dx = t.clientX - center.x;
+        let dy = t.clientY - center.y;
+        const d = Math.hypot(dx, dy);
+        if (d > maxR) {
+          dx = (dx / d) * maxR;
+          dy = (dy / d) * maxR;
+        }
+        knob.style.transform = 	ranslate(px, px);
+
+        // æ˜ å°„ä¸ºè™šæ‹Ÿé”®ç›˜çŠ¶æ€
+        keys.KeyW = dy < -12;
+        keys.KeyS = dy > 12;
+        keys.KeyA = dx < -12;
+        keys.KeyD = dx > 12;
+        
+        // å…è®¸ç›´æŽ¥å¹³æ»‘è½¬å‘
+        if (player && d > 10) {
+          player.yaw = Math.atan2(dx, dy);
+        }
+      }
+    }
+  }, { passive: false });
+
+  const endStick = e => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === touchId) {
+        touchId = null;
+        knob.style.transform = 'translate(0px, 0px)';
+        keys.KeyW = keys.KeyS = keys.KeyA = keys.KeyD = false;
+      }
+    }
+  };
+  stick.addEventListener('touchend', endStick);
+  stick.addEventListener('touchcancel', endStick);
+
+  // åŠ¨ä½œæŒ‰é’®ç»‘å®š
+  if (btnFire) {
+    btnFire.addEventListener('touchstart', e => { e.preventDefault(); keys.Click = true; }, { passive: false });
+    btnFire.addEventListener('touchend', e => { e.preventDefault(); keys.Click = false; }, { passive: false });
+  }
+  if (btnBomb) {
+    btnBomb.addEventListener('touchstart', e => { e.preventDefault(); triggerNuke(); }, { passive: false });
+  }
+  if (btnCall) {
+    btnCall.addEventListener('touchstart', e => { e.preventDefault(); triggerAirStrike(); }, { passive: false });
+  }
+})();
+
 function loop() {
   requestAnimationFrame(loop);
   const dt = Math.min(clock.getDelta(), 0.05);
