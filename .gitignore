@@ -12,4 +12,8 @@ pro (1).html
 
 # Local logs
 *.log
+students/
+output/
+blue1.jpg
+开场intro/11月8日(1).mp4
 

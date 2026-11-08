@@ -691,6 +691,173 @@ h1.hero-title {
   pointer-events: none;
 }
 
+/* ==================== 开场 Intro 视频与音乐舞台 ==================== */
+.intro-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 100005;
+  background: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.intro-stage.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro-stage.hidden {
+  display: none !important;
+}
+
+.intro-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: translateZ(0);
+  will-change: opacity;
+}
+
+/* 视频四周电影感柔和暗角遮罩 */
+.intro-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 58%, rgba(0, 0, 0, 0.65) 100%);
+  pointer-events: none;
+}
+
+.intro-hud-bar {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 5;
+  width: max-content;
+  max-width: 92vw;
+}
+
+.intro-bgm-pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(10, 18, 32, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #e0f2fe;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+}
+
+.intro-bgm-pill:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.intro-skip-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #f8fafc;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.intro-skip-btn:hover {
+  background: rgba(56, 189, 248, 0.28);
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+/* 登录画面右上角背景音乐状态胶丸 */
+.boot-bgm-indicator {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  z-index: 10;
+  padding: 7px 15px;
+  border-radius: 999px;
+  background: rgba(10, 18, 34, 0.78);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #bae6fd;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.boot-bgm-indicator:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.boot-bgm-indicator .music-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.boot-bgm-indicator .music-bars i {
+  width: 2.5px;
+  background: #38bdf8;
+  border-radius: 2px;
+  animation: eqBounce 0.8s ease-in-out infinite alternate;
+}
+
+.boot-bgm-indicator .music-bars i:nth-child(1) { height: 5px; animation-delay: 0s; }
+.boot-bgm-indicator .music-bars i:nth-child(2) { height: 11px; animation-delay: 0.2s; }
+.boot-bgm-indicator .music-bars i:nth-child(3) { height: 7px; animation-delay: 0.4s; }
+
+.boot-bgm-indicator.paused .music-bars i {
+  animation: none;
+  height: 3px !important;
+  background: #64748b;
+}
+
+@keyframes eqBounce {
+  0% { height: 3px; }
+  100% { height: 12px; }
+}
+
+.boot-card.intro-waiting {
+  opacity: 0;
+  transform: translateY(18px) scale(0.96);
+  pointer-events: none;
+}
+
+.boot-card.intro-reveal {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .boot-logo-wrap {
   position: relative;
   width: 68px;
@@ -1215,11 +1382,40 @@ h1.hero-title {
 </head>
 <body>
 
+<!-- 开场 Intro 视频与音乐舞台 (启动网页首先播放) -->
+<div id="intro-stage" class="intro-stage">
+  <video
+    id="intro-video"
+    class="intro-video"
+    src="开场intro/intro_web.mp4?v=5"
+    autoplay
+    muted
+    playsinline
+    webkit-playsinline
+    preload="auto"
+  ></video>
+  <div class="intro-vignette"></div>
+  <div class="intro-hud-bar">
+    <button id="intro-skip-btn" class="intro-skip-btn" type="button" onclick="event.stopPropagation(); finishIntroVideoToLogin();">
+      <span>跳过开场 // SKIP</span>
+      <i class="fa-solid fa-forward-step"></i>
+    </button>
+  </div>
+</div>
+
+<!-- 开场与登录界面专属背景音乐 (一开始自动播放，点击登录时自动关闭) -->
+<audio id="intro-bgm" src="开场intro/数字墨韵.mp3" autoplay preload="auto" loop></audio>
+
 <!-- 开机画面与进入界面 (背景纯黑) -->
-<div id="boot-screen" class="boot-screen">
+<div id="boot-screen" class="boot-screen hidden">
   <canvas id="boot-canvas" class="boot-canvas"></canvas>
 
-  <div class="boot-card" id="boot-card">
+  <button id="boot-bgm-indicator" class="boot-bgm-indicator" type="button" onclick="event.stopPropagation(); toggleIntroBgmMute();" title="点击切换开场音乐静音/播放（点击进入展厅后将自动停止）">
+    <span class="music-bars"><i></i><i></i><i></i></span>
+    <span id="boot-bgm-text">开场曲：数字墨韵</span>
+  </button>
+
+  <div class="boot-card intro-waiting" id="boot-card">
     <div class="boot-logo-wrap">
       <div class="boot-logo-halo"></div>
       <img src="Sin Min Logo.png" alt="亚罗士打新民独中学校徽" class="boot-logo-img" id="boot-logo" onerror="this.style.display='none'">
@@ -2439,22 +2635,269 @@ class BootScreenFX {
 
 let apertureTransition = null;
 let bootFX = null;
+let introPhase = 'video'; // 'video' | 'login' | 'entered'
+let introSafetyTimer = null;
 
-function showBootScreen(force = false) {
+let bgmUnlockWatcher = null;
+let bgmManuallyPaused = false;
+let bgmPlayPending = false;
+
+function isAnyIntroAudioPlaying() {
+  const bgm = document.getElementById('intro-bgm');
+  return Boolean(bgm && !bgm.paused && !bgm.muted);
+}
+
+function syncBgmIndicatorUI() {
+  const bootInd = document.getElementById('boot-bgm-indicator');
+  const bootText = document.getElementById('boot-bgm-text');
+  const isPlaying = isAnyIntroAudioPlaying();
+  if (bootInd && bootText) {
+    bootInd.classList.toggle('paused', !isPlaying);
+    bootText.textContent = isPlaying
+      ? '开场曲：数字墨韵'
+      : '点击开启配乐：数字墨韵';
+  }
+}
+
+function unlockAndPlayIntroBgm() {
+  if (introPhase === 'entered' || bgmManuallyPaused) return;
+  const bgm = document.getElementById('intro-bgm');
+  if (!bgm) return;
+
+  bgm.defaultMuted = false;
+  bgm.muted = false;
+  bgm.volume = 0.85;
+
+  if (!bgm.paused) {
+    if (bgmUnlockWatcher) {
+      clearInterval(bgmUnlockWatcher);
+      bgmUnlockWatcher = null;
+    }
+    syncBgmIndicatorUI();
+    return;
+  }
+
+  if (bgmPlayPending) return;
+  bgmPlayPending = true;
+
+  try {
+    const p = bgm.play();
+    if (p !== undefined) {
+      p.then(() => {
+        bgmPlayPending = false;
+        bgm.muted = false;
+        if (bgmUnlockWatcher) {
+          clearInterval(bgmUnlockWatcher);
+          bgmUnlockWatcher = null;
+        }
+        syncBgmIndicatorUI();
+      }).catch(() => {
+        bgmPlayPending = false;
+        syncBgmIndicatorUI();
+      });
+    } else {
+      bgmPlayPending = false;
+      syncBgmIndicatorUI();
+    }
+  } catch (e) {
+    bgmPlayPending = false;
+  }
+
+  if (!bgmUnlockWatcher) {
+    bgmUnlockWatcher = setInterval(() => {
+      if (introPhase === 'entered' || bgmManuallyPaused || isAnyIntroAudioPlaying()) {
+        if (bgmUnlockWatcher) {
+          clearInterval(bgmUnlockWatcher);
+          bgmUnlockWatcher = null;
+        }
+        syncBgmIndicatorUI();
+        return;
+      }
+      unlockAndPlayIntroBgm();
+    }, 500);
+  }
+}
+
+function toggleIntroBgmMute() {
+  const bgm = document.getElementById('intro-bgm');
+  if (!bgm) return;
+  if (isAnyIntroAudioPlaying()) {
+    bgmManuallyPaused = true;
+    bgm.pause();
+    syncBgmIndicatorUI();
+  } else {
+    bgmManuallyPaused = false;
+    bgm.muted = false;
+    bgm.volume = 0.85;
+    bgm.play().then(syncBgmIndicatorUI).catch(syncBgmIndicatorUI);
+  }
+}
+
+function stopIntroBgm() {
+  bgmManuallyPaused = true;
+  if (bgmUnlockWatcher) {
+    clearInterval(bgmUnlockWatcher);
+    bgmUnlockWatcher = null;
+  }
+  const bgm = document.getElementById('intro-bgm');
+  if (bgm) {
+    try {
+      bgm.pause();
+      bgm.currentTime = 0;
+    } catch (e) {}
+  }
+  syncBgmIndicatorUI();
+}
+
+// 捕获用户首次有效交互（点击、触摸、按键、滚轮）立即启动配乐（绝不将 bgm.muted 设为 true）
+['pointerdown', 'mousedown', 'touchstart', 'touchend', 'keydown', 'wheel', 'click'].forEach(evt => {
+  window.addEventListener(evt, function onAutoPlayGesture() {
+    if (introPhase !== 'entered' && !bgmManuallyPaused && !isAnyIntroAudioPlaying()) {
+      const bgm = document.getElementById('intro-bgm');
+      if (bgm) {
+        bgm.defaultMuted = false;
+        bgm.muted = false;
+        bgm.volume = 0.85;
+        bgm.play().then(syncBgmIndicatorUI).catch(() => {});
+      }
+    }
+  }, { capture: true, passive: true });
+});
+
+let gridRendered = false;
+
+function finishIntroVideoToLogin() {
+  if (introPhase !== 'video') return;
+  introPhase = 'login';
+  if (introSafetyTimer) {
+    clearTimeout(introSafetyTimer);
+    introSafetyTimer = null;
+  }
+
+  const introStage = document.getElementById('intro-stage');
+  const introVid = document.getElementById('intro-video');
   const bootScreen = document.getElementById('boot-screen');
   const bootCard = document.getElementById('boot-card');
   const canvas = document.getElementById('boot-canvas');
 
-  if (apertureTransition) apertureTransition.destroy();
-  if (bootFX) bootFX.destroy();
+  if (introVid) {
+    try { introVid.pause(); } catch (e) {}
+  }
 
-  bootScreen.classList.remove('hidden');
-  bootCard.classList.remove('dismissing');
+  // 显示底层登录界面并启动全息粒子背景
+  if (bootScreen) {
+    bootScreen.classList.remove('hidden');
+  }
+  if (!bootFX && canvas) {
+    bootFX = new BootScreenFX(canvas);
+    bootFX.init();
+  }
+
+  // 在视频播放完毕后才异步渲染展厅 35 张卡片（完全避免开机第一秒卡顿）
+  if (!gridRendered) {
+    gridRendered = true;
+    setTimeout(() => {
+      renderGrid();
+    }, 350);
+  }
+
+  // 确保过渡到登录画面时音乐继续无缝播放
+  if (!bgmManuallyPaused) {
+    unlockAndPlayIntroBgm();
+  }
+
+  if (introStage) {
+    introStage.classList.add('fade-out');
+    setTimeout(() => {
+      if (introPhase !== 'video') {
+        introStage.classList.add('hidden');
+      }
+    }, 850);
+  }
+
+  if (bootCard) {
+    bootCard.classList.remove('intro-waiting');
+    bootCard.classList.add('intro-reveal');
+  }
+}
+
+function showBootScreen(force = false) {
+  const bootScreen = document.getElementById('boot-screen');
+  const bootCard = document.getElementById('boot-card');
+  const introStage = document.getElementById('intro-stage');
+  const introVid = document.getElementById('intro-video');
+  const bgm = document.getElementById('intro-bgm');
+
+  if (apertureTransition) apertureTransition.destroy();
+  if (bootFX) {
+    bootFX.destroy();
+    bootFX = null;
+  }
+  if (introSafetyTimer) clearTimeout(introSafetyTimer);
+
+  introPhase = 'video';
+  bgmManuallyPaused = false;
+
+  // 1. 视频播放期间隐藏登录界面（停止其中的无限旋转光环、扫描光束等高负载 CSS 动画）
+  bootScreen.classList.add('hidden');
+  bootCard.classList.remove('dismissing', 'intro-reveal');
+  bootCard.classList.add('intro-waiting');
   bootCard.style.display = 'block';
 
-  // 启动彩虹滑鼠与全息背景特效系统
-  bootFX = new BootScreenFX(canvas);
-  bootFX.init();
+  // 2. 启动开场音乐《数字墨韵.mp3》
+  if (bgm) {
+    try { bgm.currentTime = 0; } catch (e) {}
+    unlockAndPlayIntroBgm();
+  }
+
+  // 3. 显示并播放开场视频《intro_web.mp4》(纯视频流 + 零B帧极速解码，100% 保证绝不卡住)
+  if (introStage && introVid) {
+    introStage.classList.remove('hidden', 'fade-out');
+    introVid.muted = true;
+    introVid.defaultMuted = true;
+
+    introVid.onended = () => {
+      finishIntroVideoToLogin();
+    };
+    introVid.onerror = () => {
+      finishIntroVideoToLogin();
+    };
+    introVid.onplaying = () => {
+      if (introSafetyTimer) clearTimeout(introSafetyTimer);
+      introSafetyTimer = setTimeout(() => {
+        finishIntroVideoToLogin();
+      }, 6500);
+    };
+
+    let started = false;
+    const startPlay = () => {
+      if (started || introPhase !== 'video') return;
+      started = true;
+      const playPromise = introVid.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          introVid.muted = true;
+          introVid.play().catch(() => {
+            finishIntroVideoToLogin();
+          });
+        });
+      }
+    };
+
+    if (introVid.readyState >= 3) {
+      startPlay();
+    } else {
+      introVid.addEventListener('canplaythrough', startPlay, { once: true });
+      introVid.addEventListener('canplay', startPlay, { once: true });
+    }
+
+    // 网络加载安全兜底计时
+    introSafetyTimer = setTimeout(() => {
+      finishIntroVideoToLogin();
+    }, 10000);
+  } else {
+    finishIntroVideoToLogin();
+  }
 }
 
 function executeBootLogin() {
@@ -2462,19 +2905,34 @@ function executeBootLogin() {
   const bootCard = document.getElementById('boot-card');
   const canvas = document.getElementById('boot-canvas');
 
+  // 若还在开场视频阶段，先切入登录界面
+  if (introPhase === 'video') {
+    finishIntroVideoToLogin();
+    return;
+  }
+
   // 防止连击
   if (bootCard.classList.contains('dismissing')) return;
+
+  introPhase = 'entered';
+
+  // 0. 点击登录时立即关闭开场音乐《数字墨韵》
+  stopIntroBgm();
 
   // 1. 播放电影级科技空间接入音效
   playBootSound();
 
   // 2. 卡片收缩淡出
+  bootCard.classList.remove('intro-reveal');
   bootCard.classList.add('dismissing');
+  const bootInd = document.getElementById('boot-bgm-indicator');
+  if (bootInd) bootInd.style.opacity = '0';
 
   // 3. 停止鼠标彩虹渲染，启动四方形缺口打开转场动画
   setTimeout(() => {
     if (bootFX) bootFX.destroy();
     bootCard.style.display = 'none';
+    if (bootInd) bootInd.style.opacity = '';
 
     if (!apertureTransition) {
       apertureTransition = new SquareApertureTransition(canvas);
@@ -2487,13 +2945,18 @@ function executeBootLogin() {
   }, 220);
 }
 
-// 支持键盘任意键或回车直接进入
+// 支持键盘任意键或回车：开场视频阶段按任意键可跳过视频进入登录画面；登录画面阶段按任意键进入展厅并关闭音乐
 window.addEventListener('keydown', e => {
   const bootScreen = document.getElementById('boot-screen');
   if (bootScreen && !bootScreen.classList.contains('hidden')) {
     if (['Control', 'Shift', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
     e.preventDefault();
-    executeBootLogin();
+    if (introPhase === 'video') {
+      unlockAndPlayIntroBgm();
+      finishIntroVideoToLogin();
+    } else {
+      executeBootLogin();
+    }
   }
 });
 
@@ -2503,11 +2966,13 @@ window.addEventListener('resize', () => {
   if (apertureTransition && apertureTransition.running) apertureTransition.resize();
 });
 
-// 首次渲染
-renderGrid();
-
 // 初始化开机检查（支持会话刷新平滑，同时默认初次必现开机登录）
 window.addEventListener('DOMContentLoaded', () => {
+  const bgm = document.getElementById('intro-bgm');
+  if (bgm) {
+    bgm.addEventListener('play', syncBgmIndicatorUI);
+    bgm.addEventListener('pause', syncBgmIndicatorUI);
+  }
   showBootScreen();
 });
 </script>
