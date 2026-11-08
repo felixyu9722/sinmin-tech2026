@@ -718,9 +718,18 @@ h1.hero-title {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   display: block;
   transform: translateZ(0);
   will-change: opacity;
+}
+
+/* 手机端 9:16 竖屏：将开场视频水平焦点锁定在 38% 处，完整呈现亚罗士打电讯塔 (Alor Setar Tower) 与稻田插秧主景 */
+@media (max-aspect-ratio: 4/5), (max-width: 768px) {
+  .intro-video {
+    object-fit: cover;
+    object-position: 38% center;
+  }
 }
 
 /* 视频四周电影感柔和暗角遮罩 */
@@ -1382,12 +1391,12 @@ h1.hero-title {
 </head>
 <body>
 
-<!-- 开场 Intro 视频与音乐舞台 (启动网页首先播放) -->
+<!-- 开场 Intro 视频与音乐舞台 (启动网页首先播放 4 秒) -->
 <div id="intro-stage" class="intro-stage">
   <video
     id="intro-video"
     class="intro-video"
-    src="开场intro/intro_web.mp4?v=5"
+    src="开场intro/intro_web.mp4?v=7"
     autoplay
     muted
     playsinline
@@ -2749,17 +2758,11 @@ function stopIntroBgm() {
   syncBgmIndicatorUI();
 }
 
-// 捕获用户首次有效交互（点击、触摸、按键、滚轮）立即启动配乐（绝不将 bgm.muted 设为 true）
-['pointerdown', 'mousedown', 'touchstart', 'touchend', 'keydown', 'wheel', 'click'].forEach(evt => {
+// 全方位捕获任意交互瞬间启动配乐（点击、触摸、按键、滚轮、鼠标划过）
+['pointerdown', 'mousedown', 'touchstart', 'touchend', 'keydown', 'wheel', 'click', 'pointermove', 'mousemove'].forEach(evt => {
   window.addEventListener(evt, function onAutoPlayGesture() {
     if (introPhase !== 'entered' && !bgmManuallyPaused && !isAnyIntroAudioPlaying()) {
-      const bgm = document.getElementById('intro-bgm');
-      if (bgm) {
-        bgm.defaultMuted = false;
-        bgm.muted = false;
-        bgm.volume = 0.85;
-        bgm.play().then(syncBgmIndicatorUI).catch(() => {});
-      }
+      unlockAndPlayIntroBgm();
     }
   }, { capture: true, passive: true });
 });
@@ -2866,7 +2869,7 @@ function showBootScreen(force = false) {
       if (introSafetyTimer) clearTimeout(introSafetyTimer);
       introSafetyTimer = setTimeout(() => {
         finishIntroVideoToLogin();
-      }, 6500);
+      }, 4500);
     };
 
     let started = false;
@@ -2894,7 +2897,7 @@ function showBootScreen(force = false) {
     // 网络加载安全兜底计时
     introSafetyTimer = setTimeout(() => {
       finishIntroVideoToLogin();
-    }, 10000);
+    }, 8000);
   } else {
     finishIntroVideoToLogin();
   }
