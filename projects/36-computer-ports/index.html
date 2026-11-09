@@ -922,13 +922,7 @@
     }
 
     /* Current Port Visual Preview in Encyclopedia */
-    .detail-photo-card {
-      background: var(--bg-subtle);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px;
-      margin: 10px 0 12px;
-    }
+    .detail-photo-card { display: none !important; }
 
     .detail-photo-grid {
       display: grid;
@@ -995,30 +989,11 @@
       display: block;
     }
 
-    .anatomy-card {
-      background: var(--bg-subtle);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: zoom-in;
-    }
+    
 
-    .anatomy-card img {
-      width: 115px;
-      border-radius: 6px;
-      flex-shrink: 0;
-      background: #fff;
-      padding: 2px;
-    }
+    
 
-    .anatomy-info {
-      font-size: 11.8px;
-      line-height: 1.5;
-      color: var(--text-secondary);
-    }
+    
 
     /* ==================== Lightbox Modal for Full HD Image Inspection ==================== */
     .lightbox {
@@ -1555,11 +1530,13 @@
       body.mob-view-stage #panel-center {
         display: flex !important;
         flex: 1;
+        width: 100% !important;
       }
       body.mob-view-stage #panel-stage {
         display: flex !important;
         flex: 1;
-        min-height: calc(100vh - 126px);
+        width: 100% !important;
+        min-height: auto !important;
       }
       body.mob-view-stage #panel-catalog,
       body.mob-view-stage #panel-matrix,
@@ -1837,23 +1814,6 @@
           </div>
         </div>
 
-        <!-- Current Port Visual Showcase in Encyclopedia (Dynamic for every port) -->
-        <div class="detail-photo-card">
-          <div class="detail-photo-grid">
-            <div class="detail-photo-box" onclick="openLightbox(currentPort.macroImg, currentPort.name + ' - 3D 微距插口特写')">
-              <img id="detail-macro-img" src="" alt="Port Macro" />
-              <span class="detail-photo-tag" id="ui-detail-tag-macro">🔍 3D 插口特写</span>
-            </div>
-            <div class="detail-photo-box" onclick="openLightbox(currentPort.cardImg, currentPort.name + ' - 插座与线材插头对照')">
-              <img id="detail-card-img" src="" alt="Port & Cable" />
-              <span class="detail-photo-tag" id="ui-detail-tag-cable">🔌 插头与线材</span>
-            </div>
-          </div>
-          <div class="detail-photo-hint" id="ui-detail-photo-hint">
-            <i class="fa-solid fa-expand"></i> 提示：点击图片可放大查看高清细节
-          </div>
-        </div>
-
         <p class="detail-desc" id="detail-desc"></p>
 
         <!-- Student Life Analogy Card -->
@@ -1885,6 +1845,8 @@
           </div>
         </div>
 
+        
+
         <!-- Optional Network Banner from Image 2 if available -->
         <div id="net-banner-section" style="display:none;">
           <div style="font-size:11.5px; font-weight:800; color:var(--text-muted); margin-bottom:5px;" id="ui-net-banner-label">
@@ -1895,17 +1857,7 @@
           </div>
         </div>
 
-        <!-- Educational Reference: General Port Anatomy Structure (Using USB as sample) -->
-        <div class="anatomy-card" onclick="openLightbox('assets/panel-port-anatomy.jpg', '通用硬件结构图解：金属屏蔽外壳 (Outer Shell) + 金属触点针脚 (Pins) + 防呆插口形状 (以常见 USB 接口为例示意)')">
-          <img src="assets/panel-port-anatomy.jpg" alt="Anatomy of a Port" />
-          <div class="anatomy-info" id="ui-anatomy-text">
-            <strong style="color:var(--accent-bright);"><i class="fa-solid fa-microchip"></i> 硬件通用解剖原理：</strong><br/>
-            <span style="font-size:11px; color:var(--text-muted);">（所有电脑接口通用三大结构，图以标准 USB 剖面为例）：</span><br/>
-            1. <b>金属外壳 (Outer Shell)</b>：坚固保护与电磁屏蔽<br/>
-            2. <b>金属针脚 (Pins)</b>：传输微电信号与电力<br/>
-            3. <b>防呆内芯 (Keying)</b>：防止插反短路
-          </div>
-        </div>
+        
 
         <!-- Mobile Detail Action Buttons -->
         <div class="mobile-detail-nav">
@@ -2018,7 +1970,7 @@
         desktopNum: null,
         laptopNum: null,
         macroImg: "assets/macro-mini-dp.jpg",
-        cardImg: "assets/macro-mini-dp.jpg",
+        cardImg: "assets/card-mini-dp.jpg",
         netBanner: null,
         speed: "Up to 32.4 Gbps (DP 1.4)",
         zh: {
@@ -2073,7 +2025,7 @@
         color: "#3b82f6",
         desktopNum: 4,
         laptopNum: null,
-        macroImg: "assets/card-dvi.jpg",
+        macroImg: "assets/macro-dvi.jpg",
         cardImg: "assets/card-dvi.jpg",
         netBanner: null,
         speed: "Up to 7.92 Gbps (Dual-Link)",
@@ -2151,6 +2103,90 @@
         }
       },
       {
+        id: "micro-usb",
+        name: "USB Micro-B",
+        cat: "usb",
+        color: "#10b981",
+        desktopNum: null,
+        laptopNum: null,
+        macroImg: "assets/macro-micro-usb.jpg",
+        cardImg: "assets/card-micro-usb.jpg",
+        netBanner: null,
+        speed: "480 Mbps (USB 2.0)",
+        zh: {
+          sub: "Micro USB 梯形接口 · 经典安卓手机与移动电源接口",
+          signal: "5V 供电 + USB 2.0 数据传输",
+          shape: "微型扁梯形 (两端带倒角，底部双弹片插头)",
+          devices: "旧款安卓手机、Kindle、蓝牙耳机、移动电源",
+          desc: "USB Micro-B（俗称安卓老接口）曾是全球数十亿台移动设备的标准充电与传输口。它采用微型扁梯形设计，插头背面带有两个小弹簧倒钩，提供插拔固定力。",
+          analogy: "Type-C 普及前统治手机界的「老国王」！它的特点是扁平梯形、插头有两个扎人的小牙齿（弹簧扣）。因为不能盲插，以前大家睡前关灯摸黑插手机充电总得试两三次！"
+        },
+        en: {
+          sub: "Micro USB Type-B Mobile Connector",
+          signal: "5V Power + USB 2.0 Data",
+          shape: "Small asymmetric trapezoid with locking clips",
+          devices: "Legacy Android phones, Kindle, Power banks",
+          desc: "Micro-USB was the universal mobile charging and data standard before USB-C. It features a compact trapezoidal connector with dual bottom spring latches.",
+          analogy: "The 'former king' of mobile ports before USB-C! Notice the tiny spring teeth on the bottom and how it only plugs in one way."
+        }
+      },
+      {
+        id: "lightning",
+        name: "Lightning (闪电接口)",
+        cat: "usb",
+        color: "#10b981",
+        desktopNum: null,
+        laptopNum: null,
+        macroImg: "assets/macro-lightning.jpg",
+        cardImg: "assets/card-lightning.jpg",
+        netBanner: null,
+        speed: "480 Mbps (USB 2.0) / 12W~27W",
+        zh: {
+          sub: "苹果专属闪电接口 · 8 针双面对称金手指",
+          signal: "数字音频 + 高速数据 + 双面盲插充电",
+          shape: "极薄实心扁平插头 (双面外露 8 根镀金针脚)",
+          devices: "iPhone 5 ~ 14 系列、iPad、AirPods 充电盒",
+          desc: "Lightning 是苹果公司于 2012 年发布的独家移动设备接口，比老式 30-pin 缩小了 80%，首创双面对称盲插设计，内部集成动态针脚分配芯片。",
+          analogy: "在 Type-C 普及前，苹果 iPhone 最引以为傲的「闭眼盲插」小银片！插头表面能清晰看到 8 根金色条纹，双面都有，怎么插都插得进。"
+        },
+        en: {
+          sub: "Apple Proprietary Reversible Connector",
+          signal: "Digital Audio + Data + Fast Charging",
+          shape: "Thin solid plug with 8 exposed gold pins",
+          devices: "iPhone 5–14, iPad, AirPods Charging Case",
+          desc: "Introduced by Apple in 2012, Lightning replaced the bulky 30-pin connector with a slim, reversible 8-pin digital interface with dynamic pin assignment.",
+          analogy: "The famous Apple reversible plug before USB-C! Look for the 8 visible gold pin stripes on both sides of the compact blade."
+        }
+      },
+      {
+        id: "firewire",
+        name: "FireWire 800 (IEEE 1394)",
+        cat: "usb",
+        color: "#10b981",
+        desktopNum: null,
+        laptopNum: null,
+        macroImg: "assets/macro-firewire.jpg",
+        cardImg: "assets/card-firewire.jpg",
+        netBanner: null,
+        speed: "800 Mbps (IEEE 1394b)",
+        zh: {
+          sub: "火线高速接口 · 专业数码摄像机与专业音频接口",
+          signal: "等时同步高速数据流 (DMA 直连内存)",
+          shape: "长方形带单侧凹槽 (9 针 Beta 接口)",
+          devices: "专业 DV 摄像机、专业调音台、影视外置硬盘阵列",
+          desc: "FireWire（火线接口，IEEE 1394b）由苹果主导开发，以极低的 CPU 占用和点对点连续高速流媒体传输闻名，曾是电视台与好莱坞剪辑数字摄录机的黄金标准。",
+          analogy: "在 USB 2.0 时代秒杀全场的高速「影视直通车」！以前电视台记者拍完 DV 磁带，就是插这根火线把高清视频原盘无损拉进 Mac 电脑里剪辑。"
+        },
+        en: {
+          sub: "High-Speed Multimedia Bus (IEEE 1394b)",
+          signal: "Isochronous Real-Time Data Streaming",
+          shape: "Rectangular 9-pin socket with keyed groove",
+          devices: "Digital Camcorders, Pro Audio Interfaces, RAID",
+          desc: "FireWire 800 delivers 800 Mbps peer-to-peer data streaming with ultra-low CPU overhead, once standard across Mac computers and professional video production.",
+          analogy: "The legendary pro video streaming bus of the 2000s! Used by TV crews to ingest live digital video footage into editing suites."
+        }
+      },
+      {
         id: "thunderbolt",
         name: "Thunderbolt (雷电)",
         cat: "usb",
@@ -2158,7 +2194,7 @@
         desktopNum: 7,
         laptopNum: 4,
         macroImg: "assets/macro-thunderbolt.jpg",
-        cardImg: "assets/card-usb-c.jpg",
+        cardImg: "assets/card-thunderbolt.jpg",
         netBanner: null,
         speed: "40 Gbps (TB 3/4) / 80 Gbps (TB 5)",
         zh: {
@@ -2269,7 +2305,7 @@
         color: "#8b5cf6",
         desktopNum: null,
         laptopNum: null,
-        macroImg: "assets/net-poe.jpg",
+        macroImg: "assets/macro-ethernet.jpg",
         cardImg: "assets/net-poe.jpg",
         netBanner: "assets/net-poe.jpg",
         speed: "1,000 Mbps + 15W~90W 电力",
@@ -2297,7 +2333,7 @@
         color: "#8b5cf6",
         desktopNum: null,
         laptopNum: null,
-        macroImg: "assets/net-sfp.jpg",
+        macroImg: "assets/card-sfp.jpg",
         cardImg: "assets/net-sfp.jpg",
         netBanner: "assets/net-sfp.jpg",
         speed: "1 Gbps (SFP) / 10~100 Gbps (SFP+)",
@@ -2325,7 +2361,7 @@
         color: "#8b5cf6",
         desktopNum: null,
         laptopNum: null,
-        macroImg: "assets/net-console.jpg",
+        macroImg: "assets/macro-serial.jpg",
         cardImg: "assets/net-console.jpg",
         netBanner: "assets/net-console.jpg",
         speed: "9600 ~ 115200 bps (串口指令)",
@@ -2375,6 +2411,34 @@
         }
       },
       {
+        id: "optical",
+        name: "Optical Audio (TOSLINK)",
+        cat: "audio",
+        color: "#f59e0b",
+        desktopNum: null,
+        laptopNum: null,
+        macroImg: "assets/macro-audio.jpg",
+        cardImg: "assets/card-optical.jpg",
+        netBanner: null,
+        speed: "SPDIF 纯光信号 / 5.1~7.1 环绕声",
+        zh: {
+          sub: "方形光纤数字音频接口 · 零杂音家庭影院传输",
+          signal: "脉冲光信号 (S/PDIF 多声道数字环绕声)",
+          shape: "微型方形孔 (带弹簧自动防尘门，通电透出红光)",
+          devices: "高档主板声卡、家庭影院功放、回音壁音响、PS5",
+          desc: "TOSLINK（东芝光纤接口）通过塑料光纤以脉冲红光传输音频数据，彻底杜绝铜线常见的接地电流杂音（底噪），是追求纯净音质的高保真音响发烧友首选。",
+          analogy: "电脑背板上会「冒红光」的神奇方孔！它不用铜线传电，而是发射红色激光闪烁传递声音，即使旁边有高压电磁干扰，耳机里也是 0 杂音的纯净天籁。"
+        },
+        en: {
+          sub: "TOSLINK Optical Digital Audio Interface",
+          signal: "Pulsed Optical Light (S/PDIF Digital Surround)",
+          shape: "Square keyed jack with spring dust shutter & red LED",
+          devices: "Hi-Fi DACs, Soundbars, AV Receivers, Consoles",
+          desc: "TOSLINK carries digital audio as red light pulses over optical fiber, completely eliminating electrical ground loops and interference in home theaters.",
+          analogy: "The cool square port on the PC back panel that glows RED! It shoots light pulses instead of electricity, delivering completely hiss-free surround sound."
+        }
+      },
+      {
         id: "power",
         name: "Power Jack (电源接口)",
         cat: "audio",
@@ -2382,7 +2446,7 @@
         desktopNum: null,
         laptopNum: 1,
         macroImg: "assets/card-power.jpg",
-        cardImg: "assets/card-power.jpg",
+        cardImg: "assets/card-sec7-power.jpg",
         netBanner: null,
         speed: "DC 19V~20V / AC 100~240V",
         zh: {
@@ -2641,8 +2705,10 @@
       // Update Right Sidebar Encyclopedia
       document.getElementById("detail-name").textContent = p.name;
       document.getElementById("detail-sub").textContent = t.sub;
-      document.getElementById("detail-macro-img").src = p.macroImg;
-      document.getElementById("detail-card-img").src = p.cardImg;
+      const dMacro = document.getElementById("detail-macro-img");
+      if (dMacro) dMacro.src = p.macroImg;
+      const dCard = document.getElementById("detail-card-img");
+      if (dCard) dCard.src = p.cardImg;
       document.getElementById("detail-desc").textContent = t.desc;
       document.getElementById("detail-analogy").textContent = t.analogy;
       document.getElementById("spec-speed").textContent = p.speed;
@@ -2806,8 +2872,12 @@
 
       if (autoScroll) {
         const ws = document.querySelector(".workspace");
-        if (ws) ws.scrollTo({ top: 0, behavior: "smooth" });
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (ws) {
+          ws.scrollTop = 0;
+        }
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
       }
     }
 
