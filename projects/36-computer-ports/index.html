@@ -1399,12 +1399,15 @@
       }
 
       .stage-body {
-        padding: 4px 6px 10px;
+        padding: 4px 6px 14px;
+        overflow-y: visible;
+        height: auto;
       }
 
       .visual-showcase {
-        grid-template-columns: 1fr;
-        gap: 10px;
+        display: flex !important;
+        flex-direction: column;
+        gap: 12px;
       }
 
       .closeup-img-pair {
@@ -1474,63 +1477,63 @@
         grid-template-columns: 1fr;
       }
 
-      /* 手机视口清晰分屏逻辑：单视图沉浸式展现，零上下杂乱拖拽 */
-      body.mob-view-catalog .center-col,
-      body.mob-view-catalog aside.panel {
-        display: none !important;
-      }
-      body.mob-view-catalog section.panel:first-child {
+      /* 手机视口清晰分屏逻辑：单视图沉浸式展现，精准控制各面板显隐 */
+      body.mob-view-catalog #panel-catalog {
         display: flex !important;
         flex: 1;
         min-height: calc(100vh - 126px);
+      }
+      body.mob-view-catalog #panel-center,
+      body.mob-view-catalog #panel-detail {
+        display: none !important;
       }
       body.mob-view-catalog .port-list {
         max-height: none;
         flex: 1;
       }
 
-      body.mob-view-stage section.panel:first-child,
-      body.mob-view-stage aside.panel,
-      body.mob-view-stage .matrix-panel {
-        display: none !important;
-      }
-      body.mob-view-stage .center-col {
+      body.mob-view-stage #panel-center {
         display: flex !important;
         flex: 1;
       }
-      body.mob-view-stage .stage-panel {
+      body.mob-view-stage #panel-stage {
         display: flex !important;
         flex: 1;
         min-height: calc(100vh - 126px);
+      }
+      body.mob-view-stage #panel-catalog,
+      body.mob-view-stage #panel-matrix,
+      body.mob-view-stage #panel-detail {
+        display: none !important;
       }
 
-      body.mob-view-detail section.panel:first-child,
-      body.mob-view-detail .center-col {
-        display: none !important;
-      }
-      body.mob-view-detail aside.panel {
+      body.mob-view-detail #panel-detail {
         display: flex !important;
         flex: 1;
         min-height: calc(100vh - 126px);
+      }
+      body.mob-view-detail #panel-catalog,
+      body.mob-view-detail #panel-center {
+        display: none !important;
       }
       body.mob-view-detail .detail-scroll {
         max-height: none;
         flex: 1;
       }
 
-      body.mob-view-matrix section.panel:first-child,
-      body.mob-view-matrix .stage-panel,
-      body.mob-view-matrix aside.panel {
-        display: none !important;
-      }
-      body.mob-view-matrix .center-col {
+      body.mob-view-matrix #panel-center {
         display: flex !important;
         flex: 1;
       }
-      body.mob-view-matrix .matrix-panel {
+      body.mob-view-matrix #panel-matrix {
         display: flex !important;
         flex: 1;
         min-height: calc(100vh - 126px);
+      }
+      body.mob-view-matrix #panel-catalog,
+      body.mob-view-matrix #panel-stage,
+      body.mob-view-matrix #panel-detail {
+        display: none !important;
       }
     }
   </style>
@@ -1569,7 +1572,7 @@
   <main class="workspace">
 
     <!-- Left Column: Port Directory -->
-    <section class="panel">
+    <section class="panel" id="panel-catalog">
       <div class="panel-header">
         <div class="panel-title">
           <i class="fa-solid fa-microchip"></i>
@@ -1583,10 +1586,10 @@
     </section>
 
     <!-- Center Column: Interactive Visual Stage + Comparison Stream Table -->
-    <div class="center-col">
+    <div class="center-col" id="panel-center">
 
       <!-- Top Stage Panel -->
-      <section class="panel stage-panel">
+      <section class="panel stage-panel" id="panel-stage">
         <div class="stage-toolbar">
           <div class="seg-group">
             <button class="seg-btn active" id="mode-btn-visual" onclick="setStageMode('visual')">
@@ -1711,7 +1714,7 @@
       </section>
 
       <!-- Bottom Matrix Panel (Hardware Ports vs Software TCP/UDP Port Numbers) -->
-      <section class="panel matrix-panel">
+      <section class="panel matrix-panel" id="panel-matrix">
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
             <div class="panel-title">
@@ -1748,7 +1751,7 @@
     </div>
 
     <!-- Right Column: Port Encyclopedia & Student Analogy -->
-    <aside class="panel">
+    <aside class="panel" id="panel-detail">
       <div class="panel-header">
         <div class="panel-title">
           <i class="fa-solid fa-book-open"></i>
@@ -2733,6 +2736,15 @@
       const activeBtn = document.getElementById("mob-btn-" + view);
       if (activeBtn) activeBtn.classList.add("active");
 
+      if (view === "stage" && currentStageMode !== "visual" && currentStageMode !== "quiz") {
+        setStageMode("visual");
+      }
+
+      const stageVis = document.getElementById("stage-visual");
+      if (view === "stage" && currentStageMode === "visual" && stageVis) {
+        stageVis.style.display = window.innerWidth <= 1024 ? "flex" : "grid";
+      }
+
       updateMobileTexts();
 
       if (autoScroll) {
@@ -2800,7 +2812,10 @@
       document.getElementById("mode-btn-charts").classList.toggle("active", mode === "charts");
       document.getElementById("mode-btn-quiz").classList.toggle("active", mode === "quiz");
 
-      document.getElementById("stage-visual").style.display = mode === "visual" ? "grid" : "none";
+      const stageVis = document.getElementById("stage-visual");
+      if (stageVis) {
+        stageVis.style.display = mode === "visual" ? (window.innerWidth <= 1024 ? "flex" : "grid") : "none";
+      }
       document.getElementById("stage-charts").classList.toggle("active", mode === "charts");
       document.getElementById("stage-quiz").classList.toggle("active", mode === "quiz");
       document.getElementById("io-switch-group").style.display = mode === "visual" ? "inline-flex" : "none";
