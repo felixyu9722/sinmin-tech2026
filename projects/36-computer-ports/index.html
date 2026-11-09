@@ -921,6 +921,66 @@
       font-family: "JetBrains Mono", "Consolas", sans-serif;
     }
 
+    /* Current Port Visual Preview in Encyclopedia */
+    .detail-photo-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      margin: 10px 0 12px;
+    }
+
+    .detail-photo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .detail-photo-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      height: 125px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      cursor: zoom-in;
+      position: relative;
+      transition: transform 0.18s, border-color 0.18s;
+    }
+
+    .detail-photo-box:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-bright);
+    }
+
+    .detail-photo-box img {
+      max-width: 100%;
+      max-height: 88px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .detail-photo-tag {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .detail-photo-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
     .net-banner-box {
       background: var(--bg-subtle);
       border: 1px solid var(--border);
@@ -1782,6 +1842,23 @@
           </div>
         </div>
 
+        <!-- Current Port Visual Showcase in Encyclopedia (Dynamic for every port) -->
+        <div class="detail-photo-card">
+          <div class="detail-photo-grid">
+            <div class="detail-photo-box" onclick="openLightbox(currentPort.macroImg, currentPort.name + ' - 3D 微距插口特写')">
+              <img id="detail-macro-img" src="" alt="Port Macro" />
+              <span class="detail-photo-tag" id="ui-detail-tag-macro">🔍 3D 插口特写</span>
+            </div>
+            <div class="detail-photo-box" onclick="openLightbox(currentPort.cardImg, currentPort.name + ' - 插座与线材插头对照')">
+              <img id="detail-card-img" src="" alt="Port & Cable" />
+              <span class="detail-photo-tag" id="ui-detail-tag-cable">🔌 插头与线材</span>
+            </div>
+          </div>
+          <div class="detail-photo-hint" id="ui-detail-photo-hint">
+            <i class="fa-solid fa-expand"></i> 提示：点击图片可放大查看高清细节
+          </div>
+        </div>
+
         <p class="detail-desc" id="detail-desc"></p>
 
         <!-- Student Life Analogy Card -->
@@ -1823,14 +1900,15 @@
           </div>
         </div>
 
-        <!-- Anatomy of a Port Card (from Image 4) -->
-        <div class="anatomy-card" onclick="openLightbox('assets/panel-port-anatomy.jpg', '接口解剖结构：金属屏蔽外壳 (Outer Shell) + 金属触点针脚 (Pins) + 防呆插口形状')">
+        <!-- Educational Reference: General Port Anatomy Structure (Using USB as sample) -->
+        <div class="anatomy-card" onclick="openLightbox('assets/panel-port-anatomy.jpg', '通用硬件结构图解：金属屏蔽外壳 (Outer Shell) + 金属触点针脚 (Pins) + 防呆插口形状 (以常见 USB 接口为例示意)')">
           <img src="assets/panel-port-anatomy.jpg" alt="Anatomy of a Port" />
           <div class="anatomy-info" id="ui-anatomy-text">
-            <strong style="color:var(--text-main);">🔬 接口解剖三要素：</strong><br/>
-            1. <b>金属外壳 (Outer Shell)</b>：保护与防电磁干扰<br/>
-            2. <b>金属针脚 (Pins)</b>：传输数据与电力<br/>
-            3. <b>防呆内芯</b>：防止插反烧毁硬件
+            <strong style="color:var(--accent-bright);"><i class="fa-solid fa-microchip"></i> 硬件通用解剖原理：</strong><br/>
+            <span style="font-size:11px; color:var(--text-muted);">（所有电脑接口通用三大结构，图以标准 USB 剖面为例）：</span><br/>
+            1. <b>金属外壳 (Outer Shell)</b>：坚固保护与电磁屏蔽<br/>
+            2. <b>金属针脚 (Pins)</b>：传输微电信号与电力<br/>
+            3. <b>防呆内芯 (Keying)</b>：防止插反短路
           </div>
         </div>
 
@@ -2568,6 +2646,8 @@
       // Update Right Sidebar Encyclopedia
       document.getElementById("detail-name").textContent = p.name;
       document.getElementById("detail-sub").textContent = t.sub;
+      document.getElementById("detail-macro-img").src = p.macroImg;
+      document.getElementById("detail-card-img").src = p.cardImg;
       document.getElementById("detail-desc").textContent = t.desc;
       document.getElementById("detail-analogy").textContent = t.analogy;
       document.getElementById("spec-speed").textContent = p.speed;
@@ -2910,6 +2990,13 @@
       if (mobLblDetail) mobLblDetail.textContent = isZh ? "秒懂百科" : "Wiki";
       const mobLblMatrix = document.getElementById("mob-lbl-matrix");
       if (mobLblMatrix) mobLblMatrix.textContent = isZh ? "参数/端口" : "Matrix";
+
+      const dTagMacro = document.getElementById("ui-detail-tag-macro");
+      if (dTagMacro) dTagMacro.textContent = isZh ? "🔍 3D 插口特写" : "🔍 3D Close-up";
+      const dTagCable = document.getElementById("ui-detail-tag-cable");
+      if (dTagCable) dTagCable.textContent = isZh ? "🔌 插头与线材" : "🔌 Plug & Cable";
+      const dHint = document.getElementById("ui-detail-photo-hint");
+      if (dHint) dHint.innerHTML = isZh ? '<i class="fa-solid fa-expand"></i> 提示：点击图片可放大查看高清细节' : '<i class="fa-solid fa-expand"></i> Tip: Click image to zoom in full HD';
 
       renderCategoryTabs();
       renderPortList();
