@@ -1612,7 +1612,7 @@
 
     <div class="search-box">
       <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text" id="search-input" placeholder="搜索接口 (如 HDMI, USB-C, RJ45, 443)..." oninput="filterPorts()" />
+      <input type="text" id="search-input" placeholder="搜索接口 (如 HDMI, USB-C, RJ45, VGA)..." oninput="filterPorts()" />
       <span class="search-kbd">Ctrl K</span>
     </div>
 
@@ -1773,13 +1773,13 @@
         </div>
       </section>
 
-      <!-- Bottom Matrix Panel (Hardware Ports vs Software TCP/UDP Port Numbers) -->
+      <!-- Bottom Matrix Panel (Hardware Ports Parameter Stream) -->
       <section class="panel matrix-panel" id="panel-matrix">
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
             <div class="panel-title">
               <i class="fa-solid fa-table-list"></i>
-              <span id="ui-matrix-title">接口参数流</span>
+              <span id="ui-matrix-title">接口参数对比流</span>
             </div>
             <div class="legend-dots">
               <span class="legend-item"><i class="legend-dot" style="background:#3b82f6;"></i> <span id="leg-display">影音显示</span></span>
@@ -1790,13 +1790,8 @@
             </div>
           </div>
 
-          <div class="seg-group">
-            <button class="seg-btn active" id="tab-hw-ports" onclick="setMatrixTab('hw')">
-              🔌 <span id="ui-tab-hw">硬件物理接口 (18)</span>
-            </button>
-            <button class="seg-btn" id="tab-sw-ports" onclick="setMatrixTab('sw')">
-              🌐 <span id="ui-tab-sw">软件网络端口号 (TCP/UDP 11)</span>
-            </button>
+          <div style="font-size:11.5px; font-weight:700; color:var(--accent-bright); background:var(--accent-soft); padding:4px 10px; border-radius:999px; border:1px solid rgba(37,99,235,0.25);">
+            <i class="fa-solid fa-plug"></i> <span id="ui-tab-hw">18 种硬件接口参数速查</span>
           </div>
         </div>
 
@@ -1943,7 +1938,7 @@
     </button>
     <button class="mob-tab-btn" id="mob-btn-matrix" onclick="setMobileView('matrix')">
       <i class="fa-solid fa-table-list"></i>
-      <span id="mob-lbl-matrix">参数/端口</span>
+      <span id="mob-lbl-matrix">参数对比</span>
     </button>
   </nav>
 
@@ -2523,12 +2518,12 @@
         zhExp: "✅ 正确！带 ⚡ 闪电标志的 USB-C 就是 Thunderbolt（雷电接口），一线搞定 40Gbps 数据、100W 充电和双 4K 屏幕！"
       },
       {
-        zhQ: "6. 【区分硬件口与软件端口】当你打开浏览器访问加密网页 `https://` 时，电脑通过硬件 RJ45 网口发送的数据包，默认访问服务器的哪个软件端口号？",
-        enQ: "6. When browsing a secure `https://` website, which software TCP port number is used by default?",
-        options: ["Port 21 (FTP)", "Port 25 (SMTP)", "Port 80 (HTTP)", "Port 443 (HTTPS)"],
-        answer: 3,
-        portId: "rj45",
-        zhExp: "✅ 太棒了！硬件网口是插网线的物理洞口（RJ45），而软件端口号是程序门牌号：HTTP 是 80，加密 HTTPS 是 443！"
+        zhQ: "6. 【防呆物理设计】为什么现代手机和轻薄笔记本越来越推崇 USB Type-C 接口？它相比老式 USB-A 最人性化的物理优势是什么？",
+        enQ: "6. Why is USB Type-C preferred on modern devices? What is its most user-friendly physical advantage over USB-A?",
+        options: ["正反两面都能盲插，彻底告别插反", "线材必须用螺丝固定", "只能传输黑白信号", "必须配合天线使用"],
+        answer: 0,
+        portId: "usb-c",
+        zhExp: "✅ 正确！Type-C 采用对称椭圆设计，正反两面盲插都能通，彻底终结了以前老 USB-A 总是插反需要翻面的烦恼！"
       }
     ];
 
@@ -2699,45 +2694,27 @@
       const thead = document.getElementById("matrix-thead");
       const tbody = document.getElementById("matrix-tbody");
 
-      if (currentMatrixTab === "hw") {
-        thead.innerHTML = currentLang === "zh"
-          ? `<tr><th>序号</th><th>接口名称</th><th>最高速率</th><th>传输信号</th><th>背板编号</th><th>典型连接设备</th></tr>`
-          : `<tr><th>#</th><th>Port Name</th><th>Max Speed</th><th>Signal Type</th><th>Panel #</th><th>Common Devices</th></tr>`;
+      thead.innerHTML = currentLang === "zh"
+        ? `<tr><th>序号</th><th>接口名称</th><th>最高速率</th><th>传输信号</th><th>背板编号</th><th>典型连接设备</th></tr>`
+        : `<tr><th>#</th><th>Port Name</th><th>Max Speed</th><th>Signal Type</th><th>Panel #</th><th>Common Devices</th></tr>`;
 
-        tbody.innerHTML = PORTS.map((p, idx) => {
-          const t = currentLang === "zh" ? p.zh : p.en;
-          const active = p.id === currentPort.id ? "active" : "";
-          const badgeLoc = p.desktopNum
-            ? (currentLang === "zh" ? `台式机 #${p.desktopNum}` : `Desktop #${p.desktopNum}`)
-            : (p.laptopNum ? (currentLang === "zh" ? `笔记本 #${p.laptopNum}` : `Laptop #${p.laptopNum}`) : (currentLang === "zh" ? "扩展/专用" : "Specialized"));
-          return `
-            <tr class="${active}" onclick="selectPort('${p.id}')">
-              <td><span class="idx-badge" style="background:${p.color}">${idx + 1}</span></td>
-              <td class="mono-code">${p.name}</td>
-              <td class="mono-code" style="color:var(--accent-bright);">${p.speed}</td>
-              <td>${t.signal}</td>
-              <td><span style="font-size:11px; padding:2px 7px; border-radius:4px; background:var(--bg-subtle); border:1px solid var(--border);">${badgeLoc}</span></td>
-              <td>${t.devices}</td>
-            </tr>
-          `;
-        }).join("");
-      } else {
-        thead.innerHTML = currentLang === "zh"
-          ? `<tr><th>端口号</th><th>协议名称</th><th>传输层</th><th>中文全称</th><th>核心用途说明 (对应图4/图5底部第10栏)</th></tr>`
-          : `<tr><th>Port #</th><th>Protocol</th><th>Transport</th><th>Purpose</th><th>Description (From All-Ports Chart #10)</th></tr>`;
-
-        tbody.innerHTML = SW_PORTS.map(s => {
-          return `
-            <tr onclick="openLightbox('assets/chart-all-ports-dark.jpg', '第10栏：常见 TCP/UDP 网络端口号 (Common Network Port Numbers)')">
-              <td><span class="idx-badge" style="background:${s.color}; width:auto; padding:0 8px; border-radius:999px;">${s.port}</span></td>
-              <td class="mono-code">${s.proto}</td>
-              <td class="mono-code" style="color:var(--accent-bright);">${s.tcpudp}</td>
-              <td style="font-weight:700; color:var(--text-main);">${currentLang === "zh" ? s.zhName : s.enName}</td>
-              <td>${currentLang === "zh" ? s.zhDesc : s.enDesc}</td>
-            </tr>
-          `;
-        }).join("");
-      }
+      tbody.innerHTML = PORTS.map((p, idx) => {
+        const t = currentLang === "zh" ? p.zh : p.en;
+        const active = p.id === currentPort.id ? "active" : "";
+        const badgeLoc = p.desktopNum
+          ? (currentLang === "zh" ? `台式机 #${p.desktopNum}` : `Desktop #${p.desktopNum}`)
+          : (p.laptopNum ? (currentLang === "zh" ? `笔记本 #${p.laptopNum}` : `Laptop #${p.laptopNum}`) : (currentLang === "zh" ? "扩展/专用" : "Specialized"));
+        return `
+          <tr class="${active}" onclick="selectPort('${p.id}')">
+            <td><span class="idx-badge" style="background:${p.color}">${idx + 1}</span></td>
+            <td class="mono-code">${p.name}</td>
+            <td class="mono-code" style="color:var(--accent-bright);">${p.speed}</td>
+            <td>${t.signal}</td>
+            <td><span style="font-size:11px; padding:2px 7px; border-radius:4px; background:var(--bg-subtle); border:1px solid var(--border);">${badgeLoc}</span></td>
+            <td>${t.devices}</td>
+          </tr>
+        `;
+      }).join("");
     }
 
     // ==================== 6. Quiz Logic ====================
@@ -2952,8 +2929,8 @@
         ? "了解电脑硬件接口与网络端口如何连接世界"
         : "Interactive Guide to Computer Hardware Ports & Network Connectors";
       document.getElementById("search-input").placeholder = isZh
-        ? "搜索接口 (如 HDMI, USB-C, RJ45, 443)..."
-        : "Search ports (e.g. HDMI, USB-C, RJ45, 443)...";
+        ? "搜索接口 (如 HDMI, USB-C, RJ45, VGA)..."
+        : "Search ports (e.g. HDMI, USB-C, RJ45, VGA)...";
       document.getElementById("ui-left-title").textContent = isZh ? "电脑接口图鉴" : "Computer Ports";
       document.getElementById("ui-mode-visual").textContent = isZh ? "实拍定位" : "Port Visual";
       document.getElementById("ui-mode-charts").textContent = isZh ? "5张原图" : "5 HD Charts";
@@ -2965,14 +2942,13 @@
       document.getElementById("stage-pin-hint").textContent = isZh ? "💡 提示：点击任意图片可全屏高清检视细节" : "💡 Tip: Click any image to inspect in full HD";
       document.getElementById("ui-locator-title").textContent = isZh ? "📍 在真实电脑上的位置（点击下方编号快速切换接口）：" : "📍 Location on Real PC (Click numbers below to switch):";
       document.getElementById("ui-zoom-io").textContent = isZh ? "放大全图" : "Full Chart";
-      document.getElementById("ui-matrix-title").textContent = isZh ? "接口参数流" : "Port Stream";
+      document.getElementById("ui-matrix-title").textContent = isZh ? "接口参数对比流" : "Hardware Port Specs";
       document.getElementById("leg-display").textContent = isZh ? "影音显示" : "Display";
       document.getElementById("leg-usb").textContent = isZh ? "USB与存储" : "USB & Storage";
       document.getElementById("leg-net").textContent = isZh ? "网络通信" : "Network";
       document.getElementById("leg-audio").textContent = isZh ? "音频与电源" : "Audio & Power";
       document.getElementById("leg-legacy").textContent = isZh ? "经典老接口" : "Legacy";
-      document.getElementById("ui-tab-hw").textContent = isZh ? "硬件物理接口 (18)" : "Hardware Ports (18)";
-      document.getElementById("ui-tab-sw").textContent = isZh ? "软件网络端口号 (TCP/UDP 11)" : "Software TCP/UDP Ports (11)";
+      document.getElementById("ui-tab-hw").textContent = isZh ? "18 种硬件接口参数速查" : "18 Hardware Ports Full Matrix";
       document.getElementById("ui-right-title").textContent = isZh ? "接口概览" : "Port Overview";
       document.getElementById("ui-status-learning").textContent = isZh ? "学习中" : "Learning";
       document.getElementById("ui-analogy-header").textContent = isZh ? "中学生秒懂 · 生活比喻" : "Real-Life Analogy";
@@ -2989,7 +2965,7 @@
       const mobLblDetail = document.getElementById("mob-lbl-detail");
       if (mobLblDetail) mobLblDetail.textContent = isZh ? "秒懂百科" : "Wiki";
       const mobLblMatrix = document.getElementById("mob-lbl-matrix");
-      if (mobLblMatrix) mobLblMatrix.textContent = isZh ? "参数/端口" : "Matrix";
+      if (mobLblMatrix) mobLblMatrix.textContent = isZh ? "参数对比" : "Specs";
 
       const dTagMacro = document.getElementById("ui-detail-tag-macro");
       if (dTagMacro) dTagMacro.textContent = isZh ? "🔍 3D 插口特写" : "🔍 3D Close-up";
