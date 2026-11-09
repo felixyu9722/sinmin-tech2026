@@ -1670,13 +1670,21 @@
           <div class="visual-showcase" id="stage-visual">
             <div class="closeup-card" id="stage-closeup-card">
               <div class="closeup-img-pair">
-                <div class="closeup-img-box" onclick="openLightbox(currentPort.macroImg, currentPort.name + ' - 3D 微距插口特写')">
+                <div class="closeup-img-box" id="stage-macro-box">
                   <img id="stage-macro-img" src="" alt="Port Macro" />
                   <div class="closeup-tag" id="ui-tag-macro">🔍 3D 插口特写 (点击放大)</div>
+                  <div class="blank-hint" id="stage-macro-blank" style="display:none;">
+                    <i class="fa-regular fa-image"></i>
+                    <span id="ui-blank-macro-text">暂无独立 3D 特写（留白）</span>
+                  </div>
                 </div>
-                <div class="closeup-img-box" id="stage-card-box" onclick="openLightbox(currentPort.cardImg, currentPort.name + ' - 插座与线材插头对照')">
+                <div class="closeup-img-box" id="stage-card-box">
                   <img id="stage-card-img" src="" alt="Port & Cable" />
                   <div class="closeup-tag" id="ui-tag-cable">🔌 插座 + 线材插头对照</div>
+                  <div class="blank-hint" id="stage-card-blank" style="display:none;">
+                    <i class="fa-regular fa-image"></i>
+                    <span id="ui-blank-card-text">暂无实物线材对照（留白）</span>
+                  </div>
                 </div>
               </div>
               <div style="width:100%; display:flex; align-items:center; justify-content:space-between; font-size:11.5px; color:var(--text-muted); padding:0 4px;">
@@ -1970,7 +1978,7 @@
         desktopNum: null,
         laptopNum: null,
         macroImg: "assets/macro-mini-dp.jpg",
-        cardImg: "assets/card-mini-dp.jpg",
+        cardImg: null,
         netBanner: null,
         speed: "Up to 32.4 Gbps (DP 1.4)",
         zh: {
@@ -2102,62 +2110,7 @@
           analogy: "Ends the 'flip the USB three times' curse! Pill-shaped, reversible, and handles charging, files, and monitors all at once."
         }
       },
-      {
-        id: "micro-usb",
-        name: "USB Micro-B",
-        cat: "usb",
-        color: "#10b981",
-        desktopNum: null,
-        laptopNum: null,
-        macroImg: "assets/macro-micro-usb.jpg",
-        cardImg: "assets/card-micro-usb.jpg",
-        netBanner: null,
-        speed: "480 Mbps (USB 2.0)",
-        zh: {
-          sub: "Micro USB 梯形接口 · 经典安卓手机与移动电源接口",
-          signal: "5V 供电 + USB 2.0 数据传输",
-          shape: "微型扁梯形 (两端带倒角，底部双弹片插头)",
-          devices: "旧款安卓手机、Kindle、蓝牙耳机、移动电源",
-          desc: "USB Micro-B（俗称安卓老接口）曾是全球数十亿台移动设备的标准充电与传输口。它采用微型扁梯形设计，插头背面带有两个小弹簧倒钩，提供插拔固定力。",
-          analogy: "Type-C 普及前统治手机界的「老国王」！它的特点是扁平梯形、插头有两个扎人的小牙齿（弹簧扣）。因为不能盲插，以前大家睡前关灯摸黑插手机充电总得试两三次！"
-        },
-        en: {
-          sub: "Micro USB Type-B Mobile Connector",
-          signal: "5V Power + USB 2.0 Data",
-          shape: "Small asymmetric trapezoid with locking clips",
-          devices: "Legacy Android phones, Kindle, Power banks",
-          desc: "Micro-USB was the universal mobile charging and data standard before USB-C. It features a compact trapezoidal connector with dual bottom spring latches.",
-          analogy: "The 'former king' of mobile ports before USB-C! Notice the tiny spring teeth on the bottom and how it only plugs in one way."
-        }
-      },
-      {
-        id: "lightning",
-        name: "Lightning (闪电接口)",
-        cat: "usb",
-        color: "#10b981",
-        desktopNum: null,
-        laptopNum: null,
-        macroImg: "assets/macro-lightning.jpg",
-        cardImg: "assets/card-lightning.jpg",
-        netBanner: null,
-        speed: "480 Mbps (USB 2.0) / 12W~27W",
-        zh: {
-          sub: "苹果专属闪电接口 · 8 针双面对称金手指",
-          signal: "数字音频 + 高速数据 + 双面盲插充电",
-          shape: "极薄实心扁平插头 (双面外露 8 根镀金针脚)",
-          devices: "iPhone 5 ~ 14 系列、iPad、AirPods 充电盒",
-          desc: "Lightning 是苹果公司于 2012 年发布的独家移动设备接口，比老式 30-pin 缩小了 80%，首创双面对称盲插设计，内部集成动态针脚分配芯片。",
-          analogy: "在 Type-C 普及前，苹果 iPhone 最引以为傲的「闭眼盲插」小银片！插头表面能清晰看到 8 根金色条纹，双面都有，怎么插都插得进。"
-        },
-        en: {
-          sub: "Apple Proprietary Reversible Connector",
-          signal: "Digital Audio + Data + Fast Charging",
-          shape: "Thin solid plug with 8 exposed gold pins",
-          devices: "iPhone 5–14, iPad, AirPods Charging Case",
-          desc: "Introduced by Apple in 2012, Lightning replaced the bulky 30-pin connector with a slim, reversible 8-pin digital interface with dynamic pin assignment.",
-          analogy: "The famous Apple reversible plug before USB-C! Look for the 8 visible gold pin stripes on both sides of the compact blade."
-        }
-      },
+
       {
         id: "firewire",
         name: "FireWire 800 (IEEE 1394)",
@@ -2194,7 +2147,7 @@
         desktopNum: 7,
         laptopNum: 4,
         macroImg: "assets/macro-thunderbolt.jpg",
-        cardImg: "assets/card-thunderbolt.jpg",
+        cardImg: null,
         netBanner: null,
         speed: "40 Gbps (TB 3/4) / 80 Gbps (TB 5)",
         zh: {
@@ -2305,7 +2258,7 @@
         color: "#8b5cf6",
         desktopNum: null,
         laptopNum: null,
-        macroImg: "assets/macro-ethernet.jpg",
+        macroImg: null,
         cardImg: "assets/net-poe.jpg",
         netBanner: "assets/net-poe.jpg",
         speed: "1,000 Mbps + 15W~90W 电力",
@@ -2333,7 +2286,7 @@
         color: "#8b5cf6",
         desktopNum: null,
         laptopNum: null,
-        macroImg: "assets/card-sfp.jpg",
+        macroImg: null,
         cardImg: "assets/net-sfp.jpg",
         netBanner: "assets/net-sfp.jpg",
         speed: "1 Gbps (SFP) / 10~100 Gbps (SFP+)",
@@ -2354,34 +2307,7 @@
           analogy: "Copper Ethernet cables tire out after 100 meters, so SFP ports shoot laser beams through glass fiber across entire school campuses!"
         }
       },
-      {
-        id: "console",
-        name: "Console Port (配置口)",
-        cat: "network",
-        color: "#8b5cf6",
-        desktopNum: null,
-        laptopNum: null,
-        macroImg: "assets/macro-serial.jpg",
-        cardImg: "assets/net-console.jpg",
-        netBanner: "assets/net-console.jpg",
-        speed: "9600 ~ 115200 bps (串口指令)",
-        zh: {
-          sub: "网络设备控制台接口 · 网管调试与急救专用口",
-          signal: "RS-232 串行命令行配置指令",
-          shape: "天蓝色边框 RJ45 口 (需用 RJ45 转 USB/串口线)",
-          devices: "企业级路由器、核心交换机、硬件防火墙",
-          desc: "Console 口虽然长得像普通 RJ45 网口，但它**不能用来上网**！当新买来的机房交换机还没有设置 IP 地址、或者网络瘫痪进不去后台时，网络工程师就用 Console 线直连它敲命令急救。",
-          analogy: "路由器与交换机身上的「听诊器接口」！它长得像网口但不能上网，专门给网络管理员在设备断网瘫痪时，插上调试线敲代码做“心脏起搏急救”用的。"
-        },
-        en: {
-          sub: "Device Management & Troubleshooting Port",
-          signal: "Serial CLI Configuration Commands",
-          shape: "RJ45-style socket labeled CONSOLE (often cyan)",
-          devices: "Enterprise Routers, Switches, Firewalls",
-          desc: "The Console port is used by network engineers to configure and troubleshoot routers and switches directly via a console cable—even when the network is down.",
-          analogy: "The 'doctor's stethoscope port' on a router! It looks like an Ethernet jack, but it's strictly for typing rescue commands when the network is down."
-        }
-      },
+
       {
         id: "audio",
         name: "Audio Jacks (3.5mm)",
@@ -2410,34 +2336,7 @@
           analogy: "Color memory trick: Pink = lips (Microphone in), Green = go listen (Speakers/Headphones out), Blue = Line-In!"
         }
       },
-      {
-        id: "optical",
-        name: "Optical Audio (TOSLINK)",
-        cat: "audio",
-        color: "#f59e0b",
-        desktopNum: null,
-        laptopNum: null,
-        macroImg: "assets/macro-audio.jpg",
-        cardImg: "assets/card-optical.jpg",
-        netBanner: null,
-        speed: "SPDIF 纯光信号 / 5.1~7.1 环绕声",
-        zh: {
-          sub: "方形光纤数字音频接口 · 零杂音家庭影院传输",
-          signal: "脉冲光信号 (S/PDIF 多声道数字环绕声)",
-          shape: "微型方形孔 (带弹簧自动防尘门，通电透出红光)",
-          devices: "高档主板声卡、家庭影院功放、回音壁音响、PS5",
-          desc: "TOSLINK（东芝光纤接口）通过塑料光纤以脉冲红光传输音频数据，彻底杜绝铜线常见的接地电流杂音（底噪），是追求纯净音质的高保真音响发烧友首选。",
-          analogy: "电脑背板上会「冒红光」的神奇方孔！它不用铜线传电，而是发射红色激光闪烁传递声音，即使旁边有高压电磁干扰，耳机里也是 0 杂音的纯净天籁。"
-        },
-        en: {
-          sub: "TOSLINK Optical Digital Audio Interface",
-          signal: "Pulsed Optical Light (S/PDIF Digital Surround)",
-          shape: "Square keyed jack with spring dust shutter & red LED",
-          devices: "Hi-Fi DACs, Soundbars, AV Receivers, Consoles",
-          desc: "TOSLINK carries digital audio as red light pulses over optical fiber, completely eliminating electrical ground loops and interference in home theaters.",
-          analogy: "The cool square port on the PC back panel that glows RED! It shoots light pulses instead of electricity, delivering completely hiss-free surround sound."
-        }
-      },
+
       {
         id: "power",
         name: "Power Jack (电源接口)",
@@ -2446,7 +2345,7 @@
         desktopNum: null,
         laptopNum: 1,
         macroImg: "assets/card-power.jpg",
-        cardImg: "assets/card-sec7-power.jpg",
+        cardImg: null,
         netBanner: null,
         speed: "DC 19V~20V / AC 100~240V",
         zh: {
@@ -2689,9 +2588,45 @@
       const p = currentPort;
       const t = currentLang === "zh" ? p.zh : p.en;
 
-      // Update Center Stage Images
-      document.getElementById("stage-macro-img").src = p.macroImg;
-      document.getElementById("stage-card-img").src = p.cardImg;
+      // Update Center Stage Images (with clean blank support)
+      const macroBox = document.getElementById("stage-macro-box");
+      const macroImg = document.getElementById("stage-macro-img");
+      const macroTag = document.getElementById("ui-tag-macro");
+      const macroBlank = document.getElementById("stage-macro-blank");
+
+      if (p.macroImg) {
+        if (macroBox) macroBox.classList.remove("is-blank");
+        if (macroImg) { macroImg.style.display = "block"; macroImg.src = p.macroImg; }
+        if (macroTag) macroTag.style.display = "block";
+        if (macroBlank) macroBlank.style.display = "none";
+        if (macroBox) macroBox.onclick = () => openLightbox(p.macroImg, p.name + " - 3D 微距插口特写");
+      } else {
+        if (macroBox) macroBox.classList.add("is-blank");
+        if (macroImg) { macroImg.style.display = "none"; macroImg.src = ""; }
+        if (macroTag) macroTag.style.display = "none";
+        if (macroBlank) macroBlank.style.display = "flex";
+        if (macroBox) macroBox.onclick = null;
+      }
+
+      const cardBox = document.getElementById("stage-card-box");
+      const cardImg = document.getElementById("stage-card-img");
+      const cardTag = document.getElementById("ui-tag-cable");
+      const cardBlank = document.getElementById("stage-card-blank");
+
+      if (p.cardImg) {
+        if (cardBox) cardBox.classList.remove("is-blank");
+        if (cardImg) { cardImg.style.display = "block"; cardImg.src = p.cardImg; }
+        if (cardTag) cardTag.style.display = "block";
+        if (cardBlank) cardBlank.style.display = "none";
+        if (cardBox) cardBox.onclick = () => openLightbox(p.cardImg, p.name + " - 插座与线材插头对照");
+      } else {
+        if (cardBox) cardBox.classList.add("is-blank");
+        if (cardImg) { cardImg.style.display = "none"; cardImg.src = ""; }
+        if (cardTag) cardTag.style.display = "none";
+        if (cardBlank) cardBlank.style.display = "flex";
+        if (cardBox) cardBox.onclick = null;
+      }
+
       document.getElementById("stage-speed-badge").textContent = p.speed;
 
       // Auto-switch desktop/laptop view if port is only on laptop
