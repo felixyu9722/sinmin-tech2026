@@ -1453,7 +1453,7 @@ h1.hero-title {
       <span class="status-dot"></span>
       <span>SYSTEM READY</span>
       <span class="divider">|</span>
-      <span>34 项交互成果</span>
+      <span>35 项交互成果</span>
       <span class="divider">|</span>
       <span>按 <kbd>任意键</kbd> 或 <kbd>ENTER ↵</kbd> 直接进入</span>
     </div>
@@ -1477,8 +1477,8 @@ h1.hero-title {
 
 <div class="toolbar-wrap">
   <div class="filters">
-    <button class="filter-btn active" data-cat="all"><i class="fa-solid fa-border-all"></i> 全部作品 (34)</button>
-    <button class="filter-btn" data-cat="edu"><i class="fa-solid fa-graduation-cap"></i> 📚 教育性 (11)</button>
+    <button class="filter-btn active" data-cat="all"><i class="fa-solid fa-border-all"></i> 全部作品 (35)</button>
+    <button class="filter-btn" data-cat="edu"><i class="fa-solid fa-graduation-cap"></i> 📚 教育性 (12)</button>
     <button class="filter-btn" data-cat="visual"><i class="fa-solid fa-palette"></i> 🎨 视觉 (7)</button>
     <button class="filter-btn" data-cat="game"><i class="fa-solid fa-gamepad"></i> 🎮 游戏 (16)</button>
   </div>
@@ -1529,6 +1529,15 @@ const PROJECTS = [
   },
   {
     id: "02",
+    path: "projects/36-computer-ports/index.html",
+    title: "Port Explorer · 电脑接口与插槽互动图鉴",
+    cat: "edu",
+    catName: "教育性",
+    origin: "精选交互",
+    desc: "涵盖 HDMI、DisplayPort、USB-A/C、雷电、RJ45、PoE、SFP光纤、PS/2 等 16 大电脑硬件接口与 11 项常见网络端口号，支持台式机背板与笔记本侧面真实定位、5 张高清原图放大检视、中英双语切换与连线闯关小测验。"
+  },
+  {
+    id: "03",
     path: "projects/33-ancient-poetry/index.html",
     title: "古诗词沉浸式意境画卷 · 诗画雅集",
     cat: "edu",
@@ -1537,7 +1546,7 @@ const PROJECTS = [
     desc: "水墨国风与古典文学沉浸交融！十首经典古诗词伴随动态意境画卷与环境粒子，融入真声逐句吟诵、拼音注音、诗意解析与《云水相望》古筝雅乐。"
   },
   {
-    id: "03",
+    id: "04",
     path: "projects/34-chinese-genealogy/index.html",
     title: "祖宗十八代是这样排的 · 华夏宗族世系与亲属称谓科普",
     cat: "edu",
@@ -1546,7 +1555,7 @@ const PROJECTS = [
     desc: "上有九代祖先（鼻祖至父亲），下有九代子孙（儿子至耳孙），十九代长轴全景画卷与互动排辈！内置亲属称谓递进计算器与世系考点趣味测验，配以《明月照归途》国风雅乐。"
   },
   {
-    id: "04",
+    id: "05",
     path: "https://anthesis-flower-garden.vercel.app/",
     title: "繁花之境 · 交互式花语艺术花园",
     cat: "visual",
@@ -1555,7 +1564,7 @@ const PROJECTS = [
     desc: "沉浸式自然花卉交互艺术花园，细腻的植物生长算法、灵动光影变幻与治愈系自然视听共鸣。"
   },
   {
-    id: "05",
+    id: "06",
     path: "projects/35-protocol-explorer/index.html",
     title: "Protocol Explorer · 互联网协议互动探索器",
     cat: "edu",
@@ -1564,7 +1573,7 @@ const PROJECTS = [
     desc: "交互式互联网底层协议图解实验室！涵盖 TCP、UDP、IP、IPv6、Wi-Fi、HTTP、DNS、DHCP、HTTPS、TLS、WireGuard 等 19 项核心协议，支持中英双语切换、2.5D 网络拓扑与时序数据包逐帧拆解。"
   },
   {
-    id: "06",
+    id: "07",
     path: "https://felixyu9722.github.io/WebCrawlerMY/",
     title: "WebCrawlerMY · 大马网络数据全景观测平台",
     cat: "edu",
@@ -1573,7 +1582,7 @@ const PROJECTS = [
     desc: "面向马来西亚网络数据全景的数据爬取与分析可视化系统，探索网络数据流转、节点抓取机制与拓扑结构。"
   },
   {
-    id: "07",
+    id: "08",
     path: "projects/13-solar-system-3d/index.html",
     title: "八大行星 · 3D 太阳系科普探索 (HD Ultra)",
     cat: "edu",
@@ -1582,7 +1591,7 @@ const PROJECTS = [
     desc: "超高清 3D 真实太阳系公转与行星自转模拟，顶部导航栏一键平滑特写追踪锁定目标天体，并支持黑洞引力假想模拟。"
   },
   {
-    id: "08",
+    id: "09",
     path: "projects/14-orbit-gravity-simulator/index.html",
     title: "万有引力轨道模拟器 · 天体多玩法沙盘",
     cat: "edu",
@@ -1591,7 +1600,7 @@ const PROJECTS = [
     desc: "万有引力与开普勒轨道沙盘，支持不同大小恒星与黑洞切换，包含逃逸速度预测、完整八大行星、双星伴舞与三体混沌。"
   },
   {
-    id: "09",
+    id: "10",
     path: "projects/07-earth-moon-orbit-eclipse/index.html",
     title: "日地月引力轨迹与日食月食模拟",
     cat: "edu",
@@ -1600,7 +1609,7 @@ const PROJECTS = [
     desc: "三维高精度天体引力轨迹计算，精确呈现本影与半影光锥，一键快进预测日全食、日环食与月全食发生瞬间。"
   },
   {
-    id: "10",
+    id: "11",
     path: "projects/10-earth-simulator/index.html",
     title: "地球模拟器 2.0 · 算法星球",
     cat: "edu",
@@ -1609,7 +1618,7 @@ const PROJECTS = [
     desc: "纯算法着色程序化生成大陆板块、动态大气云层、城市璀璨夜景灯火与小行星切入碰撞地表实验。"
   },
   {
-    id: "11",
+    id: "12",
     path: "projects/04-classroom-lab/index.html",
     title: "课堂实验室 2.0 · 趣味物理",
     cat: "edu",
@@ -1618,7 +1627,7 @@ const PROJECTS = [
     desc: "涵盖跨星球单摆周期对比、大炮抛体运动轨迹发射、动态水循环交互图解与趣味物理知识问答测验。"
   },
   {
-    id: "12",
+    id: "13",
     path: "projects/32-silk-road-timeline/index.html",
     title: "丝绸之路 · 交互历史地理时间轴",
     cat: "edu",
@@ -1630,7 +1639,7 @@ const PROJECTS = [
 
   /* ================= 2. 视觉 (visual) ================= */
   {
-    id: "13",
+    id: "14",
     path: "projects/01-tech-blue-particle-core/index.html",
     title: "科技蓝粒子核心 2.0 · 反应堆",
     cat: "visual",
@@ -1639,7 +1648,7 @@ const PROJECTS = [
     desc: "高帧率量子引力连线场，包含四种色彩矩阵、旋转反应堆核心、可隐藏控制面板与超新星全屏坍缩引爆。"
   },
   {
-    id: "14",
+    id: "15",
     path: "projects/02-neon-village-weather/index.html",
     title: "赛博霓虹村落 · 动态天气 3D",
     cat: "visual",
@@ -1648,7 +1657,7 @@ const PROJECTS = [
     desc: "基于 Three.js 的宏大曲面线框赛博村落，包含晴雨雷雪天气模拟，一键即时放飞天灯、漫天流星雨与新年烟火。"
   },
   {
-    id: "15",
+    id: "16",
     path: "projects/03-particle-interaction/index.html",
     title: "粒子互动 2.0 · 声学粒子拼字",
     cat: "visual",
@@ -1657,7 +1666,7 @@ const PROJECTS = [
     desc: "输入任意文字或表情即时聚合成流光粒子拼字，融合暴雨倾泻、长按膨胀黑洞、万花筒等 15 种物理声学玩法。"
   },
   {
-    id: "16",
+    id: "17",
     path: "projects/05-aurora-lake/index.html",
     title: "极光湖 · Aurora Lake 2.0",
     cat: "visual",
@@ -1666,7 +1675,7 @@ const PROJECTS = [
     desc: "WebGL 高性能光线步进渲染的北极深邃极光倒影湖，结合空灵氛围音与太阳风暴（Solar Flare）一键紫金光带爆发。"
   },
   {
-    id: "17",
+    id: "18",
     path: "projects/08-data-tide/index.html",
     title: "数据潮汐 · 互动流体艺术",
     cat: "visual",
@@ -1675,7 +1684,7 @@ const PROJECTS = [
     desc: "十万级 WebGL 矢量流体粒子雕塑，跟随光标波澜起伏，集成特雷门琴声画互动与深水冲击波塑形。"
   },
   {
-    id: "18",
+    id: "19",
     path: "projects/25-cyber-gravity-lab/index.html",
     title: "赛博朋克：粒子重力球与星际防御实验室",
     cat: "visual",
@@ -1686,7 +1695,7 @@ const PROJECTS = [
 
   /* ================= 3. 游戏 (game) ================= */
   {
-    id: "19",
+    id: "20",
     path: "projects/30-quantum-grav-pinball/index.html",
     title: "量子黑洞台球 · 霓虹引力弹珠",
     cat: "game",
@@ -1695,7 +1704,7 @@ const PROJECTS = [
     desc: "经典台球物理撞击融合微型量子黑洞引力场，击球拖曳出弯曲预测弹道，体验引力弹珠奇幻变轨。"
   },
   {
-    id: "20",
+    id: "21",
     path: "projects/26-star-catcher/index.html",
     title: "星际接星星 · 太空漫游版",
     cat: "game",
@@ -1704,7 +1713,7 @@ const PROJECTS = [
     desc: "驾驶定制涂装太空飞船在繁星银河穿梭接星，连续捕获触发最高 5 倍连击，搭配磁铁与护盾极限生存。"
   },
   {
-    id: "21",
+    id: "22",
     path: "projects/22-ww2-joint-ops/index.html",
     title: "二战 3D 联合作战 · 钢铁风暴",
     cat: "game",
@@ -1713,7 +1722,7 @@ const PROJECTS = [
     desc: "宏大二战全兵种立体联合作战，陆海空十类战具随心驾驭，战术小地图雷达扫描，实时呼叫空军地毯轰炸与大招核爆。"
   },
   {
-    id: "22",
+    id: "23",
     path: "projects/23-neon-breakout/index.html",
     title: "霓虹弹球破砖 · 超级进化版",
     cat: "game",
@@ -1722,7 +1731,7 @@ const PROJECTS = [
     desc: "动感赛博朋克合成器弹球打砖，击碎砖块递增五声音阶，全新加入贯穿激光炮、爆炸核弹球与底线激光护盾。"
   },
   {
-    id: "23",
+    id: "24",
     path: "projects/24-neon-snake/index.html",
     title: "霓虹贪吃蛇 · 超级进化版",
     cat: "game",
@@ -1731,7 +1740,7 @@ const PROJECTS = [
     desc: "高能赛博光流贪吃蛇，连吃叠积最高 6 倍连击，按空格激活瞬态超载疾冲，收集磁力核心与全屏清障脉冲炸弹。"
   },
   {
-    id: "24",
+    id: "25",
     path: "projects/06-border-defense-protocol/index.html",
     title: "边界防线：零点协议",
     cat: "game",
@@ -1740,7 +1749,7 @@ const PROJECTS = [
     desc: "硬核俯视射击生存，管理弹药、电容储能与枪管过热，全新支持手机端虚拟双摇杆与全屏电磁脉冲 EMP 瘫痪包抄。"
   },
   {
-    id: "25",
+    id: "26",
     path: "projects/11-steel-naval-battle/index.html",
     title: "钢铁海战 3D · 怒海交锋",
     cat: "game",
@@ -1749,7 +1758,7 @@ const PROJECTS = [
     desc: "Three.js 打造的高拟真战舰海战，红蓝高反差阵营对决，真实海水波动与主炮轰鸣，全新按 V 键呼叫空军战机俯冲投弹。"
   },
   {
-    id: "26",
+    id: "27",
     path: "projects/12-interstellar-defense/index.html",
     title: "星际防线：升级射击",
     cat: "game",
@@ -1758,7 +1767,7 @@ const PROJECTS = [
     desc: "纯正街机风格太空战机割草射击，自动开火弹幕，18 种升级分支（追踪弹/闪电链/暴击流）与巨型 BOSS 决战。"
   },
   {
-    id: "27",
+    id: "28",
     path: "projects/18-star-collector/index.html",
     title: "星空收集者：终极版",
     cat: "game",
@@ -1767,7 +1776,7 @@ const PROJECTS = [
     desc: "操纵太空收集飞船在星际尘埃与能量水晶之间灵巧穿梭，避开引力异常点与宇宙辐射，挑战极限能量收集纪录。"
   },
   {
-    id: "28",
+    id: "29",
     path: "projects/21-titan-protocol/index.html",
     title: "TITAN PROTOCOL · 泰坦协议",
     cat: "game",
@@ -1776,7 +1785,7 @@ const PROJECTS = [
     desc: "未来重装机甲战术对抗系统，多雷达威胁感知、火力点射击退以及紧急过载泰坦协议防御程序。"
   },
   {
-    id: "29",
+    id: "30",
     path: "projects/19-neon-dodge/index.html",
     title: "霓虹几何躲避战 · 超级进化版",
     cat: "game",
@@ -1785,7 +1794,7 @@ const PROJECTS = [
     desc: "高能赛博霓虹几何弹幕挑战，极速躲避各方位几何冲击波，触发子弹时间与极限闪避加分。"
   },
   {
-    id: "30",
+    id: "31",
     path: "projects/20-scp-containment/index.html",
     title: "SCP: CONTAINMENT BREACH",
     cat: "game",
@@ -1794,7 +1803,7 @@ const PROJECTS = [
     desc: "SCP 基金会地下设施收容失效紧急应对，文字与视觉探索、躲避异常实体追捕并设法逃出生天。"
   },
   {
-    id: "31",
+    id: "32",
     path: "projects/15-type-strike-battle/index.html",
     title: "打字对战 TYPE//STRIKE",
     cat: "game",
@@ -1803,7 +1812,7 @@ const PROJECTS = [
     desc: "赛博霓虹风格极速打字格斗，炮塔锁定射击、破甲音效，满 20 连击激活 OVERDRIVE 狂暴全屏残影。"
   },
   {
-    id: "32",
+    id: "33",
     path: "projects/09-typing-magic-castle/index.html",
     title: "魔法城堡保卫战",
     cat: "game",
@@ -1812,7 +1821,7 @@ const PROJECTS = [
     desc: "奇幻城堡打字守卫战，单词化身空袭怪物，连击触发暴风雪与全屏陨石，迎战破云而出的远古巨龙。"
   },
   {
-    id: "33",
+    id: "34",
     path: "projects/16-neon-memory-match/index.html",
     title: "霓虹记忆配对 2.0",
     cat: "game",
@@ -1821,7 +1830,7 @@ const PROJECTS = [
     desc: "赛博全息 3D 翻转卡牌记忆配对，配对成功阶梯上升 Do-Mi-Sol 和弦音阶，融入倒计时压力与连击挑战。"
   },
   {
-    id: "34",
+    id: "35",
     path: "projects/31-prism-fall-arcade/index.html",
     title: "棱镜坠落 · 全息电音街机 (PRISM//FALL)",
     cat: "game",

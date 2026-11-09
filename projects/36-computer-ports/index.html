@@ -1,0 +1,2322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PORT EXPLORER · 电脑接口与插槽互动图鉴</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    :root {
+      --bg-page: #f4f7fb;
+      --bg-card: #ffffff;
+      --bg-subtle: #edf2f9;
+      --bg-hover: #e2ecf9;
+      --text-main: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --border: #dbe3ef;
+      --accent: #0b5cab;
+      --accent-bright: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.1);
+      --green: #10b981;
+      --amber: #f59e0b;
+      --purple: #8b5cf6;
+      --rose: #f43f5e;
+      --cyan: #06b6d4;
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+      --grid-dot: rgba(148, 163, 184, 0.25);
+    }
+
+    html.dark {
+      --bg-page: #070d19;
+      --bg-card: #0f172a;
+      --bg-subtle: #16213a;
+      --bg-hover: #1e293b;
+      --text-main: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --accent-bright: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.14);
+      --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.5);
+      --grid-dot: rgba(56, 189, 248, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg-page);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    /* ==================== Topbar (Protocol Explorer Style) ==================== */
+    .topbar {
+      height: 60px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0b5cab, #2563eb);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .brand-icon::before,
+    .brand-icon::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border: 1.5px solid var(--accent);
+      border-radius: 13px;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .brand-title {
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      font-style: italic;
+      line-height: 1.15;
+    }
+
+    .brand-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .search-box {
+      position: relative;
+      width: min(320px, 34vw);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 8px 54px 8px 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--accent-bright);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .search-kbd {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10.5px;
+      font-family: monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .seg-group {
+      display: inline-flex;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .seg-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.18s;
+    }
+
+    .seg-btn:hover {
+      color: var(--text-main);
+    }
+
+    .seg-btn.active {
+      background: var(--accent-bright);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+    }
+
+    html.dark .seg-btn.active {
+      color: #06101f;
+    }
+
+    /* ==================== Main 3-Column Workspace ==================== */
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 295px 1fr 355px;
+      gap: 12px;
+      padding: 12px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .panel-header {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ==================== Left Sidebar: Port Catalog ==================== */
+    .cat-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-subtle);
+      flex-shrink: 0;
+    }
+
+    .cat-tab {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 6px 6px;
+      border-radius: 7px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+
+    .cat-tab:hover {
+      background: var(--bg-hover);
+    }
+
+    .cat-tab.active {
+      background: var(--bg-card);
+      color: var(--accent-bright);
+      border-color: var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .cat-count {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-bright);
+      font-family: monospace;
+    }
+
+    .port-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+    }
+
+    .port-item {
+      width: 100%;
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 9px 11px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.16s ease;
+      margin-bottom: 3px;
+    }
+
+    .port-item:hover {
+      background: var(--bg-subtle);
+    }
+
+    .port-item.active {
+      background: var(--accent-soft);
+      border-color: rgba(37, 99, 235, 0.35);
+    }
+
+    .port-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      border: 2px solid var(--text-muted);
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .port-item.active .port-dot {
+      border-color: var(--amber);
+      background: var(--amber);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+    }
+
+    .port-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .port-item-name {
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .port-item-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .port-item-arrow {
+      color: var(--text-muted);
+      font-size: 11px;
+      opacity: 0.6;
+    }
+
+    /* ==================== Center Column: Interactive Stage & Matrix ==================== */
+    .center-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .stage-panel {
+      flex: 1.15;
+      min-height: 290px;
+      position: relative;
+      background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .stage-toolbar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .stage-toolbar > * {
+      pointer-events: auto;
+    }
+
+    .stage-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 54px 16px 14px;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    /* Mode 1: Port Visual Showcase + Real Motherboard Locator */
+    .visual-showcase {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 14px;
+      align-items: stretch;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .closeup-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .closeup-img-pair {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      flex: 1;
+      min-height: 150px;
+    }
+
+    .closeup-img-box {
+      flex: 1;
+      height: 165px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      position: relative;
+      cursor: zoom-in;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .closeup-img-box:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-bright);
+    }
+
+    .closeup-img-box img {
+      max-width: 100%;
+      max-height: 132px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .closeup-tag {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Interactive Motherboard & Laptop Panel */
+    .locator-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .locator-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .io-board-wrap {
+      position: relative;
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+    }
+
+    .io-board-wrap img {
+      width: 100%;
+      max-height: 168px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .io-hotspots-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+    }
+
+    .io-num-btn {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.18s;
+    }
+
+    .io-num-btn .num-circle {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #0b5cab;
+      color: #ffffff;
+      font-size: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
+    }
+
+    .io-num-btn:hover {
+      border-color: var(--accent-bright);
+      transform: translateY(-1px);
+    }
+
+    .io-num-btn.active {
+      background: var(--accent-bright);
+      color: #ffffff;
+      border-color: var(--accent-bright);
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.45);
+    }
+
+    html.dark .io-num-btn.active {
+      color: #06101f;
+    }
+
+    /* Mode 2: 5 Original HD Charts Gallery */
+    .charts-gallery {
+      display: none;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      height: 100%;
+      align-items: stretch;
+    }
+
+    .charts-gallery.active {
+      display: grid;
+    }
+
+    .chart-thumb-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: zoom-in;
+      transition: all 0.2s;
+    }
+
+    .chart-thumb-card:hover {
+      border-color: var(--accent-bright);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .chart-thumb-img-wrap {
+      flex: 1;
+      min-height: 130px;
+      background: var(--bg-card);
+      border-radius: 7px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chart-thumb-img-wrap img {
+      width: 100%;
+      height: 100%;
+      max-height: 165px;
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    .chart-thumb-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    /* Mode 3: Quick Student Match Quiz */
+    .quiz-stage {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      height: 100%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+
+    .quiz-stage.active {
+      display: flex;
+    }
+
+    .quiz-q-box {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.45;
+    }
+
+    .quiz-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .quiz-opt-btn {
+      padding: 10px 14px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .quiz-opt-btn:hover {
+      border-color: var(--accent-bright);
+      background: var(--bg-hover);
+    }
+
+    .quiz-opt-btn.correct {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: #10b981;
+      color: #059669;
+    }
+
+    html.dark .quiz-opt-btn.correct {
+      color: #34d399;
+    }
+
+    .quiz-opt-btn.wrong {
+      background: rgba(244, 63, 94, 0.15);
+      border-color: #f43f5e;
+      color: #e11d48;
+    }
+
+    html.dark .quiz-opt-btn.wrong {
+      color: #fb7185;
+    }
+
+    /* ==================== Bottom Matrix Table (Protocol Explorer Packet Stream Style) ==================== */
+    .matrix-panel {
+      flex: 0.95;
+      min-height: 210px;
+    }
+
+    .legend-dots {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+
+    .table-scroll {
+      flex: 1;
+      overflow: auto;
+    }
+
+    .port-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    .port-table th {
+      position: sticky;
+      top: 0;
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      font-weight: 700;
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      z-index: 2;
+    }
+
+    .port-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    .port-table tr {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .port-table tbody tr:hover {
+      background: var(--bg-subtle);
+    }
+
+    .port-table tbody tr.active {
+      background: var(--accent-soft);
+      font-weight: 600;
+    }
+
+    .idx-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
+    }
+
+    .mono-code {
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* ==================== Right Sidebar: Port Overview & Student Analogy ==================== */
+    .detail-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .detail-hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .detail-name {
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.15;
+    }
+
+    .detail-fullname {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.14);
+      color: #059669;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    html.dark .status-pill {
+      color: #34d399;
+    }
+
+    .status-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .detail-desc {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+    }
+
+    .analogy-card {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(139, 92, 246, 0.08));
+      border: 1px solid rgba(37, 99, 235, 0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .analogy-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent-bright);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .analogy-text {
+      font-size: 12.8px;
+      line-height: 1.6;
+      color: var(--text-main);
+    }
+
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .spec-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+    }
+
+    .spec-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .spec-val {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: var(--text-main);
+      font-family: "JetBrains Mono", "Consolas", sans-serif;
+    }
+
+    .net-banner-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      cursor: zoom-in;
+    }
+
+    .net-banner-box img {
+      width: 100%;
+      border-radius: 6px;
+      display: block;
+    }
+
+    .anatomy-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: zoom-in;
+    }
+
+    .anatomy-card img {
+      width: 115px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      background: #fff;
+      padding: 2px;
+    }
+
+    .anatomy-info {
+      font-size: 11.8px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    /* ==================== Lightbox Modal for Full HD Image Inspection ==================== */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 10, 22, 0.86);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox-inner {
+      max-width: 94vw;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .lightbox-inner img {
+      max-width: 92vw;
+      max-height: 82vh;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+      background: #ffffff;
+    }
+
+    .lightbox-caption {
+      color: #f8fafc;
+      font-size: 14px;
+      font-weight: 700;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .lightbox-close {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(15, 23, 42, 0.8);
+      color: #ffffff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==================== Responsive (Mobile & Tablet) ==================== */
+    @media (max-width: 1120px) {
+      body {
+        height: auto;
+        overflow-y: auto;
+      }
+      .workspace {
+        grid-template-columns: 1fr;
+        overflow: visible;
+        height: auto;
+      }
+      .port-list {
+        max-height: 250px;
+      }
+      .visual-showcase {
+        grid-template-columns: 1fr;
+      }
+      .charts-gallery {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .search-box {
+        width: 190px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 10px 12px;
+      }
+      .search-box {
+        order: 3;
+        width: 100%;
+      }
+      .charts-gallery {
+        grid-template-columns: 1fr;
+      }
+      .quiz-options {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar (Protocol Explorer Aesthetic) -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon"><i class="fa-solid fa-plug"></i></div>
+      <div>
+        <div class="brand-title">PORT EXPLORER</div>
+        <div class="brand-sub" id="ui-brand-sub">了解电脑硬件接口与网络端口如何连接世界</div>
+      </div>
+    </div>
+
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="search-input" placeholder="搜索接口 (如 HDMI, USB-C, RJ45, 443)..." oninput="filterPorts()" />
+      <span class="search-kbd">Ctrl K</span>
+    </div>
+
+    <div class="top-controls">
+      <div class="seg-group" title="切换中英文 / Switch Language">
+        <button class="seg-btn active" id="lang-zh" onclick="setLang('zh')">🌐 ZH</button>
+        <button class="seg-btn" id="lang-en" onclick="setLang('en')">EN</button>
+      </div>
+      <div class="seg-group" title="切换明暗主题 / Toggle Theme">
+        <button class="seg-btn active" id="theme-light" onclick="setTheme('light')"><i class="fa-solid fa-sun"></i></button>
+        <button class="seg-btn" id="theme-dark" onclick="setTheme('dark')"><i class="fa-solid fa-moon"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3-Column Main Workspace -->
+  <main class="workspace">
+
+    <!-- Left Column: Port Directory -->
+    <section class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="fa-solid fa-microchip"></i>
+          <span id="ui-left-title">电脑接口图鉴</span>
+        </div>
+        <span style="font-size:11.5px; color:var(--text-muted); font-family:monospace;" id="ui-total-badge">18 PORTS</span>
+      </div>
+
+      <div class="cat-tabs" id="cat-tabs"></div>
+      <div class="port-list" id="port-list"></div>
+    </section>
+
+    <!-- Center Column: Interactive Visual Stage + Comparison Stream Table -->
+    <div class="center-col">
+
+      <!-- Top Stage Panel -->
+      <section class="panel stage-panel">
+        <div class="stage-toolbar">
+          <div class="seg-group">
+            <button class="seg-btn active" id="mode-btn-visual" onclick="setStageMode('visual')">
+              <i class="fa-solid fa-eye"></i> <span id="ui-mode-visual">接口实拍与主机定位</span>
+            </button>
+            <button class="seg-btn" id="mode-btn-charts" onclick="setStageMode('charts')">
+              <i class="fa-solid fa-images"></i> <span id="ui-mode-charts">5张原图高清总览</span>
+            </button>
+            <button class="seg-btn" id="mode-btn-quiz" onclick="setStageMode('quiz')">
+              <i class="fa-solid fa-gamepad"></i> <span id="ui-mode-quiz">连线闯关小测验</span>
+            </button>
+          </div>
+
+          <div class="seg-group" id="io-switch-group">
+            <button class="seg-btn active" id="io-btn-desktop" onclick="setIoView('desktop')">
+              <i class="fa-solid fa-desktop"></i> <span id="ui-io-desktop">台式机背板 (1-10)</span>
+            </button>
+            <button class="seg-btn" id="io-btn-laptop" onclick="setIoView('laptop')">
+              <i class="fa-solid fa-laptop"></i> <span id="ui-io-laptop">笔记本侧面 (1-6)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="stage-body">
+
+          <!-- Stage Mode 1: Port Close-up + Real Motherboard / Laptop Locator -->
+          <div class="visual-showcase" id="stage-visual">
+            <div class="closeup-card">
+              <div class="closeup-img-pair">
+                <div class="closeup-img-box" onclick="openLightbox(currentPort.macroImg, currentPort.name + ' - 3D 微距插口特写')">
+                  <img id="stage-macro-img" src="" alt="Port Macro" />
+                  <div class="closeup-tag" id="ui-tag-macro">🔍 3D 插口特写 (点击放大)</div>
+                </div>
+                <div class="closeup-img-box" id="stage-card-box" onclick="openLightbox(currentPort.cardImg, currentPort.name + ' - 插座与线材插头对照')">
+                  <img id="stage-card-img" src="" alt="Port & Cable" />
+                  <div class="closeup-tag" id="ui-tag-cable">🔌 插座 + 线材插头对照</div>
+                </div>
+              </div>
+              <div style="width:100%; display:flex; align-items:center; justify-content:space-between; font-size:11.5px; color:var(--text-muted); padding:0 4px;">
+                <span id="stage-pin-hint">💡 提示：点击任意图片可全屏高清检视细节</span>
+                <span class="mono-code" id="stage-speed-badge" style="color:var(--accent-bright);">48 Gbps</span>
+              </div>
+            </div>
+
+            <div class="locator-card">
+              <div class="locator-header">
+                <span id="ui-locator-title">📍 在真实电脑上的位置（点击下方编号快速切换接口）：</span>
+                <button class="seg-btn" style="padding:2px 8px; font-size:11px; background:var(--bg-card); border:1px solid var(--border);" onclick="openCurrentIoLightbox()">
+                  <i class="fa-solid fa-expand"></i> <span id="ui-zoom-io">放大面板</span>
+                </button>
+              </div>
+              <div class="io-board-wrap" onclick="openCurrentIoLightbox()" style="cursor:zoom-in;">
+                <img id="io-panel-img" src="assets/panel-desktop-io.jpg" alt="Computer IO Panel" />
+              </div>
+              <div class="io-hotspots-bar" id="io-hotspots-bar"></div>
+            </div>
+          </div>
+
+          <!-- Stage Mode 2: 5 Original Reference Charts Gallery -->
+          <div class="charts-gallery" id="stage-charts">
+            <div class="chart-thumb-card" onclick="openLightbox('assets/chart-desktop-laptop-guide.jpg', '图1：台式机背板与笔记本侧面常见接口完整指南 (Desktop & Laptop Guide)')">
+              <div class="chart-thumb-img-wrap"><img src="assets/chart-desktop-laptop-guide.jpg" alt="Chart 1" /></div>
+              <div class="chart-thumb-title" id="chart-title-1">① 台式机与笔记本接口指南</div>
+            </div>
+            <div class="chart-thumb-card" onclick="openLightbox('assets/chart-closeup-grid.jpg', '图2：16种电脑接口3D微距高清特写图鉴 (Computer Ports & Connectors)')">
+              <div class="chart-thumb-img-wrap"><img src="assets/chart-closeup-grid.jpg" alt="Chart 2" /></div>
+              <div class="chart-thumb-title" id="chart-title-2">② 16种接口 3D 微距特写</div>
+            </div>
+            <div class="chart-thumb-card" onclick="openLightbox('assets/chart-network-ports.jpg', '图3：8大网络与视频传输接口速率与设备图解 (Types of Network Ports)')">
+              <div class="chart-thumb-img-wrap"><img src="assets/chart-network-ports.jpg" alt="Chart 3" /></div>
+              <div class="chart-thumb-title" id="chart-title-3">③ 8大网络与通信接口详解</div>
+            </div>
+            <div class="chart-thumb-card" onclick="openLightbox('assets/chart-all-ports-light.jpg', '图4：电脑接口全分类百科 + 端口解剖 + 网络端口号 (浅色高清版)')">
+              <div class="chart-thumb-img-wrap"><img src="assets/chart-all-ports-light.jpg" alt="Chart 4" /></div>
+              <div class="chart-thumb-title" id="chart-title-4">④ 接口全分类与端口解剖 (浅色)</div>
+            </div>
+            <div class="chart-thumb-card" onclick="openLightbox('assets/chart-all-ports-dark.jpg', '图5：电脑接口全分类百科 + 常见 TCP/UDP 网络端口号 (深色极客版)')">
+              <div class="chart-thumb-img-wrap"><img src="assets/chart-all-ports-dark.jpg" alt="Chart 5" /></div>
+              <div class="chart-thumb-title" id="chart-title-5">⑤ 接口全分类与网络端口 (深色)</div>
+            </div>
+          </div>
+
+          <!-- Stage Mode 3: Interactive Student Quiz -->
+          <div class="quiz-stage" id="stage-quiz">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-size:12px; font-weight:800; color:var(--accent-bright);" id="quiz-progress">🎯 场景实战问答 (1 / 6)</span>
+              <span style="font-size:12px; font-weight:700; color:var(--green);" id="quiz-score-label">得分：0</span>
+            </div>
+            <div class="quiz-q-box" id="quiz-question">题目加载中...</div>
+            <div class="quiz-options" id="quiz-options"></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; min-height:28px;">
+              <span style="font-size:12.5px; color:var(--text-secondary);" id="quiz-feedback">请选择最匹配的电脑接口！</span>
+              <button class="seg-btn active" onclick="nextQuizQuestion()" id="quiz-next-btn">下一题 <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Bottom Matrix Panel (Hardware Ports vs Software TCP/UDP Port Numbers) -->
+      <section class="panel matrix-panel">
+        <div class="panel-header">
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <div class="panel-title">
+              <i class="fa-solid fa-table-list"></i>
+              <span id="ui-matrix-title">接口参数流</span>
+            </div>
+            <div class="legend-dots">
+              <span class="legend-item"><i class="legend-dot" style="background:#3b82f6;"></i> <span id="leg-display">影音显示</span></span>
+              <span class="legend-item"><i class="legend-dot" style="background:#10b981;"></i> <span id="leg-usb">USB与存储</span></span>
+              <span class="legend-item"><i class="legend-dot" style="background:#8b5cf6;"></i> <span id="leg-net">网络通信</span></span>
+              <span class="legend-item"><i class="legend-dot" style="background:#f59e0b;"></i> <span id="leg-audio">音频与电源</span></span>
+              <span class="legend-item"><i class="legend-dot" style="background:#64748b;"></i> <span id="leg-legacy">经典老接口</span></span>
+            </div>
+          </div>
+
+          <div class="seg-group">
+            <button class="seg-btn active" id="tab-hw-ports" onclick="setMatrixTab('hw')">
+              🔌 <span id="ui-tab-hw">硬件物理接口 (18)</span>
+            </button>
+            <button class="seg-btn" id="tab-sw-ports" onclick="setMatrixTab('sw')">
+              🌐 <span id="ui-tab-sw">软件网络端口号 (TCP/UDP 11)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="table-scroll">
+          <table class="port-table">
+            <thead id="matrix-thead"></thead>
+            <tbody id="matrix-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Right Column: Port Encyclopedia & Student Analogy -->
+    <aside class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="fa-solid fa-book-open"></i>
+          <span id="ui-right-title">接口概览</span>
+        </div>
+        <span class="status-pill"><i class="dot"></i> <span id="ui-status-learning">学习中</span></span>
+      </div>
+
+      <div class="detail-scroll">
+        <div class="detail-hero">
+          <div>
+            <div class="detail-name" id="detail-name">HDMI</div>
+            <div class="detail-fullname" id="detail-sub">高清晰度多媒体接口 · High-Definition Multimedia Interface</div>
+          </div>
+        </div>
+
+        <p class="detail-desc" id="detail-desc"></p>
+
+        <!-- Student Life Analogy Card -->
+        <div class="analogy-card">
+          <div class="analogy-title">
+            <i class="fa-solid fa-lightbulb"></i>
+            <span id="ui-analogy-header">中学生秒懂 · 生活比喻</span>
+          </div>
+          <div class="analogy-text" id="detail-analogy"></div>
+        </div>
+
+        <!-- 4 Key Technical Specs -->
+        <div class="specs-grid">
+          <div class="spec-box">
+            <div class="spec-label" id="lbl-speed">⚡ 最高传输速率</div>
+            <div class="spec-val" id="spec-speed">48 Gbps (HDMI 2.1)</div>
+          </div>
+          <div class="spec-box">
+            <div class="spec-label" id="lbl-signal">📡 传输内容</div>
+            <div class="spec-val" id="spec-signal">高清数字视频 + 音频</div>
+          </div>
+          <div class="spec-box">
+            <div class="spec-label" id="lbl-shape">🔍 外观防呆特征</div>
+            <div class="spec-val" id="spec-shape">扁平倒角梯形 (19针)</div>
+          </div>
+          <div class="spec-box">
+            <div class="spec-label" id="lbl-devices">🖥️ 常见连接设备</div>
+            <div class="spec-val" id="spec-devices">显示器、4K电视、投影仪</div>
+          </div>
+        </div>
+
+        <!-- Optional Network Banner from Image 2 if available -->
+        <div id="net-banner-section" style="display:none;">
+          <div style="font-size:11.5px; font-weight:800; color:var(--text-muted); margin-bottom:5px;" id="ui-net-banner-label">
+            📊 图卡参数速览（点击放大）：
+          </div>
+          <div class="net-banner-box" onclick="openLightbox(currentPort.netBanner, currentPort.name + ' - 速率与应用场景图解')">
+            <img id="detail-net-banner" src="" alt="Network Port Banner" />
+          </div>
+        </div>
+
+        <!-- Anatomy of a Port Card (from Image 4) -->
+        <div class="anatomy-card" onclick="openLightbox('assets/panel-port-anatomy.jpg', '接口解剖结构：金属屏蔽外壳 (Outer Shell) + 金属触点针脚 (Pins) + 防呆插口形状')">
+          <img src="assets/panel-port-anatomy.jpg" alt="Anatomy of a Port" />
+          <div class="anatomy-info" id="ui-anatomy-text">
+            <strong style="color:var(--text-main);">🔬 接口解剖三要素：</strong><br/>
+            1. <b>金属外壳 (Outer Shell)</b>：保护与防电磁干扰<br/>
+            2. <b>金属针脚 (Pins)</b>：传输数据与电力<br/>
+            3. <b>防呆内芯</b>：防止插反烧毁硬件
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Full-Screen HD Image Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="lightbox-inner" onclick="event.stopPropagation()">
+      <img id="lightbox-img" src="" alt="Preview" />
+      <div class="lightbox-caption" id="lightbox-caption"></div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== 1. Complete Port Dataset (Using All 5 Provided Images) ====================
+    const PORTS = [
+      {
+        id: "hdmi",
+        name: "HDMI",
+        cat: "display",
+        color: "#3b82f6",
+        desktopNum: 5,
+        laptopNum: 3,
+        macroImg: "assets/macro-hdmi.jpg",
+        cardImg: "assets/card-hdmi.jpg",
+        netBanner: "assets/net-hdmi.jpg",
+        speed: "Up to 48 Gbps (HDMI 2.1)",
+        zh: {
+          sub: "高清晰度多媒体接口 · 影音一线通",
+          signal: "数字高清视频 + 多声道音频",
+          shape: "倒角扁平梯形 (像笑脸嘴型)",
+          devices: "电脑显示器、4K电视、投影仪、PS5",
+          desc: "HDMI 是目前最普及的高清影音接口！一根线就能同时传输超高清画面（最高支持 4K/8K）和立体声音频，广泛用于连接电脑显卡、电视机、课室投影仪和游戏主机。",
+          analogy: "就像一条「影音双层高速公路」——以前接电视要插一根画面线（VGA）再插一根音频线，现在 HDMI 一根线把高清画面和声音全部包办！"
+        },
+        en: {
+          sub: "High-Definition Multimedia Interface",
+          signal: "Digital Video + Audio",
+          shape: "19-pin beveled trapezoid",
+          devices: "Monitors, 4K TVs, Projectors, Consoles",
+          desc: "HDMI is the most widely used digital video and audio port. A single cable carries uncompressed crystal-clear video (up to 4K/8K) and multi-channel audio together.",
+          analogy: "Think of HDMI as a 'two-deck expressway' carrying both ultra-sharp video and stereo sound in one single cable—no separate speaker wire needed!"
+        }
+      },
+      {
+        id: "dp",
+        name: "DisplayPort",
+        cat: "display",
+        color: "#3b82f6",
+        desktopNum: 6,
+        laptopNum: null,
+        macroImg: "assets/macro-dp.jpg",
+        cardImg: "assets/card-dp.jpg",
+        netBanner: "assets/net-dp.jpg",
+        speed: "Up to 80 Gbps (DP 2.1)",
+        zh: {
+          sub: "高性能电竞显示接口 · 支持多屏串联",
+          signal: "超高刷数字视频 + 音频",
+          shape: "单侧斜切角矩形 (带锁扣防脱)",
+          devices: "高刷新率电竞屏幕、独立显卡、扩展坞",
+          desc: "DisplayPort（简称 DP）专为高性能电脑与电竞显示器打造。带宽高达 80 Gbps，支持 144Hz/240Hz 超高刷新率及多台显示器「菊花链（Daisy Chain）」串联。",
+          analogy: "如果 HDMI 是家用轿车，DisplayPort 就是「F1 赛车跑道」！打电竞需要每秒刷新 240 张画面不撕裂，独立显卡上最强大的插口就是它（注意它只削掉一边的角，别和两边对称削角的 HDMI 搞混）。"
+        },
+        en: {
+          sub: "High-Refresh PC Display Interface",
+          signal: "High-Refresh Digital Video + Audio",
+          shape: "Asymmetric rectangle (one angled corner)",
+          devices: "Gaming Monitors, GPUs, Docking Stations",
+          desc: "DisplayPort delivers up to 80 Gbps (DP 2.1) for high-resolution, high-refresh-rate gaming monitors and supports daisy-chaining multiple screens from one port.",
+          analogy: "If HDMI is a family highway, DisplayPort is a 'Formula-1 racetrack' built for 144Hz/240Hz gaming monitors. Spot it by its single angled corner!"
+        }
+      },
+      {
+        id: "mini-dp",
+        name: "Mini DisplayPort",
+        cat: "display",
+        color: "#3b82f6",
+        desktopNum: null,
+        laptopNum: null,
+        macroImg: "assets/macro-mini-dp.jpg",
+        cardImg: "assets/macro-mini-dp.jpg",
+        netBanner: null,
+        speed: "Up to 32.4 Gbps (DP 1.4)",
+        zh: {
+          sub: "迷你型 DisplayPort · 轻薄本与多屏显卡接口",
+          signal: "数字高清视频 + 音频",
+          shape: "小巧梯形 (苹果旧款 Mac 与游戏本常见)",
+          devices: "轻薄笔记本、专业多屏显卡、外接显示器",
+          desc: "Mini DisplayPort（Mini DP）是标准 DisplayPort 的微缩版，占用的机身空间不到一半，依然具备极高的高清视频输出能力，也是早期雷电 1/2 接口的物理外观。",
+          analogy: "就像把大号 DisplayPort 用「缩小灯」照了一下，方便塞进轻薄笔记本的侧面边框里，性能一点不缩水！"
+        },
+        en: {
+          sub: "Compact DisplayPort for Laptops",
+          signal: "Digital Video + Audio",
+          shape: "Miniaturized trapezoid socket",
+          devices: "Laptops, Multi-monitor GPUs",
+          desc: "Mini DisplayPort shrinks the full DisplayPort connector to fit slim laptops and multi-output graphics cards while keeping full high-resolution video capability.",
+          analogy: "A 'pocket-sized' version of DisplayPort designed to fit thin laptop edges without sacrificing display quality."
+        }
+      },
+      {
+        id: "vga",
+        name: "VGA",
+        cat: "display",
+        color: "#3b82f6",
+        desktopNum: 3,
+        laptopNum: null,
+        macroImg: "assets/macro-vga.jpg",
+        cardImg: "assets/card-vga.jpg",
+        netBanner: null,
+        speed: "Analog (模拟信号 · 最高 1080p)",
+        zh: {
+          sub: "视频图形阵列 · 经典蓝色 15 针模拟接口",
+          signal: "纯模拟视频信号 (不含声音)",
+          shape: "蓝色梯形 3排×5针 (共15孔 + 两侧螺丝)",
+          devices: "旧款电脑显示器、学校老投影仪",
+          desc: "VGA（Video Graphics Array）是 1987 年诞生的经典蓝色三排 15 针视频接口。它传输的是「模拟信号」，线材太长容易出现重影或雪花，且不能传输声音。",
+          analogy: "电脑显示界的「老爷爷」！认准它的【蓝色孔 + 15个小洞 + 两边要拧螺丝】。注意它是个“哑巴接口”，只传画面不传声音，接它还要另外插音箱线。"
+        },
+        en: {
+          sub: "Video Graphics Array (15-pin Analog)",
+          signal: "Analog Video Only (No Audio)",
+          shape: "Blue trapezoid with 15 pinholes & screws",
+          devices: "Older Monitors, Classroom Projectors",
+          desc: "VGA is a legacy analog video connector with 3 rows of 5 pins (15 pins total) and thumbscrews. It carries video only and degrades over long cables.",
+          analogy: "The 'grandpa' of monitor ports! Recognizable by its blue 15-hole socket and side screws. It only carries video—never audio."
+        }
+      },
+      {
+        id: "dvi",
+        name: "DVI",
+        cat: "display",
+        color: "#3b82f6",
+        desktopNum: 4,
+        laptopNum: null,
+        macroImg: "assets/card-dvi.jpg",
+        cardImg: "assets/card-dvi.jpg",
+        netBanner: null,
+        speed: "Up to 7.92 Gbps (Dual-Link)",
+        zh: {
+          sub: "数字视频接口 · 白色 24 针网格接口",
+          signal: "高清数字视频 (部分支持模拟转换)",
+          shape: "白色长方形 (3排24孔 + 右侧一字或十字槽)",
+          devices: "中早期液晶显示器、台式机主板/显卡",
+          desc: "DVI（Digital Visual Interface）是 VGA 向 HDMI 过渡时期的功臣，采用白色底座与 24 个密集方孔，首次让电脑显示器用上了清晰锐利的纯数字信号。",
+          analogy: "它是从模拟时代迈向数字时代的「桥梁」——通常长着白色面孔、密密麻麻排着 3 排小方格，旁边还有个十字或一字防呆口，两侧同样带固定螺丝。"
+        },
+        en: {
+          sub: "Digital Visual Interface",
+          signal: "Digital (& Analog in DVI-I) Video",
+          shape: "White rectangular 24-pin grid + blade pin",
+          devices: "LCD Monitors, Desktop Motherboards",
+          desc: "DVI bridged the gap between analog VGA and modern HDMI, delivering crisp digital video through a 24-pin white connector with locking screws.",
+          analogy: "The 'bridge' between old VGA and modern HDMI—spot its white faceplate and neat 3x8 grid of square pinholes."
+        }
+      },
+      {
+        id: "usb-a",
+        name: "USB-A (2.0 / 3.0)",
+        cat: "usb",
+        color: "#10b981",
+        desktopNum: 2,
+        laptopNum: 2,
+        macroImg: "assets/macro-usb-a.jpg",
+        cardImg: "assets/card-usb-a.jpg",
+        netBanner: "assets/net-usb-a.jpg",
+        speed: "480 Mbps (2.0) / 5~10 Gbps (3.x)",
+        zh: {
+          sub: "通用串行总线 Type-A · 最常见的扁平矩形口",
+          signal: "数据传输 + 5V 供电 + 外设扩展",
+          shape: "扁平长方形 (黑舌头=2.0，蓝舌头=3.0高速)",
+          devices: "鼠标、键盘、U盘、打印机、USB无线网卡",
+          desc: "USB Type-A 是每台电脑必备的「万能外设接口」。内部塑料片为黑色代表 USB 2.0（480 Mbps，适合接鼠键），蓝色代表 USB 3.0/3.2（5~10 Gbps，适合插高速 U 盘和移动硬盘）。",
+          analogy: "电脑上的「万能插座」！分辨快慢有一个中学生必考秘诀：看插口里面的塑料片——【黑色是慢速国道（接鼠标键盘），蓝色是高速大道（插U盘秒传电影）】！"
+        },
+        en: {
+          sub: "Universal Serial Bus Type-A",
+          signal: "Data + 5V Power + Peripherals",
+          shape: "Flat rectangle (Black = 2.0, Blue = 3.0)",
+          devices: "Mouse, Keyboard, Flash Drive, Wi-Fi Adapter",
+          desc: "The classic rectangular USB port found on almost every computer. Black inserts indicate USB 2.0 (480 Mbps), while blue inserts indicate SuperSpeed USB 3.0/3.2 (5–10 Gbps).",
+          analogy: "Pro tip to tell speed at a glance: look inside the port—Black tongue = standard speed (mouse/keyboard); Blue tongue = SuperSpeed (flash drives)!"
+        }
+      },
+      {
+        id: "usb-c",
+        name: "USB-C (Type-C)",
+        cat: "usb",
+        color: "#10b981",
+        desktopNum: 7,
+        laptopNum: 4,
+        macroImg: "assets/macro-usb-c.jpg",
+        cardImg: "assets/card-usb-c.jpg",
+        netBanner: "assets/net-usb-c.jpg",
+        speed: "10~20 Gbps (USB 3.2) / 40 Gbps (USB4)",
+        zh: {
+          sub: "正反盲插全能接口 · 数据/充电/视频三合一",
+          signal: "高速数据 + PD快充(最高240W) + DP视频",
+          shape: "圆角跑道椭圆形 (24针双面对称)",
+          devices: "现代笔记本、智能手机、iPad、高速固态硬盘",
+          desc: "USB Type-C 是现代数码设备的终极统一接口！采用圆润对称设计，不分正反面随手盲插；不仅能传数据，还能给笔记本快充（USB-PD）以及直连 4K 显示器。",
+          analogy: "终结「USB 永远插三次才插对」魔咒的救星！它像一颗小药丸形状，正着插、反着插都能进，而且一根线同时干完「充电 + 传文件 + 接屏幕」三件事。"
+        },
+        en: {
+          sub: "Reversible All-in-One Connector",
+          signal: "High-Speed Data + PD Charging + Video",
+          shape: "Small oval pill-shape (reversible)",
+          devices: "Modern Laptops, Smartphones, SSDs, Docks",
+          desc: "USB-C features a symmetrical reversible plug that combines ultra-fast data (up to 40 Gbps on USB4), laptop power delivery, and video output in one tiny port.",
+          analogy: "Ends the 'flip the USB three times' curse! Pill-shaped, reversible, and handles charging, files, and monitors all at once."
+        }
+      },
+      {
+        id: "thunderbolt",
+        name: "Thunderbolt (雷电)",
+        cat: "usb",
+        color: "#10b981",
+        desktopNum: 7,
+        laptopNum: 4,
+        macroImg: "assets/macro-thunderbolt.jpg",
+        cardImg: "assets/card-usb-c.jpg",
+        netBanner: null,
+        speed: "40 Gbps (TB 3/4) / 80 Gbps (TB 5)",
+        zh: {
+          sub: "雷电高速全能接口 · 带闪电标志的超级 USB-C",
+          signal: "PCIe 数据直通 + 双 4K/8K 视频 + 100W 供电",
+          shape: "与 USB-C 外观完全相同，旁印有「⚡闪电」图标",
+          devices: "MacBook、高端创作者笔记本、外接显卡坞、高速阵列",
+          desc: "Thunderbolt（雷电接口）由 Intel 与 Apple 联合研发，借用了 USB-C 的外形，但内部直接连通 CPU 的 PCIe 高速通道，速度高达 40~80 Gbps，可同时带动两台 4K 显示器。",
+          analogy: "长着和普通 USB-C 一模一样的脸，但旁边纹了一道「⚡小闪电」！只要看到这道闪电，说明它是拥有 40Gbps 超能力的“超级赛亚人版 USB-C”。"
+        },
+        en: {
+          sub: "Ultra-High-Speed PCIe + Display + Power Port",
+          signal: "40–80 Gbps Data + Dual 4K Video + Power",
+          shape: "USB-C shape with a Lightning Bolt ⚡ icon",
+          devices: "MacBooks, Pro Laptops, eGPUs, RAID Storage",
+          desc: "Thunderbolt uses the USB-C connector shape but supercharges it with 40–80 Gbps bandwidth, PCIe data tunneling, and dual 4K display support.",
+          analogy: "Looks identical to USB-C on the outside, but the little ⚡ lightning bolt icon next to it means it has 40 Gbps superpowers!"
+        }
+      },
+      {
+        id: "sd-card",
+        name: "SD Card Slot",
+        cat: "usb",
+        color: "#10b981",
+        desktopNum: null,
+        laptopNum: 5,
+        macroImg: "assets/macro-sd.jpg",
+        cardImg: "assets/card-sd.jpg",
+        netBanner: null,
+        speed: "104~312 MB/s (UHS-I / UHS-II)",
+        zh: {
+          sub: "SD 记忆卡插槽 · 相机与无人机照片直读",
+          signal: "闪存卡数据读取与写入",
+          shape: "扁长一字细缝插槽",
+          devices: "单反/微单相机存储卡、无人机、树莓派",
+          desc: "SD 卡插槽常见于笔记本侧面和摄影师电脑，只需把数码相机拍完照的 SD 记忆卡拔下来塞进槽里，不用找数据线就能直接拷贝高清照片和视频。",
+          analogy: "摄影师最爱的「照片直通车」——学校活动拍完几百张照片，把相机里的 SD 卡抽出来往笔记本侧面一插，几秒钟全部导进电脑！"
+        },
+        en: {
+          sub: "Secure Digital Memory Card Reader",
+          signal: "Flash Memory Storage Data",
+          shape: "Wide flat slot on laptop side",
+          devices: "DSLR Cameras, Camcorders, Drones",
+          desc: "Built-in SD card slots let photographers and students transfer photos and videos directly from camera memory cards without carrying extra cables.",
+          analogy: "The photographer's express lane—pop the memory card out of the school camera and slide it straight into the laptop!"
+        }
+      },
+      {
+        id: "esata",
+        name: "eSATA / SATA",
+        cat: "usb",
+        color: "#10b981",
+        desktopNum: 8,
+        laptopNum: null,
+        macroImg: "assets/macro-esata.jpg",
+        cardImg: "assets/card-esata.jpg",
+        netBanner: null,
+        speed: "3 Gbps / 6 Gbps (SATA III)",
+        zh: {
+          sub: "外部串行高级技术附件 · 外接硬盘专用高速口",
+          signal: "SATA 硬盘原生高速数据流",
+          shape: "扁平带两侧凸起导轨 (主板内 SATA 为 L 型防呆)",
+          devices: "机械硬盘 (HDD)、2.5寸固态硬盘 (SSD)、外置硬盘座",
+          desc: "SATA 是电脑机箱内部连接硬盘的标准接口（L 型防呆口），而 eSATA（External SATA）则是把它引到机箱背面，在 USB 3.0 普及前用于高速连接外置移动硬盘。",
+          analogy: "如果把机箱里的硬盘比作仓库，SATA/eSATA 就是连接主板和硬盘仓库的「专属货运铁轨」，比早期的 USB 2.0 快上好几倍！"
+        },
+        en: {
+          sub: "External Serial ATA Storage Port",
+          signal: "Native SATA Drive Data",
+          shape: "Keyed flat slot (L-shaped inside PC)",
+          devices: "Hard Drives (HDD), SATA SSDs, External Arrays",
+          desc: "SATA connects internal hard drives and SSDs inside a PC, while eSATA brings that same high-speed native disk connection to the back panel.",
+          analogy: "A dedicated 'freight rail track' connecting hard drives directly to the motherboard at native disk speeds."
+        }
+      },
+      {
+        id: "rj45",
+        name: "Ethernet (RJ45)",
+        cat: "network",
+        color: "#8b5cf6",
+        desktopNum: 9,
+        laptopNum: null,
+        macroImg: "assets/macro-ethernet.jpg",
+        cardImg: "assets/card-rj45.jpg",
+        netBanner: "assets/net-rj45.jpg",
+        speed: "10 / 100 / 1,000 / 10,000 Mbps",
+        zh: {
+          sub: "RJ45 以太网接口 · 有线局域网水晶头插口",
+          signal: "双绞线有线网络数据包 (支持千兆/万兆)",
+          shape: "方形阶梯口 (带卡扣凹槽 + 8根镀金触针 + 状态灯)",
+          devices: "台式电脑、路由器 (Router)、交换机 (Switch)",
+          desc: "RJ45（LAN 口）是有线网线的标准接口，内部有 8 根金色弹簧触针，插上网线水晶头时会发出清脆的「咔哒」锁定声。相比 Wi-Fi，有线连接延迟极低、抗干扰最强。",
+          analogy: "网线水晶头的「专属底座」！打比赛或下大文件为什么大家都爱插网线？因为 Wi-Fi 像在空气中隔空喊话容易被墙挡住，而 RJ45 网线是「专线直连」，稳如泰山！"
+        },
+        en: {
+          sub: "RJ45 Gigabit Wired LAN Port",
+          signal: "Wired Ethernet Network Packets",
+          shape: "8-pin modular jack with locking tab & LEDs",
+          devices: "PCs, Routers, Network Switches, Modems",
+          desc: "The RJ45 Ethernet port connects computers to wired local area networks (LAN) via Cat5e/Cat6 cables, offering rock-solid stability and low latency.",
+          analogy: "While Wi-Fi shouts through the air, the RJ45 Ethernet cable is a private underground tunnel—zero interference and ultra-low ping!"
+        }
+      },
+      {
+        id: "poe",
+        name: "PoE Port (以太网供电)",
+        cat: "network",
+        color: "#8b5cf6",
+        desktopNum: null,
+        laptopNum: null,
+        macroImg: "assets/net-poe.jpg",
+        cardImg: "assets/net-poe.jpg",
+        netBanner: "assets/net-poe.jpg",
+        speed: "1,000 Mbps + 15W~90W 电力",
+        zh: {
+          sub: "Power over Ethernet · 一根网线同时传网+供电",
+          signal: "千兆网络数据 + 直流电力 (48V)",
+          shape: "标准 RJ45 外形 (带 ⚡ 供电指示灯)",
+          devices: "校园监控摄像头 (IP Camera)、吸顶 Wi-Fi AP、IP电话",
+          desc: "PoE（以太网供电）口常见于交换机上。它让一根普通网线在传输网络信号的同时，顺便输送 48V 电力，挂在天花板上的监控摄像头和校园 Wi-Fi 飞碟就不需要另外拉电线插座了！",
+          analogy: "学校走廊天花板上的监控摄像头和 Wi-Fi 盒子，为什么旁边没有电源插座也能亮？全靠 PoE 接口——「一根网线既当血管输电，又当神经传画面」！"
+        },
+        en: {
+          sub: "Power over Ethernet Port",
+          signal: "Network Data + DC Electrical Power",
+          shape: "RJ45 jack with power delivery circuitry",
+          devices: "IP Security Cameras, Ceiling Wi-Fi APs, VoIP Phones",
+          desc: "PoE ports deliver both network data and electrical power over a single Ethernet cable, eliminating the need for AC power outlets near ceiling cameras or Wi-Fi access points.",
+          analogy: "Ever wonder how ceiling security cameras get power without a wall outlet? PoE sends both electricity and internet through one single network cable!"
+        }
+      },
+      {
+        id: "sfp",
+        name: "SFP Port (光纤接口)",
+        cat: "network",
+        color: "#8b5cf6",
+        desktopNum: null,
+        laptopNum: null,
+        macroImg: "assets/net-sfp.jpg",
+        cardImg: "assets/net-sfp.jpg",
+        netBanner: "assets/net-sfp.jpg",
+        speed: "1 Gbps (SFP) / 10~100 Gbps (SFP+)",
+        zh: {
+          sub: "小型可插拔光模块接口 · 跨楼栋远距离光纤通信",
+          signal: "激光脉冲光纤信号 (单模/多模光纤)",
+          shape: "带金属屏蔽弹片的方形模块笼槽",
+          devices: "企业核心交换机、机房路由器、跨教学楼光纤主干网",
+          desc: "普通铜质网线超过 100 米信号就会衰减，而机房交换机上的 SFP（Small Form-factor Pluggable）接口可以插入光纤模块，用激光在玻璃纤维里以光速传输几公里到几十公里！",
+          analogy: "普通网线跑 100 米就累趴下了，但学校从行政楼机房连到几百米外的教学楼，靠的就是 SFP 光纤口——把数据变成「激光束」在玻璃丝里以光速狂奔！"
+        },
+        en: {
+          sub: "Small Form-Factor Pluggable Fiber Port",
+          signal: "Optical Laser Pulses (Fiber Optic)",
+          shape: "Modular metal cage for hot-swappable transceivers",
+          devices: "Enterprise Switches, Core Routers, Campus Fiber",
+          desc: "SFP ports accept hot-swappable fiber-optic transceivers to transmit data at 1 Gbps to 10+ Gbps across kilometers of glass fiber.",
+          analogy: "Copper Ethernet cables tire out after 100 meters, so SFP ports shoot laser beams through glass fiber across entire school campuses!"
+        }
+      },
+      {
+        id: "console",
+        name: "Console Port (配置口)",
+        cat: "network",
+        color: "#8b5cf6",
+        desktopNum: null,
+        laptopNum: null,
+        macroImg: "assets/net-console.jpg",
+        cardImg: "assets/net-console.jpg",
+        netBanner: "assets/net-console.jpg",
+        speed: "9600 ~ 115200 bps (串口指令)",
+        zh: {
+          sub: "网络设备控制台接口 · 网管调试与急救专用口",
+          signal: "RS-232 串行命令行配置指令",
+          shape: "天蓝色边框 RJ45 口 (需用 RJ45 转 USB/串口线)",
+          devices: "企业级路由器、核心交换机、硬件防火墙",
+          desc: "Console 口虽然长得像普通 RJ45 网口，但它**不能用来上网**！当新买来的机房交换机还没有设置 IP 地址、或者网络瘫痪进不去后台时，网络工程师就用 Console 线直连它敲命令急救。",
+          analogy: "路由器与交换机身上的「听诊器接口」！它长得像网口但不能上网，专门给网络管理员在设备断网瘫痪时，插上调试线敲代码做“心脏起搏急救”用的。"
+        },
+        en: {
+          sub: "Device Management & Troubleshooting Port",
+          signal: "Serial CLI Configuration Commands",
+          shape: "RJ45-style socket labeled CONSOLE (often cyan)",
+          devices: "Enterprise Routers, Switches, Firewalls",
+          desc: "The Console port is used by network engineers to configure and troubleshoot routers and switches directly via a console cable—even when the network is down.",
+          analogy: "The 'doctor's stethoscope port' on a router! It looks like an Ethernet jack, but it's strictly for typing rescue commands when the network is down."
+        }
+      },
+      {
+        id: "audio",
+        name: "Audio Jacks (3.5mm)",
+        cat: "audio",
+        color: "#f59e0b",
+        desktopNum: 10,
+        laptopNum: 6,
+        macroImg: "assets/macro-audio.jpg",
+        cardImg: "assets/card-audio.jpg",
+        netBanner: null,
+        speed: "Analog Stereo / Mic Audio",
+        zh: {
+          sub: "3.5mm 音频三色接口 · 粉红麦克风 / 绿色耳机 / 蓝色音频输入",
+          signal: "模拟立体声与麦克风语音信号",
+          shape: "3.5毫米圆形插孔 (台式机标准三色环，笔记本二合一)",
+          devices: "有线耳机、电脑音箱、独立麦克风、调音台",
+          desc: "台式电脑背面通常有 3 个带颜色的 3.5mm 圆孔：【粉红色 = 麦克风输入 (Mic)】、【草绿色 = 耳机/音箱输出 (Headphones)】、【浅蓝色 = 外部音频输入 (Line-In)】；笔记本则通常合并为 1 个耳麦二合一孔。",
+          analogy: "记住台式机背面的「红绿灯口诀」就绝对不会插错孔：【粉红像嘴唇 = 插麦克风说话】、【绿色像草地 = 插耳机/音箱听声音】、【蓝色 = 外部乐器音源输入】！"
+        },
+        en: {
+          sub: "3.5mm TRS/TRRS Audio Connectors",
+          signal: "Analog Audio Output & Microphone Input",
+          shape: "3.5mm round jacks (Pink / Green / Blue)",
+          devices: "Headphones, Desktop Speakers, Microphones",
+          desc: "Standard 3.5mm color-coded audio jacks on desktop PCs: Pink for Microphone input, Green for Headphones/Speakers output, and Blue for Line-In.",
+          analogy: "Color memory trick: Pink = lips (Microphone in), Green = go listen (Speakers/Headphones out), Blue = Line-In!"
+        }
+      },
+      {
+        id: "power",
+        name: "Power Jack (电源接口)",
+        cat: "audio",
+        color: "#f59e0b",
+        desktopNum: null,
+        laptopNum: 1,
+        macroImg: "assets/card-power.jpg",
+        cardImg: "assets/card-power.jpg",
+        netBanner: null,
+        speed: "DC 19V~20V / AC 100~240V",
+        zh: {
+          sub: "电脑电源接口 · 笔记本圆口(DC) / 台式机品字口(IEC C13)",
+          signal: "直流电 (DC Barrel) 或 交流电 (AC Power)",
+          shape: "笔记本：圆形带中心针 (DC)；台式机：三孔品字形插座",
+          devices: "笔记本电源适配器 (火牛)、台式机电源 (PSU)、显示器电源",
+          desc: "没有它电脑就无法开机！笔记本侧面多采用圆形 DC 电源孔（约 19V 直流电）或新型 USB-C PD 充电口；台式机主机和显示器背面则使用耐高电流的「品字形三孔 AC 插座（IEC C13）」。",
+          analogy: "整台电脑的「干饭嘴巴」！台式机胃口大，直接用粗壮的“品”字三孔电源线喝 240V 交流电；笔记本斯文，用带黑砖头（变压器）的圆头细线喝 19V 直流电。"
+        },
+        en: {
+          sub: "DC Barrel Jack & AC IEC C13 Power Port",
+          signal: "Electrical Power Supply (DC 19V / AC 240V)",
+          shape: "Round barrel pin (Laptop) or 3-prong IEC C13 (PC)",
+          devices: "Laptop AC Adapters, Desktop Power Supplies",
+          desc: "Supplies electricity to run the computer and charge the battery. Laptops use round DC barrel jacks (or USB-C PD), while desktops use heavy-duty 3-prong IEC C13 AC sockets.",
+          analogy: "The computer's 'mouth for electricity'! Desktops use a thick 3-prong AC plug, while laptops sip ~19V DC through a round barrel plug."
+        }
+      },
+      {
+        id: "ps2",
+        name: "PS/2 Port (紫键绿鼠)",
+        cat: "legacy",
+        color: "#64748b",
+        desktopNum: 1,
+        laptopNum: null,
+        macroImg: "assets/macro-ps2.jpg",
+        cardImg: "assets/card-ps2.jpg",
+        netBanner: null,
+        speed: "Hardware Interrupt (全键无冲硬件中断)",
+        zh: {
+          sub: "经典圆形 6 针键鼠接口 · 紫色接键盘 / 绿色接鼠标",
+          signal: "键盘与鼠标专用串行中断信号",
+          shape: "圆形 6 孔 + 1个方形定位孔 (上紫下绿或紫绿双色合一)",
+          devices: "老式机械键盘、光电鼠标、工控电脑",
+          desc: "PS/2 是 IBM 于 1987 年推出的键鼠专用圆孔接口，严格区分颜色：【紫色 = 键盘 (Keyboard)】、【绿色 = 鼠标 (Mouse)】。它不支持热插拔（开机后再插可能不识别），但具备天然的硬件级全键无冲优势。",
+          analogy: "台式机左上角的「紫绿双胞胎」！记住：【紫键绿鼠（紫色插键盘、绿色插鼠标）】。千万别大力出奇迹硬拧，要把插头里的小塑料柱对准孔里的方槽再推入，否则 6 根细针一弯就报废啦！"
+        },
+        en: {
+          sub: "Legacy 6-Pin Mini-DIN Keyboard & Mouse Port",
+          signal: "Hardware Interrupt Keyboard/Mouse Signal",
+          shape: "Round 6-pin socket (Purple = Keyboard, Green = Mouse)",
+          devices: "Legacy Keyboards & Mice",
+          desc: "Introduced by IBM in 1987, PS/2 ports use color coding: Purple for keyboards and Green for mice. Still found on many desktop motherboards for BIOS-level reliability.",
+          analogy: "The 'Purple & Green Twins' at the top-left of a desktop back panel: Purple for Keyboard, Green for Mouse!"
+        }
+      },
+      {
+        id: "serial-parallel",
+        name: "Serial & Parallel (串口/并口)",
+        cat: "legacy",
+        color: "#64748b",
+        desktopNum: null,
+        laptopNum: null,
+        macroImg: "assets/macro-serial.jpg",
+        cardImg: "assets/card-serial.jpg",
+        netBanner: null,
+        speed: "115.2 kbps (Serial) / 2 MB/s (Parallel)",
+        zh: {
+          sub: "RS-232 串口(9针公头) 与 LPT 并口(25孔粉红母头)",
+          signal: "工业控制串行信号 / 老式票据打印机并行信号",
+          shape: "串口：D型 9针 (DE-9)；并口：D型加长 25孔 (DB-25)",
+          devices: "工业数控机床、收银台针式票据打印机、老式扫描仪",
+          desc: "Serial 串口（9 根凸起金属针，一排5根一排4根）每次排队发送 1 bit 数据，极其稳定，至今广泛用于工厂机床和医疗设备；Parallel 并口（粉红色 25 孔）则是 8 条车道并排走，以前专门接大号打印机。",
+          analogy: "串口（9针）像「单人独木桥排队走」，虽然慢但绝不乱队，工厂机器最爱用；并口（25孔粉红长口）像「8人挽手并排跑」，以前专门用来连老式针式打印机！"
+        },
+        en: {
+          sub: "RS-232 Serial (9-pin) & LPT Parallel (25-pin)",
+          signal: "Serial Industrial Data / Parallel Printer Data",
+          shape: "D-sub 9-pin male (Serial) & 25-hole female (Parallel)",
+          devices: "Industrial CNC Machines, Legacy Dot-Matrix Printers",
+          desc: "Serial ports (9 pins) send data 1 bit at a time for ultra-reliable industrial control, while Parallel ports (25 holes, often pink) sent 8 bits side-by-side to old printers.",
+          analogy: "Serial (9-pin) marches data single-file for reliability; Parallel (25-pin pink) marches 8 bits side-by-side for old printers!"
+        }
+      }
+    ];
+
+    // ==================== 2. Common Network Port Numbers (TCP/UDP from Charts 4 & 5) ====================
+    const SW_PORTS = [
+      { port: "20 / 21", proto: "FTP", tcpudp: "TCP", color: "#3b82f6", zhName: "文件传输协议", enName: "File Transfer", zhDesc: "用于在客户端和服务器之间上传、下载大文件（21传控制命令，20传数据）。", enDesc: "Transfers files between client and server." },
+      { port: "22", proto: "SSH", tcpudp: "TCP", color: "#10b981", zhName: "安全加密远程登录", enName: "Secure Shell", zhDesc: "程序员远程管理 Linux 服务器的安全加密通道，替代不安全的 Telnet。", enDesc: "Encrypted remote command-line login." },
+      { port: "23", proto: "Telnet", tcpudp: "TCP", color: "#64748b", zhName: "明文远程登录 (旧)", enName: "Remote Login (Legacy)", zhDesc: "早期远程控制终端协议，因密码明文传输不加密，现已被 SSH(22) 取代。", enDesc: "Unencrypted legacy text remote login." },
+      { port: "25", proto: "SMTP", tcpudp: "TCP", color: "#f59e0b", zhName: "简单邮件传输 (发信)", enName: "Send Email", zhDesc: "专门负责把你的电子邮件「寄出去」以及在邮件服务器之间中转投递。", enDesc: "Sends outgoing emails between servers." },
+      { port: "53", proto: "DNS", tcpudp: "UDP / TCP", color: "#8b5cf6", zhName: "域名系统 (网址查IP)", enName: "Domain Name System", zhDesc: "互联网的电话簿！把 www.google.com 翻译成电脑能认出的 IP 地址。", enDesc: "Translates domain names into IP addresses." },
+      { port: "80", proto: "HTTP", tcpudp: "TCP", color: "#3b82f6", zhName: "超文本传输 (普通网页)", enName: "Web Traffic (Unencrypted)", zhDesc: "浏览普通网页（http://）的默认端口，数据未加密。", enDesc: "Standard unencrypted web page traffic." },
+      { port: "110", proto: "POP3", tcpudp: "TCP", color: "#f59e0b", zhName: "邮局协议 v3 (收信下载)", enName: "Retrieve Email", zhDesc: "把服务器上的邮件下载到本地电脑阅读。", enDesc: "Downloads emails from server to local device." },
+      { port: "143", proto: "IMAP", tcpudp: "TCP", color: "#f59e0b", zhName: "互联网邮件访问 (多端同步)", enName: "Sync Email", zhDesc: "现代手机与电脑同步看邮件首选，已读状态和文件夹全设备实时同步。", enDesc: "Synchronizes email across multiple devices." },
+      { port: "443", proto: "HTTPS", tcpudp: "TCP / QUIC", color: "#10b981", zhName: "安全加密网页 (小锁头)", enName: "Secure Web (TLS/SSL)", zhDesc: "现代网页标配（https://）！用 TLS 加密保护网银密码与聊天隐私。", enDesc: "Encrypted secure web browsing via TLS." },
+      { port: "445", proto: "SMB", tcpudp: "TCP", color: "#8b5cf6", zhName: "局域网文件与打印机共享", enName: "Windows File Sharing", zhDesc: "电脑室局域网内共享文件夹和共享打印机使用的端口。", enDesc: "Local network file and printer sharing." },
+      { port: "3389", proto: "RDP", tcpudp: "TCP / UDP", color: "#f43f5e", zhName: "Windows 远程桌面控制", enName: "Remote Desktop", zhDesc: "Windows 自带的图形化远程桌面连接端口，在家里直接操控办公室电脑桌面。", enDesc: "Windows graphical Remote Desktop Protocol." }
+    ];
+
+    // ==================== 3. Interactive Student Quiz Data ====================
+    const QUIZ_DATA = [
+      {
+        zhQ: "1. 学校礼堂要把笔记本电脑的「高清画面」和「声音」同时只用一根线传给 4K 大电视，应该插哪个接口？",
+        enQ: "1. Which single cable carries both 4K high-definition video AND audio from a laptop to a TV?",
+        options: ["VGA (蓝色15针)", "HDMI", "RJ45 (以太网口)", "PS/2 (紫绿圆口)"],
+        answer: 1,
+        portId: "hdmi",
+        zhExp: "✅ 正确！HDMI 支持高清数字视频与音频一线通，而蓝色的 VGA 只传模拟画面不传声音。"
+      },
+      {
+        zhQ: "2. 你买了一个高速移动固态硬盘，想插在台式机 USB-A 口上获得最快速度，应该选什么颜色的 USB 口？",
+        enQ: "2. Which USB-A port color indicates SuperSpeed USB 3.0 (5 Gbps) instead of slow USB 2.0?",
+        options: ["黑色内芯 (USB 2.0)", "蓝色内芯 (USB 3.0)", "粉红色圆孔", "绿色圆孔"],
+        answer: 1,
+        portId: "usb-a",
+        zhExp: "✅ 正确！黑色内芯是 USB 2.0 (480 Mbps)，蓝色内芯代表 USB 3.0/3.2 高速接口 (5~10 Gbps)！"
+      },
+      {
+        zhQ: "3. 台式电脑背面有粉红、绿、蓝三个 3.5mm 圆孔，你想插上【有线耳机】听音乐，应该插哪个颜色？",
+        enQ: "3. Which 3.5mm audio jack color on a desktop PC is for plugging in Headphones / Speakers?",
+        options: ["粉红色 (Pink)", "草绿色 (Green)", "浅蓝色 (Blue)", "紫色 (Purple)"],
+        answer: 1,
+        portId: "audio",
+        zhExp: "✅ 正确！口诀：粉红插麦克风（嘴唇说话），草绿色插耳机/音箱（听声音），蓝色是外部音频输入。"
+      },
+      {
+        zhQ: "4. 学校走廊天花板上的监控摄像头 (IP Camera) 没有插电源插座，只插了一根网线就能通电工作，这是因为交换机用了什么接口？",
+        enQ: "4. Which network port sends both data and electrical power through a single Ethernet cable to ceiling cameras?",
+        options: ["VGA 接口", "Console 调试口", "PoE (以太网供电口)", "DVI 接口"],
+        answer: 2,
+        portId: "poe",
+        zhExp: "✅ 正确！PoE (Power over Ethernet) 让一根网线同时传输网络数据和电力，免去了天花板布设电源插座的麻烦。"
+      },
+      {
+        zhQ: "5. 哪种接口长着正反都能盲插的椭圆形小口，且旁边印有一道「⚡闪电」标志，速度高达 40 Gbps？",
+        enQ: "5. Which reversible oval port features a ⚡ lightning bolt icon and delivers up to 40 Gbps bandwidth?",
+        options: ["Thunderbolt (雷电接口)", "Mini DisplayPort", "RJ45 网口", "Serial 串口"],
+        answer: 0,
+        portId: "thunderbolt",
+        zhExp: "✅ 正确！带 ⚡ 闪电标志的 USB-C 就是 Thunderbolt（雷电接口），一线搞定 40Gbps 数据、100W 充电和双 4K 屏幕！"
+      },
+      {
+        zhQ: "6. 【区分硬件口与软件端口】当你打开浏览器访问加密网页 `https://` 时，电脑通过硬件 RJ45 网口发送的数据包，默认访问服务器的哪个软件端口号？",
+        enQ: "6. When browsing a secure `https://` website, which software TCP port number is used by default?",
+        options: ["Port 21 (FTP)", "Port 25 (SMTP)", "Port 80 (HTTP)", "Port 443 (HTTPS)"],
+        answer: 3,
+        portId: "rj45",
+        zhExp: "✅ 太棒了！硬件网口是插网线的物理洞口（RJ45），而软件端口号是程序门牌号：HTTP 是 80，加密 HTTPS 是 443！"
+      }
+    ];
+
+    // Desktop 1..10 & Laptop 1..6 mapping from Image 3 (chart-desktop-laptop-guide.jpg)
+    const DESKTOP_HOTSPOTS = [
+      { num: 1, label: "PS/2", portId: "ps2" },
+      { num: 2, label: "USB 2.0", portId: "usb-a" },
+      { num: 3, label: "VGA", portId: "vga" },
+      { num: 4, label: "DVI", portId: "dvi" },
+      { num: 5, label: "HDMI", portId: "hdmi" },
+      { num: 6, label: "DisplayPort", portId: "dp" },
+      { num: 7, label: "USB 3.0 / C", portId: "usb-c" },
+      { num: 8, label: "eSATA", portId: "esata" },
+      { num: 9, label: "RJ45 网口", portId: "rj45" },
+      { num: 10, label: "Audio 音频", portId: "audio" }
+    ];
+
+    const LAPTOP_HOTSPOTS = [
+      { num: 1, label: "Power 电源", portId: "power" },
+      { num: 2, label: "USB 3.0", portId: "usb-a" },
+      { num: 3, label: "HDMI", portId: "hdmi" },
+      { num: 4, label: "USB-C / 雷电", portId: "usb-c" },
+      { num: 5, label: "SD 读卡槽", portId: "sd-card" },
+      { num: 6, label: "耳机孔", portId: "audio" }
+    ];
+
+    const CATEGORIES = [
+      { id: "all", zh: "全部", en: "All" },
+      { id: "display", zh: "影音显示", en: "Display" },
+      { id: "usb", zh: "USB与存储", en: "USB/Data" },
+      { id: "network", zh: "网络通信", en: "Network" },
+      { id: "audio", zh: "音频/电源", en: "Audio/Pwr" },
+      { id: "legacy", zh: "经典老口", en: "Legacy" }
+    ];
+
+    // ==================== 4. Application State ====================
+    let currentLang = "zh";
+    let currentCat = "all";
+    let currentPort = PORTS[0];
+    let currentStageMode = "visual"; // 'visual' | 'charts' | 'quiz'
+    let currentIoView = "desktop";   // 'desktop' | 'laptop'
+    let currentMatrixTab = "hw";     // 'hw' | 'sw'
+    let quizIdx = 0;
+    let quizScore = 0;
+    let quizAnswered = false;
+
+    // ==================== 5. Render Functions ====================
+    function renderCategoryTabs() {
+      const wrap = document.getElementById("cat-tabs");
+      wrap.innerHTML = CATEGORIES.map(c => {
+        const count = c.id === "all" ? PORTS.length : PORTS.filter(p => p.cat === c.id).length;
+        const active = c.id === currentCat ? "active" : "";
+        const label = currentLang === "zh" ? c.zh : c.en;
+        return `
+          <button class="cat-tab ${active}" onclick="selectCategory('${c.id}')">
+            <span>${label}</span>
+            <span class="cat-count">${count}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function getFilteredPorts() {
+      const q = (document.getElementById("search-input").value || "").trim().toLowerCase();
+      return PORTS.filter(p => {
+        const matchCat = currentCat === "all" || p.cat === currentCat;
+        if (!matchCat) return false;
+        if (!q) return true;
+        const hay = `${p.name} ${p.zh.sub} ${p.en.sub} ${p.zh.devices} ${p.en.devices} ${p.speed}`.toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    function renderPortList() {
+      const list = document.getElementById("port-list");
+      const items = getFilteredPorts();
+      if (items.length === 0) {
+        list.innerHTML = `<div style="padding:24px 12px; text-align:center; color:var(--text-muted); font-size:12.5px;">${currentLang === 'zh' ? '未找到匹配的接口，请尝试其他关键词' : 'No matching ports found'}</div>`;
+        return;
+      }
+
+      list.innerHTML = items.map(p => {
+        const active = p.id === currentPort.id ? "active" : "";
+        const sub = currentLang === "zh" ? p.zh.sub : p.en.sub;
+        return `
+          <button class="port-item ${active}" onclick="selectPort('${p.id}')">
+            <span class="port-dot"></span>
+            <div class="port-item-info">
+              <div class="port-item-name">${p.name}</div>
+              <div class="port-item-sub">${sub}</div>
+            </div>
+            <i class="fa-solid fa-chevron-right port-item-arrow"></i>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderStageAndDetails() {
+      const p = currentPort;
+      const t = currentLang === "zh" ? p.zh : p.en;
+
+      // Update Center Stage Images
+      document.getElementById("stage-macro-img").src = p.macroImg;
+      document.getElementById("stage-card-img").src = p.cardImg;
+      document.getElementById("stage-speed-badge").textContent = p.speed;
+
+      // Auto-switch desktop/laptop view if port is only on laptop
+      if (!p.desktopNum && p.laptopNum && currentIoView === "desktop") {
+        currentIoView = "laptop";
+      } else if (p.desktopNum && !p.laptopNum && currentIoView === "laptop") {
+        currentIoView = "desktop";
+      }
+      renderIoLocator();
+
+      // Update Right Sidebar Encyclopedia
+      document.getElementById("detail-name").textContent = p.name;
+      document.getElementById("detail-sub").textContent = t.sub;
+      document.getElementById("detail-desc").textContent = t.desc;
+      document.getElementById("detail-analogy").textContent = t.analogy;
+      document.getElementById("spec-speed").textContent = p.speed;
+      document.getElementById("spec-signal").textContent = t.signal;
+      document.getElementById("spec-shape").textContent = t.shape;
+      document.getElementById("spec-devices").textContent = t.devices;
+
+      const netSec = document.getElementById("net-banner-section");
+      if (p.netBanner) {
+        netSec.style.display = "block";
+        document.getElementById("detail-net-banner").src = p.netBanner;
+      } else {
+        netSec.style.display = "none";
+      }
+
+      renderMatrixTable();
+    }
+
+    function renderIoLocator() {
+      document.getElementById("io-btn-desktop").classList.toggle("active", currentIoView === "desktop");
+      document.getElementById("io-btn-laptop").classList.toggle("active", currentIoView === "laptop");
+
+      const panelImg = document.getElementById("io-panel-img");
+      panelImg.src = currentIoView === "desktop" ? "assets/panel-desktop-io.jpg" : "assets/panel-laptop-io.jpg";
+
+      const hotspots = currentIoView === "desktop" ? DESKTOP_HOTSPOTS : LAPTOP_HOTSPOTS;
+      const bar = document.getElementById("io-hotspots-bar");
+      bar.innerHTML = hotspots.map(h => {
+        const isCurrent = h.portId === currentPort.id;
+        return `
+          <button class="io-num-btn ${isCurrent ? 'active' : ''}" onclick="selectPort('${h.portId}')">
+            <span class="num-circle">${h.num}</span>
+            <span>${h.label}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderMatrixTable() {
+      const thead = document.getElementById("matrix-thead");
+      const tbody = document.getElementById("matrix-tbody");
+
+      if (currentMatrixTab === "hw") {
+        thead.innerHTML = currentLang === "zh"
+          ? `<tr><th>序号</th><th>接口名称</th><th>最高速率</th><th>传输信号</th><th>背板编号</th><th>典型连接设备</th></tr>`
+          : `<tr><th>#</th><th>Port Name</th><th>Max Speed</th><th>Signal Type</th><th>Panel #</th><th>Common Devices</th></tr>`;
+
+        tbody.innerHTML = PORTS.map((p, idx) => {
+          const t = currentLang === "zh" ? p.zh : p.en;
+          const active = p.id === currentPort.id ? "active" : "";
+          const badgeLoc = p.desktopNum
+            ? (currentLang === "zh" ? `台式机 #${p.desktopNum}` : `Desktop #${p.desktopNum}`)
+            : (p.laptopNum ? (currentLang === "zh" ? `笔记本 #${p.laptopNum}` : `Laptop #${p.laptopNum}`) : (currentLang === "zh" ? "扩展/专用" : "Specialized"));
+          return `
+            <tr class="${active}" onclick="selectPort('${p.id}')">
+              <td><span class="idx-badge" style="background:${p.color}">${idx + 1}</span></td>
+              <td class="mono-code">${p.name}</td>
+              <td class="mono-code" style="color:var(--accent-bright);">${p.speed}</td>
+              <td>${t.signal}</td>
+              <td><span style="font-size:11px; padding:2px 7px; border-radius:4px; background:var(--bg-subtle); border:1px solid var(--border);">${badgeLoc}</span></td>
+              <td>${t.devices}</td>
+            </tr>
+          `;
+        }).join("");
+      } else {
+        thead.innerHTML = currentLang === "zh"
+          ? `<tr><th>端口号</th><th>协议名称</th><th>传输层</th><th>中文全称</th><th>核心用途说明 (对应图4/图5底部第10栏)</th></tr>`
+          : `<tr><th>Port #</th><th>Protocol</th><th>Transport</th><th>Purpose</th><th>Description (From All-Ports Chart #10)</th></tr>`;
+
+        tbody.innerHTML = SW_PORTS.map(s => {
+          return `
+            <tr onclick="openLightbox('assets/chart-all-ports-dark.jpg', '第10栏：常见 TCP/UDP 网络端口号 (Common Network Port Numbers)')">
+              <td><span class="idx-badge" style="background:${s.color}; width:auto; padding:0 8px; border-radius:999px;">${s.port}</span></td>
+              <td class="mono-code">${s.proto}</td>
+              <td class="mono-code" style="color:var(--accent-bright);">${s.tcpudp}</td>
+              <td style="font-weight:700; color:var(--text-main);">${currentLang === "zh" ? s.zhName : s.enName}</td>
+              <td>${currentLang === "zh" ? s.zhDesc : s.enDesc}</td>
+            </tr>
+          `;
+        }).join("");
+      }
+    }
+
+    // ==================== 6. Quiz Logic ====================
+    function renderQuiz() {
+      const q = QUIZ_DATA[quizIdx];
+      document.getElementById("quiz-progress").textContent = currentLang === "zh"
+        ? `🎯 场景实战闯关 (${quizIdx + 1} / ${QUIZ_DATA.length})`
+        : `🎯 Port Challenge (${quizIdx + 1} / ${QUIZ_DATA.length})`;
+      document.getElementById("quiz-score-label").textContent = currentLang === "zh"
+        ? `得分：${quizScore} / ${QUIZ_DATA.length}`
+        : `Score: ${quizScore} / ${QUIZ_DATA.length}`;
+      document.getElementById("quiz-question").textContent = currentLang === "zh" ? q.zhQ : q.enQ;
+      document.getElementById("quiz-feedback").textContent = currentLang === "zh"
+        ? "💡 请点击上方最匹配的接口选项！"
+        : "💡 Click the matching port option above!";
+
+      const optsWrap = document.getElementById("quiz-options");
+      optsWrap.innerHTML = q.options.map((opt, idx) => `
+        <button class="quiz-opt-btn" id="quiz-opt-${idx}" onclick="answerQuiz(${idx})">
+          <span>${opt}</span>
+          <i class="fa-regular fa-circle"></i>
+        </button>
+      `).join("");
+      quizAnswered = false;
+    }
+
+    function answerQuiz(choiceIdx) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const q = QUIZ_DATA[quizIdx];
+      const correctBtn = document.getElementById(`quiz-opt-${q.answer}`);
+      const chosenBtn = document.getElementById(`quiz-opt-${choiceIdx}`);
+
+      if (choiceIdx === q.answer) {
+        quizScore++;
+        chosenBtn.classList.add("correct");
+        chosenBtn.querySelector("i").className = "fa-solid fa-circle-check";
+        document.getElementById("quiz-feedback").textContent = q.zhExp;
+      } else {
+        chosenBtn.classList.add("wrong");
+        chosenBtn.querySelector("i").className = "fa-solid fa-circle-xmark";
+        correctBtn.classList.add("correct");
+        correctBtn.querySelector("i").className = "fa-solid fa-circle-check";
+        document.getElementById("quiz-feedback").textContent = q.zhExp;
+      }
+      document.getElementById("quiz-score-label").textContent = currentLang === "zh"
+        ? `得分：${quizScore} / ${QUIZ_DATA.length}`
+        : `Score: ${quizScore} / ${QUIZ_DATA.length}`;
+
+      // Sync right-hand encyclopedia to this port
+      if (q.portId) {
+        const found = PORTS.find(p => p.id === q.portId);
+        if (found) {
+          currentPort = found;
+          renderPortList();
+          renderStageAndDetails();
+        }
+      }
+    }
+
+    function nextQuizQuestion() {
+      quizIdx = (quizIdx + 1) % QUIZ_DATA.length;
+      if (quizIdx === 0) quizScore = 0;
+      renderQuiz();
+    }
+
+    // ==================== 7. Interactive Actions ====================
+    function selectCategory(catId) {
+      currentCat = catId;
+      renderCategoryTabs();
+      const filtered = getFilteredPorts();
+      if (filtered.length > 0 && !filtered.some(p => p.id === currentPort.id)) {
+        currentPort = filtered[0];
+      }
+      renderPortList();
+      renderStageAndDetails();
+    }
+
+    function selectPort(portId) {
+      const found = PORTS.find(p => p.id === portId);
+      if (!found) return;
+      currentPort = found;
+      if (currentStageMode === "charts") {
+        setStageMode("visual");
+      }
+      renderPortList();
+      renderStageAndDetails();
+    }
+
+    function filterPorts() {
+      renderPortList();
+    }
+
+    function setStageMode(mode) {
+      currentStageMode = mode;
+      document.getElementById("mode-btn-visual").classList.toggle("active", mode === "visual");
+      document.getElementById("mode-btn-charts").classList.toggle("active", mode === "charts");
+      document.getElementById("mode-btn-quiz").classList.toggle("active", mode === "quiz");
+
+      document.getElementById("stage-visual").style.display = mode === "visual" ? "grid" : "none";
+      document.getElementById("stage-charts").classList.toggle("active", mode === "charts");
+      document.getElementById("stage-quiz").classList.toggle("active", mode === "quiz");
+      document.getElementById("io-switch-group").style.display = mode === "visual" ? "inline-flex" : "none";
+
+      if (mode === "quiz") {
+        renderQuiz();
+      }
+    }
+
+    function setIoView(view) {
+      currentIoView = view;
+      renderIoLocator();
+    }
+
+    function setMatrixTab(tab) {
+      currentMatrixTab = tab;
+      document.getElementById("tab-hw-ports").classList.toggle("active", tab === "hw");
+      document.getElementById("tab-sw-ports").classList.toggle("active", tab === "sw");
+      renderMatrixTable();
+    }
+
+    function openLightbox(src, caption) {
+      document.getElementById("lightbox-img").src = src;
+      document.getElementById("lightbox-caption").textContent = caption || "";
+      document.getElementById("lightbox").classList.add("open");
+    }
+
+    function openCurrentIoLightbox() {
+      openLightbox(
+        "assets/chart-desktop-laptop-guide.jpg",
+        currentLang === "zh"
+          ? "台式电脑背面 (1-10) 与笔记本电脑侧面 (1-6) 完整高清图解"
+          : "Full Desktop Back Panel (1-10) & Laptop Side View (1-6) Reference Guide"
+      );
+    }
+
+    function closeLightbox() {
+      document.getElementById("lightbox").classList.remove("open");
+    }
+
+    function setTheme(theme) {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      document.getElementById("theme-light").classList.toggle("active", theme === "light");
+      document.getElementById("theme-dark").classList.toggle("active", theme === "dark");
+    }
+
+    function setLang(lang) {
+      currentLang = lang;
+      document.getElementById("lang-zh").classList.toggle("active", lang === "zh");
+      document.getElementById("lang-en").classList.toggle("active", lang === "en");
+
+      const isZh = lang === "zh";
+      document.getElementById("ui-brand-sub").textContent = isZh
+        ? "了解电脑硬件接口与网络端口如何连接世界"
+        : "Interactive Guide to Computer Hardware Ports & Network Connectors";
+      document.getElementById("search-input").placeholder = isZh
+        ? "搜索接口 (如 HDMI, USB-C, RJ45, 443)..."
+        : "Search ports (e.g. HDMI, USB-C, RJ45, 443)...";
+      document.getElementById("ui-left-title").textContent = isZh ? "电脑接口图鉴" : "Computer Ports";
+      document.getElementById("ui-mode-visual").textContent = isZh ? "接口实拍与主机定位" : "Port Visual & Locator";
+      document.getElementById("ui-mode-charts").textContent = isZh ? "5张原图高清总览" : "5 HD Reference Charts";
+      document.getElementById("ui-mode-quiz").textContent = isZh ? "连线闯关小测验" : "Interactive Quiz";
+      document.getElementById("ui-io-desktop").textContent = isZh ? "台式机背板 (1-10)" : "Desktop Back (1-10)";
+      document.getElementById("ui-io-laptop").textContent = isZh ? "笔记本侧面 (1-6)" : "Laptop Side (1-6)";
+      document.getElementById("ui-tag-macro").textContent = isZh ? "🔍 3D 插口特写 (点击放大)" : "🔍 3D Port Close-up (Click to Zoom)";
+      document.getElementById("ui-tag-cable").textContent = isZh ? "🔌 插座 + 线材插头对照" : "🔌 Socket & Cable Plug";
+      document.getElementById("stage-pin-hint").textContent = isZh ? "💡 提示：点击任意图片可全屏高清检视细节" : "💡 Tip: Click any image to inspect in full HD";
+      document.getElementById("ui-locator-title").textContent = isZh ? "📍 在真实电脑上的位置（点击下方编号快速切换接口）：" : "📍 Location on Real PC (Click numbers below to switch):";
+      document.getElementById("ui-zoom-io").textContent = isZh ? "放大全图" : "Full Chart";
+      document.getElementById("ui-matrix-title").textContent = isZh ? "接口参数流" : "Port Stream";
+      document.getElementById("leg-display").textContent = isZh ? "影音显示" : "Display";
+      document.getElementById("leg-usb").textContent = isZh ? "USB与存储" : "USB & Storage";
+      document.getElementById("leg-net").textContent = isZh ? "网络通信" : "Network";
+      document.getElementById("leg-audio").textContent = isZh ? "音频与电源" : "Audio & Power";
+      document.getElementById("leg-legacy").textContent = isZh ? "经典老接口" : "Legacy";
+      document.getElementById("ui-tab-hw").textContent = isZh ? "硬件物理接口 (16)" : "Hardware Ports (16)";
+      document.getElementById("ui-tab-sw").textContent = isZh ? "软件网络端口号 (TCP/UDP 11)" : "Software TCP/UDP Ports (11)";
+      document.getElementById("ui-right-title").textContent = isZh ? "接口概览" : "Port Overview";
+      document.getElementById("ui-status-learning").textContent = isZh ? "学习中" : "Learning";
+      document.getElementById("ui-analogy-header").textContent = isZh ? "中学生秒懂 · 生活比喻" : "Real-Life Analogy";
+      document.getElementById("lbl-speed").textContent = isZh ? "⚡ 最高传输速率" : "⚡ Max Speed";
+      document.getElementById("lbl-signal").textContent = isZh ? "📡 传输内容" : "📡 Signal Type";
+      document.getElementById("lbl-shape").textContent = isZh ? "🔍 外观防呆特征" : "🔍 Connector Shape";
+      document.getElementById("lbl-devices").textContent = isZh ? "🖥️ 常见连接设备" : "🖥️ Common Devices";
+      document.getElementById("ui-net-banner-label").textContent = isZh ? "📊 图卡参数速览（点击放大）：" : "📊 Quick Infographic Card (Click to Zoom):";
+
+      renderCategoryTabs();
+      renderPortList();
+      renderStageAndDetails();
+      if (currentStageMode === "quiz") renderQuiz();
+    }
+
+    // Keyboard shortcuts: Ctrl+K to search, Escape to close lightbox, Up/Down to navigate ports
+    window.addEventListener("keydown", e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        document.getElementById("search-input").focus();
+      } else if (e.key === "Escape") {
+        closeLightbox();
+      }
+    });
+
+    // Initialize
+    document.getElementById("ui-total-badge").textContent = `${PORTS.length} PORTS`;
+    renderCategoryTabs();
+    renderPortList();
+    renderStageAndDetails();
+  </script>
+</body>
+</html>
