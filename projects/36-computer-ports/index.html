@@ -1025,45 +1025,512 @@
     }
 
     /* ==================== Responsive (Mobile & Tablet) ==================== */
-    @media (max-width: 1120px) {
-      body {
-        height: auto;
-        overflow-y: auto;
-      }
-      .workspace {
-        grid-template-columns: 1fr;
-        overflow: visible;
-        height: auto;
-      }
-      .port-list {
-        max-height: 250px;
-      }
-      .visual-showcase {
-        grid-template-columns: 1fr;
-      }
-      .charts-gallery {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .search-box {
-        width: 190px;
-      }
+    .mobile-tabbar {
+      display: none;
+    }
+    .mobile-port-header {
+      display: none;
+    }
+    .mobile-jump-card {
+      display: none;
+    }
+    .mobile-detail-nav {
+      display: none;
     }
 
-    @media (max-width: 640px) {
-      .topbar {
-        flex-wrap: wrap;
-        height: auto;
-        padding: 10px 12px;
+    @keyframes portSwitchPulse {
+      0% { transform: scale(0.97); opacity: 0.75; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .pulse-anim {
+      animation: portSwitchPulse 0.28s ease-out;
+    }
+
+    @media (max-width: 1024px) {
+      body {
+        height: 100vh;
+        overflow: hidden;
       }
+
+      .topbar {
+        height: auto;
+        padding: 8px 10px;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .brand {
+        gap: 8px;
+      }
+
+      .brand-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+        border-radius: 8px;
+      }
+
+      .brand-title {
+        font-size: 14px;
+      }
+
+      .brand-sub {
+        display: none;
+      }
+
       .search-box {
         order: 3;
         width: 100%;
+        margin-top: 2px;
       }
+
+      .search-box input {
+        padding: 6px 10px 6px 30px;
+        font-size: 12.5px;
+        border-radius: 7px;
+      }
+
+      .search-kbd {
+        display: none;
+      }
+
+      .workspace {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 6px 6px 66px; /* 留出底部手机导航栏空间 */
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        gap: 8px;
+        height: auto;
+      }
+
+      /* 底部常驻 4 标签栏 (目录、实拍定位、秒懂百科、对比矩阵) */
+      .mobile-tabbar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: var(--bg-card);
+        border-top: 1px solid var(--border);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        z-index: 100;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      .mob-tab-btn {
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        font-size: 10.5px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.18s;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mob-tab-btn i {
+        font-size: 15px;
+        transition: transform 0.2s ease;
+      }
+
+      .mob-tab-btn:active {
+        transform: scale(0.92);
+      }
+
+      .mob-tab-btn.active {
+        color: var(--accent-bright);
+      }
+
+      .mob-tab-btn.active i {
+        transform: translateY(-2px);
+      }
+
+      /* 手机面板顶部轻量快捷指示条 */
+      .mobile-port-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 10px;
+        background: var(--bg-subtle);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .mob-head-btn {
+        border: 1px solid var(--border);
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.18s;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mob-head-btn:active {
+        transform: scale(0.95);
+      }
+
+      .mob-head-btn.primary {
+        background: var(--accent-bright);
+        color: #ffffff;
+        border-color: var(--accent-bright);
+      }
+
+      .mob-head-curr {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 800;
+        font-size: 13.5px;
+        color: var(--text-main);
+        min-width: 0;
+      }
+
+      .mob-head-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--amber);
+        flex-shrink: 0;
+      }
+
+      .mob-head-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* 手机实拍卡片底部的大号引导卡片 (点此看百科) */
+      .mobile-jump-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(139, 92, 246, 0.12));
+        border: 1.5px solid rgba(37, 99, 235, 0.35);
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-top: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mobile-jump-card:active {
+        transform: scale(0.98);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(139, 92, 246, 0.2));
+      }
+
+      .mob-jump-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--accent-bright);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .mob-jump-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .mob-jump-title {
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .mob-jump-title span {
+        color: var(--accent-bright);
+      }
+
+      .mob-jump-desc {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mob-jump-arrow {
+        color: var(--accent-bright);
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      /* 百科底部操作引导按钮组 */
+      .mobile-detail-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px dashed var(--border);
+      }
+
+      .mob-nav-action-btn {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--bg-card);
+        color: var(--text-main);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.18s;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mob-nav-action-btn:active {
+        transform: scale(0.98);
+      }
+
+      .mob-nav-action-btn.highlight {
+        background: var(--accent-soft);
+        border-color: var(--accent-bright);
+        color: var(--accent-bright);
+      }
+
+      .panel {
+        border-radius: 10px;
+      }
+
+      .cat-tabs {
+        grid-template-columns: repeat(3, 1fr);
+        padding: 5px;
+      }
+
+      .cat-tab {
+        padding: 6px 3px;
+        font-size: 11px;
+      }
+
+      .port-list {
+        padding: 4px;
+      }
+
+      .port-item {
+        padding: 10px 12px;
+        margin-bottom: 4px;
+      }
+
+      .port-item:active {
+        transform: scale(0.98);
+        background: var(--accent-soft);
+      }
+
+      .stage-panel {
+        min-height: auto;
+      }
+
+      /* 修复手机端顶部工具栏挤压成竖长方块的问题：单行横向药丸胶囊 */
+      .stage-toolbar {
+        position: static;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        padding: 6px 6px 4px;
+      }
+
+      .stage-toolbar .seg-group {
+        display: flex;
+        width: 100%;
+        background: var(--bg-subtle);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 3px;
+        gap: 3px;
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .stage-toolbar .seg-group::-webkit-scrollbar {
+        display: none;
+      }
+
+      .stage-toolbar .seg-btn {
+        flex: 1;
+        white-space: nowrap;
+        padding: 6px 6px;
+        font-size: 11px;
+        border-radius: 999px;
+        justify-content: center;
+        text-align: center;
+        min-width: 0;
+      }
+
+      .stage-toolbar .seg-btn i {
+        font-size: 11px;
+      }
+
+      .stage-body {
+        padding: 4px 6px 10px;
+      }
+
+      .visual-showcase {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .closeup-img-pair {
+        gap: 8px;
+        min-height: 125px;
+      }
+
+      .closeup-img-box {
+        height: 145px;
+        padding: 5px;
+      }
+
+      .closeup-img-box img {
+        max-height: 110px;
+      }
+
+      .locator-card {
+        padding: 10px;
+      }
+
+      .io-hotspots-bar {
+        gap: 5px;
+        padding: 4px 0;
+      }
+
+      .io-num-btn {
+        padding: 5px 9px;
+        font-size: 11px;
+      }
+
+      .io-num-btn .num-circle {
+        width: 18px;
+        height: 18px;
+        font-size: 10.5px;
+      }
+
       .charts-gallery {
         grid-template-columns: 1fr;
+        gap: 10px;
       }
+
       .quiz-options {
         grid-template-columns: 1fr;
+      }
+
+      .quiz-stage {
+        padding: 10px 12px;
+      }
+
+      .quiz-q-box {
+        font-size: 13.5px;
+      }
+
+      .matrix-panel {
+        min-height: auto;
+      }
+
+      .detail-scroll {
+        padding: 10px 12px;
+      }
+
+      .detail-name {
+        font-size: 20px;
+      }
+
+      .specs-grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* 手机视口清晰分屏逻辑：单视图沉浸式展现，零上下杂乱拖拽 */
+      body.mob-view-catalog .center-col,
+      body.mob-view-catalog aside.panel {
+        display: none !important;
+      }
+      body.mob-view-catalog section.panel:first-child {
+        display: flex !important;
+        flex: 1;
+        min-height: calc(100vh - 126px);
+      }
+      body.mob-view-catalog .port-list {
+        max-height: none;
+        flex: 1;
+      }
+
+      body.mob-view-stage section.panel:first-child,
+      body.mob-view-stage aside.panel,
+      body.mob-view-stage .matrix-panel {
+        display: none !important;
+      }
+      body.mob-view-stage .center-col {
+        display: flex !important;
+        flex: 1;
+      }
+      body.mob-view-stage .stage-panel {
+        display: flex !important;
+        flex: 1;
+        min-height: calc(100vh - 126px);
+      }
+
+      body.mob-view-detail section.panel:first-child,
+      body.mob-view-detail .center-col {
+        display: none !important;
+      }
+      body.mob-view-detail aside.panel {
+        display: flex !important;
+        flex: 1;
+        min-height: calc(100vh - 126px);
+      }
+      body.mob-view-detail .detail-scroll {
+        max-height: none;
+        flex: 1;
+      }
+
+      body.mob-view-matrix section.panel:first-child,
+      body.mob-view-matrix .stage-panel,
+      body.mob-view-matrix aside.panel {
+        display: none !important;
+      }
+      body.mob-view-matrix .center-col {
+        display: flex !important;
+        flex: 1;
+      }
+      body.mob-view-matrix .matrix-panel {
+        display: flex !important;
+        flex: 1;
+        min-height: calc(100vh - 126px);
       }
     }
   </style>
@@ -1145,9 +1612,23 @@
 
         <div class="stage-body">
 
+          <!-- Mobile Port Quick Nav Header (Only on Mobile) -->
+          <div class="mobile-port-header" id="mobile-stage-header">
+            <button class="mob-head-btn" onclick="setMobileView('catalog')">
+              <i class="fa-solid fa-list-ul"></i> 选其它接口
+            </button>
+            <div class="mob-head-curr">
+              <span class="mob-head-dot"></span>
+              <span class="mob-head-name" id="mob-stage-port-name">HDMI</span>
+            </div>
+            <button class="mob-head-btn primary" onclick="setMobileView('detail')">
+              秒懂百科 <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
           <!-- Stage Mode 1: Port Close-up + Real Motherboard / Laptop Locator -->
           <div class="visual-showcase" id="stage-visual">
-            <div class="closeup-card">
+            <div class="closeup-card" id="stage-closeup-card">
               <div class="closeup-img-pair">
                 <div class="closeup-img-box" onclick="openLightbox(currentPort.macroImg, currentPort.name + ' - 3D 微距插口特写')">
                   <img id="stage-macro-img" src="" alt="Port Macro" />
@@ -1175,6 +1656,16 @@
                 <img id="io-panel-img" src="assets/panel-desktop-io.jpg" alt="Computer IO Panel" />
               </div>
               <div class="io-hotspots-bar" id="io-hotspots-bar"></div>
+            </div>
+
+            <!-- Mobile Jump Card to Encyclopedia (Prominent Action for Beginners) -->
+            <div class="mobile-jump-card" id="mob-stage-jump-card" onclick="setMobileView('detail')">
+              <div class="mob-jump-icon"><i class="fa-solid fa-lightbulb"></i></div>
+              <div class="mob-jump-content">
+                <div class="mob-jump-title">阅读【<span id="mob-jump-port-name">HDMI</span>】秒懂百科</div>
+                <div class="mob-jump-desc" id="mob-jump-port-analogy">中学生生活比喻与 4 项核心参数 ➔</div>
+              </div>
+              <i class="fa-solid fa-circle-arrow-right mob-jump-arrow"></i>
             </div>
           </div>
 
@@ -1267,6 +1758,20 @@
       </div>
 
       <div class="detail-scroll">
+
+        <!-- Mobile Detail Quick Nav Header (Only on Mobile) -->
+        <div class="mobile-port-header" id="mobile-detail-header">
+          <button class="mob-head-btn" onclick="setMobileView('stage')">
+            <i class="fa-solid fa-arrow-left"></i> 回看实拍特写
+          </button>
+          <div class="mob-head-curr">
+            <span class="mob-head-name" id="mob-detail-port-name">HDMI</span>
+          </div>
+          <button class="mob-head-btn" onclick="setMobileView('catalog')">
+            换个接口 <i class="fa-solid fa-list-ul"></i>
+          </button>
+        </div>
+
         <div class="detail-hero">
           <div>
             <div class="detail-name" id="detail-name">HDMI</div>
@@ -1325,10 +1830,41 @@
             3. <b>防呆内芯</b>：防止插反烧毁硬件
           </div>
         </div>
+
+        <!-- Mobile Detail Action Buttons -->
+        <div class="mobile-detail-nav">
+          <button class="mob-nav-action-btn" onclick="setMobileView('catalog')">
+            <i class="fa-solid fa-list-ul"></i> 返回目录挑选其它 17 种接口
+          </button>
+          <button class="mob-nav-action-btn highlight" onclick="setMobileView('stage'); setStageMode('quiz');">
+            <i class="fa-solid fa-gamepad"></i> 挑战连线闯关小测验 (测测你懂了吗)
+          </button>
+        </div>
+
       </div>
     </aside>
 
   </main>
+
+  <!-- Mobile Bottom Tab Bar (Navigation between Catalog, Stage, Details, Charts) -->
+  <nav class="mobile-tabbar" id="mobile-tabbar">
+    <button class="mob-tab-btn active" id="mob-btn-catalog" onclick="setMobileView('catalog')">
+      <i class="fa-solid fa-list-ul"></i>
+      <span id="mob-lbl-catalog">接口目录</span>
+    </button>
+    <button class="mob-tab-btn" id="mob-btn-stage" onclick="setMobileView('stage')">
+      <i class="fa-solid fa-eye"></i>
+      <span id="mob-lbl-stage">实拍定位</span>
+    </button>
+    <button class="mob-tab-btn" id="mob-btn-detail" onclick="setMobileView('detail')">
+      <i class="fa-solid fa-book-open"></i>
+      <span id="mob-lbl-detail">秒懂百科</span>
+    </button>
+    <button class="mob-tab-btn" id="mob-btn-matrix" onclick="setMobileView('matrix')">
+      <i class="fa-solid fa-table-list"></i>
+      <span id="mob-lbl-matrix">参数/端口</span>
+    </button>
+  </nav>
 
   <!-- Full-Screen HD Image Lightbox -->
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
@@ -2044,6 +2580,15 @@
         netSec.style.display = "none";
       }
 
+      // Trigger card pulse animation for smooth visual feedback
+      const cardBox = document.getElementById("stage-closeup-card");
+      if (cardBox) {
+        cardBox.classList.remove("pulse-anim");
+        void cardBox.offsetWidth;
+        cardBox.classList.add("pulse-anim");
+      }
+
+      updateMobileTexts();
       renderMatrixTable();
     }
 
@@ -2177,6 +2722,47 @@
     }
 
     // ==================== 7. Interactive Actions ====================
+    let currentMobileView = "catalog";
+
+    function setMobileView(view, autoScroll = true) {
+      currentMobileView = view;
+      document.body.classList.remove("mob-view-catalog", "mob-view-stage", "mob-view-detail", "mob-view-matrix");
+      document.body.classList.add("mob-view-" + view);
+
+      document.querySelectorAll(".mob-tab-btn").forEach(btn => btn.classList.remove("active"));
+      const activeBtn = document.getElementById("mob-btn-" + view);
+      if (activeBtn) activeBtn.classList.add("active");
+
+      updateMobileTexts();
+
+      if (autoScroll) {
+        const ws = document.querySelector(".workspace");
+        if (ws) ws.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    function updateMobileTexts() {
+      const p = currentPort;
+      if (!p) return;
+      const t = currentLang === "zh" ? p.zh : p.en;
+
+      const stageNameEl = document.getElementById("mob-stage-port-name");
+      if (stageNameEl) stageNameEl.textContent = p.name;
+
+      const detailNameEl = document.getElementById("mob-detail-port-name");
+      if (detailNameEl) detailNameEl.textContent = p.name;
+
+      const jumpNameEl = document.getElementById("mob-jump-port-name");
+      if (jumpNameEl) jumpNameEl.textContent = p.name;
+
+      const jumpDescEl = document.getElementById("mob-jump-port-analogy");
+      if (jumpDescEl) {
+        const raw = t.analogy || "";
+        jumpDescEl.textContent = raw.length > 28 ? raw.slice(0, 28) + "..." : raw;
+      }
+    }
+
     function selectCategory(catId) {
       currentCat = catId;
       renderCategoryTabs();
@@ -2197,6 +2783,11 @@
       }
       renderPortList();
       renderStageAndDetails();
+
+      // 手机端自动丝滑跳转到相关实拍与定位画面，新手零困惑
+      if (window.innerWidth <= 1024) {
+        setMobileView("stage", true);
+      }
     }
 
     function filterPorts() {
@@ -2269,11 +2860,11 @@
         ? "搜索接口 (如 HDMI, USB-C, RJ45, 443)..."
         : "Search ports (e.g. HDMI, USB-C, RJ45, 443)...";
       document.getElementById("ui-left-title").textContent = isZh ? "电脑接口图鉴" : "Computer Ports";
-      document.getElementById("ui-mode-visual").textContent = isZh ? "接口实拍与主机定位" : "Port Visual & Locator";
-      document.getElementById("ui-mode-charts").textContent = isZh ? "5张原图高清总览" : "5 HD Reference Charts";
-      document.getElementById("ui-mode-quiz").textContent = isZh ? "连线闯关小测验" : "Interactive Quiz";
-      document.getElementById("ui-io-desktop").textContent = isZh ? "台式机背板 (1-10)" : "Desktop Back (1-10)";
-      document.getElementById("ui-io-laptop").textContent = isZh ? "笔记本侧面 (1-6)" : "Laptop Side (1-6)";
+      document.getElementById("ui-mode-visual").textContent = isZh ? "实拍定位" : "Port Visual";
+      document.getElementById("ui-mode-charts").textContent = isZh ? "5张原图" : "5 HD Charts";
+      document.getElementById("ui-mode-quiz").textContent = isZh ? "连线测验" : "Quiz";
+      document.getElementById("ui-io-desktop").textContent = isZh ? "台式机背板" : "Desktop Back";
+      document.getElementById("ui-io-laptop").textContent = isZh ? "笔记本侧面" : "Laptop Side";
       document.getElementById("ui-tag-macro").textContent = isZh ? "🔍 3D 插口特写 (点击放大)" : "🔍 3D Port Close-up (Click to Zoom)";
       document.getElementById("ui-tag-cable").textContent = isZh ? "🔌 插座 + 线材插头对照" : "🔌 Socket & Cable Plug";
       document.getElementById("stage-pin-hint").textContent = isZh ? "💡 提示：点击任意图片可全屏高清检视细节" : "💡 Tip: Click any image to inspect in full HD";
@@ -2285,7 +2876,7 @@
       document.getElementById("leg-net").textContent = isZh ? "网络通信" : "Network";
       document.getElementById("leg-audio").textContent = isZh ? "音频与电源" : "Audio & Power";
       document.getElementById("leg-legacy").textContent = isZh ? "经典老接口" : "Legacy";
-      document.getElementById("ui-tab-hw").textContent = isZh ? "硬件物理接口 (16)" : "Hardware Ports (16)";
+      document.getElementById("ui-tab-hw").textContent = isZh ? "硬件物理接口 (18)" : "Hardware Ports (18)";
       document.getElementById("ui-tab-sw").textContent = isZh ? "软件网络端口号 (TCP/UDP 11)" : "Software TCP/UDP Ports (11)";
       document.getElementById("ui-right-title").textContent = isZh ? "接口概览" : "Port Overview";
       document.getElementById("ui-status-learning").textContent = isZh ? "学习中" : "Learning";
@@ -2296,13 +2887,22 @@
       document.getElementById("lbl-devices").textContent = isZh ? "🖥️ 常见连接设备" : "🖥️ Common Devices";
       document.getElementById("ui-net-banner-label").textContent = isZh ? "📊 图卡参数速览（点击放大）：" : "📊 Quick Infographic Card (Click to Zoom):";
 
+      const mobLblCatalog = document.getElementById("mob-lbl-catalog");
+      if (mobLblCatalog) mobLblCatalog.textContent = isZh ? "接口目录" : "Catalog";
+      const mobLblStage = document.getElementById("mob-lbl-stage");
+      if (mobLblStage) mobLblStage.textContent = isZh ? "实拍定位" : "Visual";
+      const mobLblDetail = document.getElementById("mob-lbl-detail");
+      if (mobLblDetail) mobLblDetail.textContent = isZh ? "秒懂百科" : "Wiki";
+      const mobLblMatrix = document.getElementById("mob-lbl-matrix");
+      if (mobLblMatrix) mobLblMatrix.textContent = isZh ? "参数/端口" : "Matrix";
+
       renderCategoryTabs();
       renderPortList();
       renderStageAndDetails();
       if (currentStageMode === "quiz") renderQuiz();
     }
 
-    // Keyboard shortcuts: Ctrl+K to search, Escape to close lightbox, Up/Down to navigate ports
+    // Keyboard shortcuts: Ctrl+K to search, Escape to close lightbox
     window.addEventListener("keydown", e => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -2312,11 +2912,29 @@
       }
     });
 
+    // Check responsive mode on resize
+    window.addEventListener("resize", () => {
+      if (window.innerWidth <= 1024) {
+        if (!document.body.classList.contains("mob-view-catalog") &&
+            !document.body.classList.contains("mob-view-stage") &&
+            !document.body.classList.contains("mob-view-detail") &&
+            !document.body.classList.contains("mob-view-matrix")) {
+          setMobileView("catalog", false);
+        }
+      } else {
+        document.body.classList.remove("mob-view-catalog", "mob-view-stage", "mob-view-detail", "mob-view-matrix");
+      }
+    });
+
     // Initialize
     document.getElementById("ui-total-badge").textContent = `${PORTS.length} PORTS`;
     renderCategoryTabs();
     renderPortList();
     renderStageAndDetails();
+
+    if (window.innerWidth <= 1024) {
+      setMobileView("catalog", false);
+    }
   </script>
 </body>
 </html>
