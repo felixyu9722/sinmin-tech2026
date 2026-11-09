@@ -2660,11 +2660,11 @@
       }
 
       // Trigger card pulse animation for smooth visual feedback
-      const cardBox = document.getElementById("stage-closeup-card");
-      if (cardBox) {
-        cardBox.classList.remove("pulse-anim");
-        void cardBox.offsetWidth;
-        cardBox.classList.add("pulse-anim");
+      const closeupCard = document.getElementById("stage-closeup-card");
+      if (closeupCard) {
+        closeupCard.classList.remove("pulse-anim");
+        void closeupCard.offsetWidth;
+        closeupCard.classList.add("pulse-anim");
       }
 
       updateMobileTexts();
